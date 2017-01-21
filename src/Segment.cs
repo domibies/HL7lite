@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace HL7.Dotnetcore
 {
@@ -9,7 +7,6 @@ namespace HL7.Dotnetcore
     {
         private String _Value;
         private String _Name;
-        //internal Segment.SegmentList _list;
         private List<Segment> _List;
         private Char[] fieldDelimiters = new Char[] { '|', '^', '~', '&' };
         private short seqNo = 0;
@@ -20,18 +17,15 @@ namespace HL7.Dotnetcore
             set { fieldDelimiters = value; }
         }
 
-        //public List<Field> FieldList { get; set; }
         internal FieldCollection FieldList { get; set; }
         
         public Segment()
         {
-            //FieldList = new List<Field>();
             FieldList = new FieldCollection();
         }
 
         public Segment(String pName)
         {
-            //FieldList = new List<Field>();
             FieldList = new FieldCollection();
             _Name = pName;
         }
@@ -71,8 +65,6 @@ namespace HL7.Dotnetcore
                 _Value = value;
                 if (_Value.Length > 0)
                 {
-                    //FieldList = new List<Field>();
-
                     char[] fieldSeparatorString = new char[1] { FieldDelimiters[0] };
                     List<String> AllFields = MessageHelper.SplitString(_Value, fieldSeparatorString);
 
