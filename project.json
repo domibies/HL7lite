@@ -3,6 +3,16 @@
     "name": "HL7-dotnetcore",
     "description": "Small HL7 2.x library compatible with .net Core",
 
+    "packOptions": {
+        "summary": "Small HL7 2.x library compatible with .net Core",
+        "owners": [ "jaime-olivares" ],
+        "tags": ["hl7", "dotnetcore"],
+        "requireLicenseAcceptance": false,
+        "repository": {
+            "type": "git",
+            "url": "https://github.com/Efferent-Health/HL7-dotnetcore"
+        }
+    },
     "dependencies": 
     {
         "System.Runtime": "*",
@@ -12,6 +22,7 @@
     },
     "frameworks": 
     {
-        "netstandard1.5": {}
+        "netstandard1.5": {},
+        "netstandard1.6": {}
     }
-} 
+}

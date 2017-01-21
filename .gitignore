@@ -1,7 +1,7 @@
 **/out
 **/bin
 **/obj
-*.lock.json
+project.lock.json
 .DS_Store
 /packages
 /node_modules
