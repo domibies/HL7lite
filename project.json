@@ -1,0 +1,17 @@
+{
+    "version": "1.0.0-*",
+    "name": "HL7-dotnetcore",
+    "description": "Small HL7 2.x library compatible with .net Core",
+
+    "dependencies": 
+    {
+        "System.Runtime": "*",
+        "System.Runtime.Extensions": "*",
+        "System.Linq": "*",
+        "System.Text.RegularExpressions": "*"
+    },
+    "frameworks": 
+    {
+        "netstandard1.5": {}
+    }
+} 
