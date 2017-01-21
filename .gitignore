@@ -1,0 +1,7 @@
+**/out
+**/bin
+**/obj
+*.lock.json
+.DS_Store
+/packages
+/node_modules
