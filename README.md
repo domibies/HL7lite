@@ -1,8 +1,8 @@
-# Efferent-dotnetcore
+# HL7-dotnetcore
 
 This is a fork from Jayant Singh's HL7 parser. For more information read:
-https://github.com/j4jayant/hl7-cSharp-parser
-http://j4jayant.com/articles/hl7/31-hl7-parsing-lib
+- https://github.com/j4jayant/hl7-cSharp-parser
+- http://j4jayant.com/articles/hl7/31-hl7-parsing-lib
 
 This library treats every message in same manner while parsing HL7 messages. After successfull parsing it provides all the components of HL7 message like segments, fields (with repetitions), components, subcomponents in easily accessible way.
 
@@ -20,11 +20,9 @@ try
 }
 catch(Exception ex)
 {
-    //handle the exception
+    // Handle the exception
 }
 `````
-
-//Now let’s see some of the functions, Please note indexes are zero based, so if you access FieldList[3], it’s actually a fourth field.
 
 ## Accessing Segments
 
@@ -36,15 +34,15 @@ List<Segment> segList = message.Segments();
 
 ### Get List of list of repeated segments by name 
 
-For example if you have multiple IN1 segments
+For example if there are multiple IN1 segments
 
 ````cSharp
 List<Segment> IN1List = message.Segments("IN1");
 ````
 
-### Access a particular occurrence from multiple IN1s you can provide the index
+### Access a particular occurrence from multiple IN1s providing the index
 
-Please note index 1 will give you 2nd element from list
+Note index 1 will return the 2nd element from list
 
 ````cSharp
 Segment IN1_2 = message.Segments("IN1")[1];
@@ -179,7 +177,7 @@ Field ZIB_5 = new Field("ZIB5");
 Component com1 = new Component("ZIB.5.2");
  
 //Add Component ZIB.5.2 to Field ZIB_5
-//2nd parameter here specifies the component position, if you want to insert segment on particular position
+//2nd parameter here specifies the component position, for inserting segment on particular position
 //If we don’t provide 2nd parameter, component will be inserted to next position (if field has 2 components this will be 3rd, 
 //if field is empty this will be 1st component
 ZIB_5.AddNewComponent(com1, 2);
@@ -194,16 +192,25 @@ newSeg.AddNewField(ZIB_5, 5);
 message.AddNewSegment(newSeg);
 ````
 
-New Segment would look like this
+New Segment would look like this:
 
 ````text
 ZIB|ZIB1||||^ZIB.5.2
 ````
 
-After you have evaluated and modified required values you can again get the message in text format
+After evaluated and modified required values, the message can be obtained again in text format
 
 ````cSharp
-String strUpdatedMsg = message.SerializeMessage();
+string strUpdatedMsg = message.SerializeMessage();
+````
+
+### Copying a segment
+
+The DeepCopy method allows to perform a clone of a segment when building new messages. Countersense, if a segment is referenced directly when adding segments to a message, a change in the segment will affect both the origin and new messages.
+
+````cSharp
+Segment pid = ormMessage.DefaultSegment("PID").DeepCopy();
+oru.AddNewSegment(pid);
 ````
 
 ### Generate ACKs
@@ -211,12 +218,12 @@ String strUpdatedMsg = message.SerializeMessage();
 AA ACK
 
 ````cSharp
-String ackMsg = message.getACK();
+string ackMsg = message.getACK();
 ````
 
 To generate negative ACK message with error message
 
 
 ````cSharp
-String ackMsg = message.getNACK("AR", "Invalid Processing ID");
+string ackMsg = message.getNACK("AR", "Invalid Processing ID");
 ````
