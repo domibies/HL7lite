@@ -3,132 +3,79 @@ using System.Collections.Generic;
 
 namespace HL7.Dotnetcore
 {
-    public class Segment
+    public class Segment : MessageElement
     {
-        private String _Value;
-        private String _Name;
-        private List<Segment> _List;
-        private Char[] fieldDelimiters = new Char[] { '|', '^', '~', '&' };
-        private short seqNo = 0;
-
-        internal Char[] FieldDelimiters
-        {
-            get { return fieldDelimiters; }
-            set { fieldDelimiters = value; }
-        }
-
         internal FieldCollection FieldList { get; set; }
-        
-        public Segment()
+        internal short SequenceNo { get; set; }
+                
+        public string Name { get; set; }
+
+        public Segment(Encoding encoding)
         {
-            FieldList = new FieldCollection();
+            this.FieldList = new FieldCollection();
+            this.Encoding = encoding;
         }
 
-        public Segment(String pName)
+        public Segment(string name, Encoding encoding)
         {
-            FieldList = new FieldCollection();
-            _Name = pName;
+            this.FieldList = new FieldCollection();
+            this.Name = name;
+            this.Encoding = encoding;
         }
 
-        public String Name
+        protected override void ProcessValue()
         {
-            get
+            if (_value.Length > 0)
             {
-                return _Name;
-            }
-            set
-            {
-                _Name = value;
-            }
-        }
+                _value = _value.TrimEnd(this.Encoding.FieldDelimiter);
+                List<string> allFields = MessageHelper.SplitString(_value, this.Encoding.FieldDelimiter);
 
-        internal short SequenceNo
-        {
-            get
-            {
-                return seqNo;
-            }
-            set
-            {
-                seqNo = value;
-            }
-        }
-
-        internal String Value
-        {
-            get
-            {
-                return _Value;
-            }
-            set
-            {
-                _Value = value;
-                if (_Value.Length > 0)
+                if (allFields.Count > 1)
                 {
-                    char[] fieldSeparatorString = new char[1] { FieldDelimiters[0] };
-                    List<String> AllFields = MessageHelper.SplitString(_Value, fieldSeparatorString);
-
-                    if (AllFields.Count > 1)
-                    {
-                        if (Name == "MSH")
-                        {
-                            AllFields[0] = new String(fieldSeparatorString);
-                        }
-                        else
-                            AllFields.RemoveAt(0);
-
-                        foreach (String strField in AllFields)
-                        {
-                            Field field = new Field();
-                            field.FieldDelimiters = new Char[3] { FieldDelimiters[1], FieldDelimiters[2], FieldDelimiters[3] };
-                            field.Value = strField;
-                            FieldList.Add(field);
-                        }
-                    }
+                    if (Name == "MSH")
+                        allFields[0] = this.Encoding.FieldDelimiter.ToString();
                     else
-                    {
-                        Field field = new Field();
-                        field.FieldDelimiters = new Char[3] { FieldDelimiters[1], FieldDelimiters[2], FieldDelimiters[3] };
-                        field.Value = _Value;
-                        FieldList.Add(field);
-                    }
+                        allFields.RemoveAt(0);
+                }
+                foreach (string strField in allFields)
+                {
+                    Field field = new Field(strField, this.Encoding);
+                    FieldList.Add(field);
                 }
             }
         }
 
-        internal List<Segment> List
+        public Segment DeepCopy()
         {
-            get
-            {
-                if (_List == null)
-                    _List = new List<Segment>();
-                return _List;
-            }
-            set
-            {
-                _List = value;
-            }
+            var newSegment = new Segment(this.Name, this.Encoding);
+            newSegment.Value = this.Value; 
+
+            return newSegment;        
         }
 
-        public bool AddNewField(Field field)
+        public void AddNewField(string content, int position = -1)
+        {
+            this.AddNewField(new Field(content, this.Encoding), position);
+        }
+
+        public void AddEmptyField()
+        {
+            this.AddNewField(string.Empty);
+        }
+
+        public bool AddNewField(Field field, int position = -1)
         {
             try
             {
-                this.FieldList.Add(field);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                throw new HL7Exception("Unable to add new field in segment " + this.Name + " Error - " + ex.Message);
-            }
-        }
-
-        public bool AddNewField(Field field, int position)
-        {
-            position = position - 1;
-            try
-            {
-                this.FieldList.Add(field, position);
+                if (position < 0)
+                {
+                    this.FieldList.Add(field);
+                }
+                else 
+                {
+                    position = position - 1;
+                    this.FieldList.Add(field, position);
+                }
                 return true;
             }
             catch (Exception ex)
@@ -148,7 +95,7 @@ namespace HL7.Dotnetcore
             }
             catch (Exception ex)
             {
-                throw new HL7Exception("Field not availalbe Error-" + ex.Message);
+                throw new HL7Exception("Field not availalbe Error - " + ex.Message);
             }
 
             return field;

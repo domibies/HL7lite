@@ -1,33 +1,13 @@
-﻿using System;
-
-namespace HL7.Dotnetcore
+﻿namespace HL7.Dotnetcore
 {
-    public class SubComponent
+    public class SubComponent : MessageElement
     {
-        private String _Value;
-
-        public SubComponent()
+        public SubComponent(string pValue)
         {
+            this._value = pValue;
         }
 
-        public SubComponent(String pValue)
-        {
-            _Value = pValue;
-        }
-
-        public String Value
-        {
-            get
-            {
-                if (_Value == null)
-                    return String.Empty;
-                else
-                    return _Value;
-            }
-            set
-            {
-                _Value = value;
-            }
-        }
+        protected override void ProcessValue()
+        {}
     }
 }

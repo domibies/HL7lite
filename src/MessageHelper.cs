@@ -6,18 +6,24 @@ namespace HL7.Dotnetcore
 {
     public static class MessageHelper
     {
-        static MessageHelper()
+        public static List<string> SplitString(string strStringToSplit, string splitBy, StringSplitOptions splitOptions = StringSplitOptions.None)
         {
+            return strStringToSplit.Split(splitBy.ToCharArray(), splitOptions).ToList<string>();
         }
 
-        public static List<String> SplitString(String strStringToSplit, String[] strSplitBy, StringSplitOptions splitOptions = StringSplitOptions.None)
+        public static List<string> SplitString(string strStringToSplit, char chSplitBy, StringSplitOptions splitOptions = StringSplitOptions.None)
         {
-            return strStringToSplit.Split(strSplitBy, splitOptions).ToList<String>();
+            return strStringToSplit.Split(new char [] {chSplitBy}, splitOptions).ToList<string>();
+        }
+        
+        public static List<string> SplitString(string strStringToSplit, char[] chSplitBy, StringSplitOptions splitOptions = StringSplitOptions.None)
+        {
+            return strStringToSplit.Split(chSplitBy, splitOptions).ToList<string>();
         }
 
-        public static List<String> SplitString(String strStringToSplit, char[] chSplitBy, StringSplitOptions splitOptions = StringSplitOptions.None)
+        public static string LongDateWithFractionOfSecond(DateTime dt)
         {
-            return strStringToSplit.Split(chSplitBy, splitOptions).ToList<String>();
+            return dt.ToString("yyyyMMddHHmmss.FFFF");
         }
     }
 }

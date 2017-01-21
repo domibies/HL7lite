@@ -4,33 +4,14 @@ using System.Linq;
 
 namespace HL7.Dotnetcore
 {
-    public class Field
+    public class Field : MessageElement
     {
-        private String _Value;
-        internal ComponentCollection ComponentList { get; set; }
-
-        private Char[] fieldDelimiters = new Char[] { '^', '~', '&' };
-        private bool isComponentized = false;
-        private bool hasRepetitions = false;
         private List<Field> _RepetitionList;
 
-        internal Char[] FieldDelimiters
-        {
-            get { return fieldDelimiters; }
-            set { fieldDelimiters = value; }
-        }
+        internal ComponentCollection ComponentList { get; set; }
 
-        public bool IsComponentized
-        {
-            get { return isComponentized; }
-            set { isComponentized = value; }
-        }
-
-        public bool HasRepetitions
-        {
-            get { return hasRepetitions; }
-            set { hasRepetitions = value; }
-        }
+        public bool IsComponentized { get; set; } = false;
+        public bool HasRepetitions { get; set; } = false;
 
         internal List<Field> RepeatitionList
         {
@@ -46,78 +27,53 @@ namespace HL7.Dotnetcore
             }
         }
 
-        public Field()
+        protected override void ProcessValue()
         {
-            //ComponentList = new List<Component>();
-            ComponentList = new ComponentCollection();
-        }
-
-        public Field(String pValue)
-        {
-            //ComponentList = new List<Component>();
-            ComponentList = new ComponentCollection();
-            _Value = pValue;
-        }
-
-        public String Value
-        {
-            get
+            if (_value.Length > 0)
             {
-                if (_Value == null)
-                    return String.Empty;
-                else
-                    return _Value;
-            }
-            set
-            {
-                _Value = value;
+                this.HasRepetitions = _value.Contains(this.Encoding.RepeatDelimiter);
 
-                if (_Value.Length > 0)
+                if (this.HasRepetitions)
                 {
-                    hasRepetitions = _Value.Contains(FieldDelimiters[1]);
+                    _RepetitionList = new List<Field>();
+                    List<string> IndividualFields = MessageHelper.SplitString(_value, this.Encoding.RepeatDelimiter);
 
-                    if (hasRepetitions)
+                    for (int index = 0; index < IndividualFields.Count; index++)
                     {
-                        _RepetitionList = new List<Field>();
-                        List<String> InduvidualFields = MessageHelper.SplitString(_Value, new char[] { FieldDelimiters[1] });
-
-                        for (int index = 0; index < InduvidualFields.Count; index++)
-                        {
-                            Field field = new Field();
-                            field.FieldDelimiters = new Char[3] { FieldDelimiters[0], FieldDelimiters[1], FieldDelimiters[2] };
-                            field.Value = InduvidualFields[index];
-                            _RepetitionList.Add(field);
-                        }
+                        Field field = new Field(IndividualFields[index], this.Encoding);
+                        _RepetitionList.Add(field);
                     }
-                    else
+                }
+                else
+                {
+                    List<string> AllComponents = MessageHelper.SplitString(_value, this.Encoding.ComponentDelimiter);
+                    if (AllComponents.Count > 1)
                     {
-                        //ComponentList = new List<Component>();
-                        char[] componentSeparatorString = new char[1] { FieldDelimiters[0] };
+                        this.IsComponentized = true;
+                    }
 
-                        List<String> AllComponents = MessageHelper.SplitString(_Value, componentSeparatorString);
-                        if (AllComponents.Count > 1)
-                        {
-                            isComponentized = true;
-                            ComponentList = new ComponentCollection();
-                            foreach (String strComponent in AllComponents)
-                            {
-                                Component component = new Component();
-                                component.SubComponentSeparator = new char[1] { FieldDelimiters[2] };
-                                component.Value = strComponent;
-                                ComponentList.Add(component);
-                            }
-                        }
-                        else
-                        {
-                            ComponentList = new ComponentCollection();
-                            Component component = new Component();
-                            component.SubComponentSeparator = new char[1] { FieldDelimiters[2] };
-                            component.Value = _Value;
-                            ComponentList.Add(component);
-                        }
+                    ComponentList = new ComponentCollection();
+                    foreach (string strComponent in AllComponents)
+                    {
+                        Component component = new Component(this.Encoding);
+                        component.Value = strComponent;
+                        ComponentList.Add(component);
                     }
                 }
             }
+        }
+
+        public Field(Encoding encoding)
+        {
+            this.ComponentList = new ComponentCollection();
+            this.Encoding = encoding;
+        }
+
+        public Field(string pValue, Encoding encoding)
+        {
+            this.ComponentList = new ComponentCollection();
+            this.Encoding = encoding;
+            _value = pValue;
         }
 
         public bool AddNewComponent(Component com)
@@ -157,7 +113,7 @@ namespace HL7.Dotnetcore
             }
             catch (Exception ex)
             {
-                throw new HL7Exception("Component not availalbe Error-" + ex.Message);
+                throw new HL7Exception("Component not available Error - " + ex.Message);
             }
 
             return com;
@@ -170,7 +126,7 @@ namespace HL7.Dotnetcore
 
         public List<Field> Repetitions()
         {
-            if (this.hasRepetitions)
+            if (this.HasRepetitions)
             {
                 return _RepetitionList;
             }
@@ -179,7 +135,7 @@ namespace HL7.Dotnetcore
 
         public Field Repetitions(int repeatitionNumber)
         {
-            if (this.hasRepetitions)
+            if (this.HasRepetitions)
             {
                 return _RepetitionList[repeatitionNumber - 1];
             }
@@ -189,8 +145,7 @@ namespace HL7.Dotnetcore
 
     internal class FieldCollection : List<Field>
     {
-        internal FieldCollection()
-            :base()
+        internal FieldCollection() : base()
         {
             
         }
@@ -234,8 +189,7 @@ namespace HL7.Dotnetcore
             {
                 for (int fieldIndex = listCount+1; fieldIndex <= position; fieldIndex++)
                 {
-                    Field blankField = new Field();
-                    blankField.Value = String.Empty;
+                    Field blankField = new Field(string.Empty, field.Encoding);
                     base.Add(blankField);
                 }
                 base.Add(field);

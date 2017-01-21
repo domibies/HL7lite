@@ -3,70 +3,46 @@ using System.Collections.Generic;
 
 namespace HL7.Dotnetcore
 {
-    public class Component
+    public class Component : MessageElement
     {
-        private String _Value;
         internal List<SubComponent> SubComponentList { get; set; }
-        private Char[] subComponentSeparator = new Char[1] { '&' };
-        private bool isSubComponentized = false;
 
-        internal Char[] SubComponentSeparator
+        public bool IsSubComponentized { get; set; } = false;
+
+        public Component(Encoding encoding)
         {
-            get { return subComponentSeparator; }
-            set { subComponentSeparator = value; }
+            this.SubComponentList = new List<SubComponent>();
+            this.Encoding = encoding;
+        }
+        public Component(string pValue, Encoding encoding)
+        {
+            this.SubComponentList = new List<SubComponent>();
+            this.Encoding = encoding;
+            this._value = pValue;
         }
 
-        public bool IsSubComponentized
+        protected override void ProcessValue()
         {
-            get { return isSubComponentized; }
-            set { isSubComponentized = value; }
-        }
-
-        public Component()
-        {
-            SubComponentList = new List<SubComponent>();
-        }
-        public Component(String pValue)
-        {
-            SubComponentList = new List<SubComponent>();
-            _Value = pValue;
-        }
-
-        public String Value
-        {
-            get
+            if (_value.Length > 0)
             {
-                if (_Value == null)
-                    return String.Empty;
-                else
-                    return _Value;
-            }
-            set
-            {
-                _Value = value;
-                if (_Value.Length > 0)
+                SubComponentList = new List<SubComponent>();
+                List<string> AllSubComponents = MessageHelper.SplitString(_value, this.Encoding.SubComponentDelimiter);
+
+                if (AllSubComponents.Count > 1)
                 {
-                    SubComponentList = new List<SubComponent>();
-                    List<String> AllSubComponents = MessageHelper.SplitString(_Value, SubComponentSeparator);
+                    this.IsSubComponentized = true;
 
-                    if (AllSubComponents.Count > 1)
+                    foreach (string strSubComponent in AllSubComponents)
                     {
-                        isSubComponentized = true;
-
-                        foreach (String strSubComponent in AllSubComponents)
-                        {
-                            SubComponent subComponent = new SubComponent();
-                            subComponent.Value = strSubComponent;
-                            SubComponentList.Add(subComponent);
-                        }
-                    }
-                    else
-                    {
-                        SubComponentList = new List<SubComponent>();
-                        SubComponent subComponent = new SubComponent();
-                        subComponent.Value = _Value;
+                        SubComponent subComponent = new SubComponent(strSubComponent);
                         SubComponentList.Add(subComponent);
                     }
+                }
+                else
+                {
+                    SubComponentList = new List<SubComponent>();
+                    SubComponent subComponent = new SubComponent(_value);
+                    SubComponentList.Add(subComponent);
                 }
             }
         }
@@ -96,11 +72,9 @@ namespace HL7.Dotnetcore
 
     internal class ComponentCollection : List<Component>
     {
-        internal ComponentCollection() : base()
-        {
-
-        }
-
+        /// <summary>
+        /// Component indexer
+        /// </summary>
         internal new Component this[int index]
         {
             get
@@ -128,24 +102,24 @@ namespace HL7.Dotnetcore
         /// <summary>
         /// Add component at specific position
         /// </summary>
-        /// <param name="com">Component</param>
+        /// <param name="component">Component</param>
         /// <param name="position">Position</param>
-        internal void Add(Component com, int position)
+        internal void Add(Component component, int position)
         {
             position = position - 1;
             int listCount = base.Count;
 
             if (position <= listCount)
-                base[position] = com;
+                base[position] = component;
             else
             {
                 for (int comIndex = listCount + 1; comIndex <= position; comIndex++)
                 {
-                    Component blankCom = new Component();
-                    blankCom.Value = String.Empty;
+                    Component blankCom = new Component(component.Encoding);
+                    blankCom.Value = string.Empty;
                     base.Add(blankCom);
                 }
-                base.Add(com);
+                base.Add(component);
             }
         }
     }
