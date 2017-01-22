@@ -12,7 +12,7 @@ namespace HL7.Dotnetcore
 
         public bool IsComponentized { get; set; } = false;
         public bool HasRepetitions { get; set; } = false;
-        public bool IsDelimiters { get; set;} = false;
+        public bool IsDelimiters { get; set; } = false;
 
         internal List<Field> RepeatitionList
         {

@@ -694,11 +694,12 @@ namespace HL7.Dotnetcore
             string ackMsg = string.Empty;
             if (this.MessageStructure != "ACK")
             {
-                // TODO date is missing
+                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
                 var msh = this.SegmentList["MSH"].First();
                 var delim = this.Encoding.FieldDelimiter;
+
                 ackMsg += "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
-                + msh.FieldList[3].Value + delim + "ddmmyyyy" + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
+                + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
                 + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
 
                 ackMsg += "MSA" + delim + "AA" + delim + this.MessageControlID + this.Encoding.SegmentDelimiter;
@@ -717,11 +718,14 @@ namespace HL7.Dotnetcore
             string ackMsg = string.Empty;
             if (this.MessageStructure != "ACK")
             {
-                // TODO date is missing
+                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
                 var msh = this.SegmentList["MSH"].First();
                 var delim = this.Encoding.FieldDelimiter;
                 
-                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim + msh.FieldList[3].Value + delim + "ddmmyyyy" + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
+                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
+                + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
+                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
+                
                 ackMsg += "MSA" + delim + code + delim + this.MessageControlID + delim + errMsg + this.Encoding.SegmentDelimiter;
             }
             return ackMsg;
