@@ -1,6 +1,10 @@
 # HL7-dotnetcore
 
-This is a fork from Jayant Singh's HL7 parser. For more information read:
+[![NuGet](https://img.shields.io/nuget/v/HL7-dotnetcore.svg)](https://www.nuget.org/packages/HL7-dotnetcore/)
+[![github](https://img.shields.io/github/stars/Efferent-Health/HL7-dotnetcore.svg)]()
+
+This is a fork from Jayant Singh's HL7 parser. Since then, it has been modified fundamentally, with respect to features, code quality, bugs and typos. 
+For more information read:
 - https://github.com/j4jayant/hl7-cSharp-parser
 - http://j4jayant.com/articles/hl7/31-hl7-parsing-lib
 
