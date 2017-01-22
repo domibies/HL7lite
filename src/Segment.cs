@@ -32,14 +32,17 @@ namespace HL7.Dotnetcore
 
                 if (allFields.Count > 1)
                 {
-                    if (Name == "MSH")
-                        allFields[1] = this.Encoding.FieldDelimiter.ToString();
-                    else
-                        allFields.RemoveAt(0);
+                    allFields.RemoveAt(0);
                 }
-                foreach (string strField in allFields)
+                for (int i=0; i<allFields.Count; i++)
                 {
-                    Field field = new Field(strField, this.Encoding);
+                   string strField = allFields[i];
+                    
+                    Field field = new Field(this.Encoding);   
+                    if (Name == "MSH" && i==0)
+                        field.IsDelimiters = true;  // special case
+                    field.Value = strField;
+
                     FieldList.Add(field);
                 }
             }

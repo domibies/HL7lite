@@ -45,7 +45,7 @@ namespace HL7.Dotnetcore
             }
             catch (Exception ex)
             {
-                throw new HL7Exception("Unhandeled Exceiption in validation - " + ex.Message, HL7Exception.BAD_MESSAGE);
+                throw new HL7Exception("Unhandled Exception in validation - " + ex.Message, HL7Exception.BAD_MESSAGE);
             }
 
             if (isValid)
@@ -87,7 +87,7 @@ namespace HL7.Dotnetcore
                     }
                     else
                     {
-                        throw new HL7Exception("Unable to serialize to origional message - ", HL7Exception.PARSING_ERROR);
+                        throw new HL7Exception("Unable to serialize to original message - ", HL7Exception.PARSING_ERROR);
                     }
                 }
                 catch (Exception ex)
@@ -119,7 +119,7 @@ namespace HL7.Dotnetcore
                     //check if message starts with header segment
                     if (!HL7Message.StartsWith("MSH"))
                     {
-                        throw new HL7Exception("MSH Segment not found at the beggining of the message", HL7Exception.BAD_MESSAGE);
+                        throw new HL7Exception("MSH segment not found at the beggining of the message", HL7Exception.BAD_MESSAGE);
                     }
 
                     this.Encoding.EvaluateSegmentDelimiter(this.HL7Message);
@@ -137,14 +137,14 @@ namespace HL7.Dotnetcore
 
                         if (!isValidSegName)
                         {
-                            throw new HL7Exception("Invalid Segment Name Found :" + strSegment, HL7Exception.BAD_MESSAGE);
+                            throw new HL7Exception("Invalid segment name found :" + strSegment, HL7Exception.BAD_MESSAGE);
                         }
 
                         char fourthCharSEG = strSegment[3];
 
                         if (fourthCharMSH != fourthCharSEG)
                         {
-                            throw new HL7Exception("Invalid Segment Found :" + strSegment, HL7Exception.BAD_MESSAGE);
+                            throw new HL7Exception("Invalid segment found :" + strSegment, HL7Exception.BAD_MESSAGE);
                         }
                     }
 
@@ -156,7 +156,7 @@ namespace HL7.Dotnetcore
 
                     if (countFieldSepInMSH < 11)
                     {
-                        throw new HL7Exception("MSH segment doesn't contain all required fields", HL7Exception.BAD_MESSAGE);
+                        throw new HL7Exception("MSH segment doesn't contain all the required fields", HL7Exception.BAD_MESSAGE);
                     }
 
                     //Find Message Version
@@ -167,7 +167,7 @@ namespace HL7.Dotnetcore
                     }
                     else
                     {
-                        throw new HL7Exception("HL7 version not found in MSH Segment", HL7Exception.REQUIRED_FIELD_MISSING);
+                        throw new HL7Exception("HL7 version not found in the MSH segment", HL7Exception.REQUIRED_FIELD_MISSING);
                     }
 
                     //Find Message Type & Trigger Event
@@ -247,7 +247,7 @@ namespace HL7.Dotnetcore
         public string SerializeMessage(bool validate)
         {
             if (validate && !this.ValidateMessage())
-                throw new HL7Exception("Failed to validate updated message", HL7Exception.BAD_MESSAGE);
+                throw new HL7Exception("Failed to validate the updated message", HL7Exception.BAD_MESSAGE);
 
             string strMessage = string.Empty;
             string currentSegName = string.Empty;;
@@ -294,7 +294,7 @@ namespace HL7.Dotnetcore
                 catch (Exception ex)
                 {
                     if (currentSegName == "MSH")
-                        throw new HL7Exception("Failed to serialize MSH segment with error - " + ex.Message, HL7Exception.SERIALIZATION_ERROR);
+                        throw new HL7Exception("Failed to serialize the MSH segment with error - " + ex.Message, HL7Exception.SERIALIZATION_ERROR);
                     else throw;
                 }
 
@@ -427,15 +427,15 @@ namespace HL7.Dotnetcore
                         }
                         catch (Exception ex)
                         {
-                            throw new HL7Exception("Segment Value not available - " + strValueFormat + " Error: " + ex.Message);
+                            throw new HL7Exception("Segment value not available - " + strValueFormat + " Error: " + ex.Message);
                         }
                     }
                 }
                 else
-                    throw new HL7Exception("Segment Name not available");
+                    throw new HL7Exception("Segment name not available");
             }
             else
-                throw new HL7Exception("Request Format is not valid");
+                throw new HL7Exception("Request format is not valid");
 
             return strValue;
         }
@@ -513,14 +513,14 @@ namespace HL7.Dotnetcore
                     }
                     else
                     {
-                        throw new HL7Exception("Cannot overwrite a Segment Value");
+                        throw new HL7Exception("Cannot overwrite a segment value");
                     }
                 }
                 else
-                    throw new HL7Exception("Segment Name not available");
+                    throw new HL7Exception("Segment name not available");
             }
             else
-                throw new HL7Exception("Request Format is not valid");
+                throw new HL7Exception("Request format is not valid");
 
             return isSet;
         }
@@ -590,7 +590,7 @@ namespace HL7.Dotnetcore
                     throw new HL7Exception("Field not identified in request");
             }
             else
-                throw new HL7Exception("Request Format is not valid");
+                throw new HL7Exception("Request format is not valid");
 
             return isComponentized;
         }
@@ -634,7 +634,7 @@ namespace HL7.Dotnetcore
                     throw new HL7Exception("Field not identified in request");
             }
             else
-                throw new HL7Exception("Request Format is not valid");
+                throw new HL7Exception("Request format is not valid");
 
             return hasRepeatitions;
         }
@@ -680,42 +680,54 @@ namespace HL7.Dotnetcore
                     throw new HL7Exception("Component not identified in request");
             }
             else
-                throw new HL7Exception("Request Format is not valid");
+                throw new HL7Exception("Request format is not valid");
 
             return isSubComponentized;
         }
 
         /// <summary>
-        /// get acknowledgement message for this message
+        /// Builds the acknowledgement message for this message
         /// </summary>
-        /// <returns>string with ack message</returns>
-        public string getACK()
+        /// <returns>An ACK message if success, otherwise null</returns>
+        public Message getACK()
         {
-            string ackMsg = string.Empty;
+            string ackMsg;
             if (this.MessageStructure != "ACK")
             {
                 var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
                 var msh = this.SegmentList["MSH"].First();
                 var delim = this.Encoding.FieldDelimiter;
 
-                ackMsg += "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
+                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
                 + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
                 + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
 
                 ackMsg += "MSA" + delim + "AA" + delim + this.MessageControlID + this.Encoding.SegmentDelimiter;
             }
-            return ackMsg;
+            else
+                return null;
+
+            try 
+            {
+                var ack = new Message(ackMsg);
+                ack.ParseMessage();
+                return ack;
+            }
+            catch 
+            {
+                return null;
+            }
         }
 
         /// <summary>
-        /// get negative ack for this message
+        /// Builds a negative ack for this message
         /// </summary>
         /// <param name="code">ack code like AR, AE</param>
         /// <param name="errMsg">error message to be sent with ACK</param>
-        /// <returns>string with ack message</returns>
-        public string getNACK(string code, string errMsg)
+        /// <returns>A NACK message if success, otherwise null</returns>
+        public Message getNACK(string code, string errMsg)
         {
-            string ackMsg = string.Empty;
+            string ackMsg;
             if (this.MessageStructure != "ACK")
             {
                 var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
@@ -728,18 +740,30 @@ namespace HL7.Dotnetcore
                 
                 ackMsg += "MSA" + delim + code + delim + this.MessageControlID + delim + errMsg + this.Encoding.SegmentDelimiter;
             }
-            return ackMsg;
+            else
+                return null;
+
+            try 
+            {
+                var nack = new Message(ackMsg);
+                nack.ParseMessage();
+                return nack;
+            }
+            catch 
+            {
+                return null;
+            }
         }
 
-        public bool AddNewSegment(Segment newSeg)
+        public bool AddNewSegment(Segment newSegment)
         {
             try
             {
-                newSeg.SequenceNo = SegmentCount++;
-                if (!SegmentList.ContainsKey(newSeg.Name))
-                    SegmentList[newSeg.Name] = new List<Segment>();
+                newSegment.SequenceNo = SegmentCount++;
+                if (!SegmentList.ContainsKey(newSegment.Name))
+                    SegmentList[newSegment.Name] = new List<Segment>();
 
-                SegmentList[newSeg.Name].Add(newSeg);
+                SegmentList[newSegment.Name].Add(newSegment);
                 return true;
             }
             catch (Exception ex)

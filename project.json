@@ -1,5 +1,5 @@
 {
-    "version": "2.0.0-*",
+    "version": "2.1.0-*",
     "name": "HL7-dotnetcore",
     "description": "Small HL7 2.x library compatible with .net Core",
 

@@ -4,18 +4,18 @@
 [![github](https://img.shields.io/github/stars/Efferent-Health/HL7-dotnetcore.svg)]()
 
 This is a fork from Jayant Singh's HL7 parser. Since then, it has been modified fundamentally, with respect to features, code quality, bugs and typos. 
-For more information read:
+For more information about the original implementation read:
 - https://github.com/j4jayant/hl7-cSharp-parser
 - http://j4jayant.com/articles/hl7/31-hl7-parsing-lib
 
-This library treats every message in same manner while parsing HL7 messages. After successfull parsing it provides all the components of HL7 message like segments, fields (with repetitions), components, subcomponents in easily accessible way.
+The field encoding and decoding methods have been based on https://github.com/elomagic/hl7inspector
 
 ### Create a Message object and pass raw HL7 message in text format
 
 ````cSharp
 Message message = new Message(strMsg);
 
-Parse this message
+// Parse this message
 
 bool isParsed = false;
 try
@@ -73,15 +73,15 @@ Segment IN1 = message.Segments("IN1")[0];
 ### Access field values
 
 ````cSharp
-String SendingFacility = message.getValue("MSH.4");
+string SendingFacility = message.getValue("MSH.4");
 
 // OR
 
-String SendingFacility = message.DefaultSegment("MSH").Fields(4).Value;
+string SendingFacility = message.DefaultSegment("MSH").Fields(4).Value;
 
 // OR
 
-String SendingFacility = message.Segments("MSH")[0].Fields(4).Value;
+string SendingFacility = message.Segments("MSH")[0].Fields(4).Value;
 `````
 
 ### Check if field is componentized
@@ -129,9 +129,9 @@ message.Segments("PV1"[0];).Fields(2).Value = "I";
 ### Access some of the required MSH fields with properties
 
 ````cSharp
-String version = message.Version;
-String msgControlID = message.MessageControlID;
-String messageStructure = message.MessageStructure;
+string version = message.Version;
+string msgControlID = message.MessageControlID;
+string messageStructure = message.MessageStructure;
 ````
 
 ## Accessing Components
@@ -139,11 +139,11 @@ String messageStructure = message.MessageStructure;
 ### Access particular component i.e. PID.5.1 – Patient Family Name
 
 ````cSharp
-String PatName1 = message.getValue("PID.5.1");
+string PatName1 = message.getValue("PID.5.1");
 
 // OR
 
-String PatName1 = message.Segments("PID")[0].Fields(5).Components(1).Value;
+string PatName1 = message.Segments("PID")[0].Fields(5).Components(1).Value;
 ````
 
 ### Check if component is sub componentized
@@ -172,27 +172,27 @@ message.setValue("PID.5.1", "Jayant");
 //Create a Segment with name ZIB
 Segment newSeg = new Segment("ZIB");
  
-//Create Field ZIB_1
+// Create Field ZIB_1
 Field ZIB_1 = new Field("ZIB1");
-//Create Field ZIB_5
+// Create Field ZIB_5
 Field ZIB_5 = new Field("ZIB5");
  
-//Create Component ZIB.5.2
+// Create Component ZIB.5.2
 Component com1 = new Component("ZIB.5.2");
  
-//Add Component ZIB.5.2 to Field ZIB_5
-//2nd parameter here specifies the component position, for inserting segment on particular position
-//If we don’t provide 2nd parameter, component will be inserted to next position (if field has 2 components this will be 3rd, 
-//if field is empty this will be 1st component
+// Add Component ZIB.5.2 to Field ZIB_5
+// 2nd parameter here specifies the component position, for inserting segment on particular position
+// If we don’t provide 2nd parameter, component will be inserted to next position (if field has 2 components this will be 3rd, 
+// If field is empty this will be 1st component
 ZIB_5.AddNewComponent(com1, 2);
  
-//Add Field ZIB_1 to segment ZIB, this will add a new filed to next field location, in this case first field
+// Add Field ZIB_1 to segment ZIB, this will add a new filed to next field location, in this case first field
 newSeg.AddNewField(ZIB_1);
  
-//Add Field ZIB_5 to segment ZIB, this will add a new filed as 5th field of segment
+// Add Field ZIB_5 to segment ZIB, this will add a new filed as 5th field of segment
 newSeg.AddNewField(ZIB_5, 5);
  
-//add segment ZIB to message
+// Add segment ZIB to message
 message.AddNewSegment(newSeg);
 ````
 
@@ -222,12 +222,20 @@ oru.AddNewSegment(pid);
 AA ACK
 
 ````cSharp
-string ackMsg = message.getACK();
+Message ack = message.getACK();
 ````
 
 To generate negative ACK message with error message
 
+````cSharp
+Message nack = message.getNACK("AR", "Invalid Processing ID");
+````
+
+It may be required to change the application and facility fields
 
 ````cSharp
-string ackMsg = message.getNACK("AR", "Invalid Processing ID");
+Message ack = message.getACK();
+ack.setValue("MSH.3", myHL7AppName);
+ack.setValue("MSH.4", myHL7Facility);
+
 ````
