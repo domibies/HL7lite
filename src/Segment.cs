@@ -33,7 +33,7 @@ namespace HL7.Dotnetcore
                 if (allFields.Count > 1)
                 {
                     if (Name == "MSH")
-                        allFields[0] = this.Encoding.FieldDelimiter.ToString();
+                        allFields[1] = this.Encoding.FieldDelimiter.ToString();
                     else
                         allFields.RemoveAt(0);
                 }
@@ -53,14 +53,24 @@ namespace HL7.Dotnetcore
             return newSegment;        
         }
 
-        public void AddNewField(string content, int position = -1)
-        {
-            this.AddNewField(new Field(content, this.Encoding), position);
-        }
-
         public void AddEmptyField()
         {
             this.AddNewField(string.Empty);
+        }
+
+        public void AddNewField(string val, bool isDelimiters)
+        {
+            var newField = new Field(this.Encoding);
+
+            if (isDelimiters)
+                newField.IsDelimiters = true;   // Prevent decoding
+
+            newField.Value = val;
+            this.AddNewField(newField, -1);
+        }
+        public void AddNewField(string content, int position = -1)
+        {
+            this.AddNewField(new Field(content, this.Encoding), position);
         }
 
         public bool AddNewField(Field field, int position = -1)

@@ -12,6 +12,7 @@ namespace HL7.Dotnetcore
 
         public bool IsComponentized { get; set; } = false;
         public bool HasRepetitions { get; set; } = false;
+        public bool IsDelimiters { get; set;} = false;
 
         internal List<Field> RepeatitionList
         {
@@ -29,6 +30,19 @@ namespace HL7.Dotnetcore
 
         protected override void ProcessValue()
         {
+            if (this.IsDelimiters)  // Special case for the delimiters field (MSH)
+            {
+                var subcomponent = new SubComponent(_value);
+
+                this.ComponentList = new ComponentCollection();
+                Component component = new Component(this.Encoding);
+
+                component.SubComponentList.Add(subcomponent);
+
+                this.ComponentList.Add(component);
+                return;
+            }
+
             if (_value.Length > 0)
             {
                 this.HasRepetitions = _value.Contains(this.Encoding.RepeatDelimiter);
@@ -36,29 +50,26 @@ namespace HL7.Dotnetcore
                 if (this.HasRepetitions)
                 {
                     _RepetitionList = new List<Field>();
-                    List<string> IndividualFields = MessageHelper.SplitString(_value, this.Encoding.RepeatDelimiter);
+                    List<string> individualFields = MessageHelper.SplitString(_value, this.Encoding.RepeatDelimiter);
 
-                    for (int index = 0; index < IndividualFields.Count; index++)
+                    for (int index = 0; index < individualFields.Count; index++)
                     {
-                        Field field = new Field(IndividualFields[index], this.Encoding);
+                        Field field = new Field(individualFields[index], this.Encoding);
                         _RepetitionList.Add(field);
                     }
                 }
                 else
                 {
-                    List<string> AllComponents = MessageHelper.SplitString(_value, this.Encoding.ComponentDelimiter);
-                    if (AllComponents.Count > 1)
-                    {
-                        this.IsComponentized = true;
-                    }
+                    List<string> allComponents = MessageHelper.SplitString(_value, this.Encoding.ComponentDelimiter);
 
-                    ComponentList = new ComponentCollection();
-                    foreach (string strComponent in AllComponents)
+                    this.ComponentList = new ComponentCollection();
+                    foreach (string strComponent in allComponents)
                     {
                         Component component = new Component(this.Encoding);
                         component.Value = strComponent;
-                        ComponentList.Add(component);
+                        this.ComponentList.Add(component);
                     }
+                    this.IsComponentized = this.ComponentList.Count > 1;
                 }
             }
         }
@@ -73,7 +84,7 @@ namespace HL7.Dotnetcore
         {
             this.ComponentList = new ComponentCollection();
             this.Encoding = encoding;
-            _value = pValue;
+            this.Value = pValue;
         }
 
         public bool AddNewComponent(Component com)

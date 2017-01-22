@@ -18,30 +18,24 @@ namespace HL7.Dotnetcore
         {
             this.SubComponentList = new List<SubComponent>();
             this.Encoding = encoding;
-            this._value = pValue;
+            this.Value = pValue;
         }
 
         protected override void ProcessValue()
         {
             if (_value.Length > 0)
             {
-                SubComponentList = new List<SubComponent>();
                 List<string> AllSubComponents = MessageHelper.SplitString(_value, this.Encoding.SubComponentDelimiter);
 
                 if (AllSubComponents.Count > 1)
                 {
                     this.IsSubComponentized = true;
-
-                    foreach (string strSubComponent in AllSubComponents)
-                    {
-                        SubComponent subComponent = new SubComponent(strSubComponent);
-                        SubComponentList.Add(subComponent);
-                    }
                 }
-                else
+
+                SubComponentList = new List<SubComponent>();
+                foreach (string strSubComponent in AllSubComponents)
                 {
-                    SubComponentList = new List<SubComponent>();
-                    SubComponent subComponent = new SubComponent(_value);
+                    SubComponent subComponent = new SubComponent(Encoding.Decode(strSubComponent));
                     SubComponentList.Add(subComponent);
                 }
             }

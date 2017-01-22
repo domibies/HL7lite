@@ -60,13 +60,13 @@ namespace HL7.Dotnetcore
                     short SegSeqNo = 0;
                     foreach (string strSegment in allSegments)
                     {
-                        Segment segNew = new Segment(this.Encoding);
+                        Segment newSegment = new Segment(this.Encoding);
                         string segmentName = strSegment.Substring(0, 3);
-                        segNew.Name = segmentName;
-                        segNew.Value = strSegment;
-                        segNew.SequenceNo = SegSeqNo++;
+                        newSegment.Name = segmentName;
+                        newSegment.Value = strSegment;
+                        newSegment.SequenceNo = SegSeqNo++;
 
-                        this.AddNewSegment(segNew);
+                        this.AddNewSegment(newSegment);
                     }
                     this.SegmentCount = SegSeqNo;
 
@@ -262,32 +262,31 @@ namespace HL7.Dotnetcore
                         currentSegName = seg.Name;
 
                         strMessage += seg.Name + this.Encoding.FieldDelimiter;
-                        int indexField = 0;
-                        foreach (Field field in seg.FieldList)
+                        for (int i = 0; i<seg.FieldList.Count; i++)
                         {
-                            indexField++;
-                            if (field.ComponentList.Count > 0)
-                            {
-                                int indexCom = 0;
-                                foreach (Component com in field.ComponentList)
-                                {
-                                    indexCom++;
-                                    if (com.SubComponentList.Count > 0)
-                                    {
-                                        strMessage += string.Join(this.Encoding.SubComponentDelimiter.ToString(), com.SubComponentList.Select(sc => sc.Value));
-                                    }
-                                    else
-                                        strMessage += com.Value;
+                            if (i > 0)
+                                strMessage += this.Encoding.FieldDelimiter;
 
-                                    if (indexCom < field.ComponentList.Count)
-                                        strMessage += this.Encoding.ComponentDelimiter;
+                            var field = seg.FieldList[i];
+                            if (field.IsDelimiters)
+                            {
+                                strMessage += field.Value;
+                                continue;
+                            }
+
+                            if (field.HasRepetitions)
+                            {
+                                for (int j=0; j<field.RepeatitionList.Count; j++)
+                                {
+                                    if (j>0)
+                                        strMessage += this.Encoding.RepeatDelimiter;
+
+                                    strMessage += SerializeField(field.RepeatitionList[j]);
                                 }
                             }
                             else
-                                strMessage += field.Value;
+                                strMessage += SerializeField(field);
 
-                            if (indexField < seg.FieldList.Count)
-                                strMessage += this.Encoding.FieldDelimiter;
                         }
                         strMessage += this.Encoding.SegmentDelimiter;
                     }
@@ -306,6 +305,33 @@ namespace HL7.Dotnetcore
             {
                 throw new HL7Exception("Failed to serialize the message with error - " + ex.Message, HL7Exception.SERIALIZATION_ERROR);
             }
+        }
+
+        private string SerializeField(Field field)
+        {
+            var strMessage = string.Empty;
+
+            if (field.ComponentList.Count > 0)
+            {
+                int indexCom = 0;
+                foreach (Component com in field.ComponentList)
+                {
+                    indexCom++;
+                    if (com.SubComponentList.Count > 0)
+                    {
+                        strMessage += string.Join(this.Encoding.SubComponentDelimiter.ToString(), com.SubComponentList.Select(sc => this.Encoding.Encode(sc.Value)));
+                    }
+                    else
+                        strMessage += this.Encoding.Encode(com.Value);
+
+                    if (indexCom < field.ComponentList.Count)
+                        strMessage += this.Encoding.ComponentDelimiter;
+                }
+            }
+            else
+                strMessage = this.Encoding.Encode(field.Value);
+
+            return strMessage;
         }
 
         //get all segments in order as they appear in origional message
