@@ -101,7 +101,7 @@ bool isRepeated = message.Segments("PID")[0].Fields(3).HasRepetitions;
 
 // OR
 
-bool isRepeated = message.HasRepeatitions("PID.3");
+bool isRepeated = message.HasRepetitions("PID.3");
 ````
 
 ### Get list of repeated fields

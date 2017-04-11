@@ -8,17 +8,17 @@ namespace HL7.Dotnetcore
     {
         public static List<string> SplitString(string strStringToSplit, string splitBy, StringSplitOptions splitOptions = StringSplitOptions.None)
         {
-            return strStringToSplit.Split(splitBy.ToCharArray(), splitOptions).ToList<string>();
+            return strStringToSplit.Split(new string[] { splitBy }, splitOptions).ToList();
         }
 
         public static List<string> SplitString(string strStringToSplit, char chSplitBy, StringSplitOptions splitOptions = StringSplitOptions.None)
         {
-            return strStringToSplit.Split(new char [] {chSplitBy}, splitOptions).ToList<string>();
+            return strStringToSplit.Split(new char[] { chSplitBy }, splitOptions).ToList();
         }
         
         public static List<string> SplitString(string strStringToSplit, char[] chSplitBy, StringSplitOptions splitOptions = StringSplitOptions.None)
         {
-            return strStringToSplit.Split(chSplitBy, splitOptions).ToList<string>();
+            return strStringToSplit.Split(chSplitBy, splitOptions).ToList();
         }
 
         public static string LongDateWithFractionOfSecond(DateTime dt)

@@ -27,6 +27,22 @@ namespace HL7.Dotnetcore
             HL7Message = strMessage;
         }
 
+        public override bool Equals(object obj)
+        {
+            if (obj is Message)
+                return this.Equals((obj as Message).HL7Message);
+
+            if (obj is string)
+            {
+                var arr1 = MessageHelper.SplitString(this.HL7Message, this.Encoding.SegmentDelimiter, StringSplitOptions.RemoveEmptyEntries);
+                var arr2 = MessageHelper.SplitString(obj as string, this.Encoding.SegmentDelimiter, StringSplitOptions.RemoveEmptyEntries);
+
+                return arr1.SequenceEqual(arr2);
+            }
+
+            return false;
+        }
+
         /// <summary>
         /// Parse the HL7 message in text format, throws HL7Exception if error occurs
         /// </summary>
@@ -60,6 +76,9 @@ namespace HL7.Dotnetcore
                     short SegSeqNo = 0;
                     foreach (string strSegment in allSegments)
                     {
+                        if (string.IsNullOrWhiteSpace(strSegment))
+                            continue;
+
                         Segment newSegment = new Segment(this.Encoding);
                         string segmentName = strSegment.Substring(0, 3);
                         newSegment.Name = segmentName;
@@ -82,7 +101,7 @@ namespace HL7.Dotnetcore
 
                     if (!string.IsNullOrEmpty(strSerializedMessage))
                     {
-                        if (HL7Message.Equals(strSerializedMessage))
+                        if (this.Equals(strSerializedMessage))
                             isParsed = true;
                     }
                     else
@@ -130,6 +149,9 @@ namespace HL7.Dotnetcore
 
                     foreach (string strSegment in allSegments)
                     {
+                        if (string.IsNullOrWhiteSpace(strSegment))
+                            continue;
+
                         bool isValidSegName = false;
                         string segmentName = strSegment.Substring(0, 3);
                         string segNameRegEx = "[A-Z][A-Z][A-Z1-9]";
@@ -600,9 +622,9 @@ namespace HL7.Dotnetcore
         /// </summary>
         /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
         /// <returns>boolean</returns>
-        public bool HasRepeatitions(string strValueFormat)
+        public bool HasRepetitions(string strValueFormat)
         {
-            bool hasRepeatitions = false;
+            bool hasRepetitions = false;
             bool isValid = false;
 
             string segmentName = string.Empty;
@@ -623,7 +645,7 @@ namespace HL7.Dotnetcore
                     {
                         Int32.TryParse(AllComponents[1], out fieldIndex);
 
-                        hasRepeatitions = SegmentList[segmentName].First().FieldList[fieldIndex - 1].HasRepetitions;
+                        hasRepetitions = SegmentList[segmentName].First().FieldList[fieldIndex - 1].HasRepetitions;
                     }
                     catch (Exception ex)
                     {
@@ -636,7 +658,7 @@ namespace HL7.Dotnetcore
             else
                 throw new HL7Exception("Request format is not valid");
 
-            return hasRepeatitions;
+            return hasRepetitions;
         }
 
         /// <summary>

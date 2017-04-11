@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Small HL7 2.x library compatible with .net Core</Description>
+    <VersionPrefix>2.2.0</VersionPrefix>
+    <TargetFrameworks>netstandard1.3;netstandard1.5;netstandard1.6</TargetFrameworks>
+    <AssemblyName>HL7-dotnetcore</AssemblyName>
+    <PackageId>HL7-dotnetcore</PackageId>
+    <PackageTags>hl7;dotnetcore</PackageTags>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Efferent-Health/HL7-dotnetcore</RepositoryUrl>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageTags>hl7 dotnetcore hl7-parser hl7-writer</PackageTags>
+    <PackageReleaseNotes>Version 2.2.0</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/Efferent-Health/HL7-dotnetcore</PackageProjectUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Efferent-Health/HL7-dotnetcore</RepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Runtime" Version="*" />
+    <PackageReference Include="System.Runtime.Extensions" Version="*" />
+    <PackageReference Include="System.Linq" Version="*" />
+    <PackageReference Include="System.Text.RegularExpressions" Version="*" />
+  </ItemGroup>
+</Project>
+
