@@ -270,7 +270,6 @@ namespace HL7.Dotnetcore
         /// </summary>
         /// <param name="validate">Validate the message before serializing</param>
         /// <returns>string with HL7 message</returns>
-
         public string SerializeMessage(bool validate)
         {
             if (validate && !this.ValidateMessage())

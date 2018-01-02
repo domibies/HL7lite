@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <Copyright>(c) Efferent Health, LLC</Copyright>
-    <VersionPrefix>2.2.0</VersionPrefix>
+    <VersionPrefix>2.3.0</VersionPrefix>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <AssemblyName>HL7Test</AssemblyName>
     <PackageId>HL7Test</PackageId>
@@ -25,7 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="HL7-dotnetcore" Version="2.2.0" />  
+    <ProjectReference Include="..\src\hl7-dotnetcore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
   </ItemGroup>
 

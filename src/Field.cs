@@ -43,34 +43,31 @@ namespace HL7.Dotnetcore
                 return;
             }
 
-            if (_value.Length > 0)
+            this.HasRepetitions = _value.Contains(this.Encoding.RepeatDelimiter);
+
+            if (this.HasRepetitions)
             {
-                this.HasRepetitions = _value.Contains(this.Encoding.RepeatDelimiter);
+                _RepetitionList = new List<Field>();
+                List<string> individualFields = MessageHelper.SplitString(_value, this.Encoding.RepeatDelimiter);
 
-                if (this.HasRepetitions)
+                for (int index = 0; index < individualFields.Count; index++)
                 {
-                    _RepetitionList = new List<Field>();
-                    List<string> individualFields = MessageHelper.SplitString(_value, this.Encoding.RepeatDelimiter);
-
-                    for (int index = 0; index < individualFields.Count; index++)
-                    {
-                        Field field = new Field(individualFields[index], this.Encoding);
-                        _RepetitionList.Add(field);
-                    }
+                    Field field = new Field(individualFields[index], this.Encoding);
+                    _RepetitionList.Add(field);
                 }
-                else
+            }
+            else
+            {
+                List<string> allComponents = MessageHelper.SplitString(_value, this.Encoding.ComponentDelimiter);
+
+                this.ComponentList = new ComponentCollection();
+                foreach (string strComponent in allComponents)
                 {
-                    List<string> allComponents = MessageHelper.SplitString(_value, this.Encoding.ComponentDelimiter);
-
-                    this.ComponentList = new ComponentCollection();
-                    foreach (string strComponent in allComponents)
-                    {
-                        Component component = new Component(this.Encoding);
-                        component.Value = strComponent;
-                        this.ComponentList.Add(component);
-                    }
-                    this.IsComponentized = this.ComponentList.Count > 1;
+                    Component component = new Component(this.Encoding);
+                    component.Value = strComponent;
+                    this.ComponentList.Add(component);
                 }
+                this.IsComponentized = this.ComponentList.Count > 1;
             }
         }
 

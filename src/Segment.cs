@@ -25,9 +25,7 @@ namespace HL7.Dotnetcore
 
         protected override void ProcessValue()
         {
-            if (_value.Length > 0)
-            {
-                _value = _value.TrimEnd(this.Encoding.FieldDelimiter);
+                // _value = _value.TrimEnd(this.Encoding.FieldDelimiter);
                 List<string> allFields = MessageHelper.SplitString(_value, this.Encoding.FieldDelimiter);
 
                 if (allFields.Count > 1)
@@ -45,7 +43,6 @@ namespace HL7.Dotnetcore
 
                     FieldList.Add(field);
                 }
-            }
         }
 
         public Segment DeepCopy()

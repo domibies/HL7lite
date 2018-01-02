@@ -23,21 +23,18 @@ namespace HL7.Dotnetcore
 
         protected override void ProcessValue()
         {
-            if (_value.Length > 0)
+            List<string> AllSubComponents = MessageHelper.SplitString(_value, this.Encoding.SubComponentDelimiter);
+
+            if (AllSubComponents.Count > 1)
             {
-                List<string> AllSubComponents = MessageHelper.SplitString(_value, this.Encoding.SubComponentDelimiter);
+                this.IsSubComponentized = true;
+            }
 
-                if (AllSubComponents.Count > 1)
-                {
-                    this.IsSubComponentized = true;
-                }
-
-                SubComponentList = new List<SubComponent>();
-                foreach (string strSubComponent in AllSubComponents)
-                {
-                    SubComponent subComponent = new SubComponent(Encoding.Decode(strSubComponent));
-                    SubComponentList.Add(subComponent);
-                }
+            SubComponentList = new List<SubComponent>();
+            foreach (string strSubComponent in AllSubComponents)
+            {
+                SubComponent subComponent = new SubComponent(Encoding.Decode(strSubComponent));
+                SubComponentList.Add(subComponent);
             }
         }
 

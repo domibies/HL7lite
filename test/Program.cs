@@ -73,5 +73,16 @@ namespace HL7.Dotnetcore.Test
             var MSH_1_8_1 = message.getValue("MSH.8.1");
             Assert.Equal("ADT", MSH_1_8_1);
         }
+
+        [Fact]
+        public void EmptyFields()
+        {
+            var message = new Message(this.HL7_ADT);
+            message.ParseMessage();
+
+            var NK1 = message.DefaultSegment("NK1").GetAllFields();
+            Assert.Equal(34, NK1.Count);
+            Assert.Equal(string.Empty, NK1[33].Value);
+        }
     }
 }
