@@ -14,7 +14,7 @@ notifications:
     on_failure: always
 
 install:
-  - nuget install xunit.runner.console -version 2.3.1
+# nuget install xunit.runner.console -version 2.3.1
   - dotnet restore src
   - dotnet restore test
 
