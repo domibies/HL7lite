@@ -43,6 +43,11 @@ namespace HL7.Dotnetcore
             return false;
         }
 
+        public override int GetHashCode()
+        {
+            return this.HL7Message.GetHashCode();
+        }
+
         /// <summary>
         /// Parse the HL7 message in text format, throws HL7Exception if error occurs
         /// </summary>
