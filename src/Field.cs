@@ -32,7 +32,7 @@ namespace HL7.Dotnetcore
         {
             if (this.IsDelimiters)  // Special case for the delimiters field (MSH)
             {
-                var subcomponent = new SubComponent(_value);
+                var subcomponent = new SubComponent(_value, this.Encoding);
 
                 this.ComponentList = new ComponentCollection();
                 Component component = new Component(this.Encoding);
@@ -71,13 +71,13 @@ namespace HL7.Dotnetcore
             }
         }
 
-        public Field(Encoding encoding)
+        public Field(HL7Encoding encoding)
         {
             this.ComponentList = new ComponentCollection();
             this.Encoding = encoding;
         }
 
-        public Field(string pValue, Encoding encoding)
+        public Field(string pValue, HL7Encoding encoding)
         {
             this.ComponentList = new ComponentCollection();
             this.Encoding = encoding;

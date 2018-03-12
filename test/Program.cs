@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Reflection;
 using Xunit;
@@ -10,6 +11,12 @@ namespace HL7.Dotnetcore.Test
     {
         private string HL7_ORM;
         private string HL7_ADT;
+
+        public static void Main()
+        {
+            var test = new HL7Test();
+            test.EncodingForOutput();
+        }
 
         public HL7Test()
         {
@@ -83,6 +90,28 @@ namespace HL7.Dotnetcore.Test
             var NK1 = message.DefaultSegment("NK1").GetAllFields();
             Assert.Equal(34, NK1.Count);
             Assert.Equal(string.Empty, NK1[33].Value);
+        }
+
+        [Fact]
+        public void EncodingForOutput()
+        {
+            const string oruUrl = "domain.com/resource.html?Action=1&ID=2";
+            
+            var obx = new Segment("OBX", new HL7Encoding());
+            obx.AddNewField("1");
+            obx.AddNewField("RP");
+            obx.AddNewField("70030^Radiologic Exam, Eye, Detection, FB^CDIRadCodes");
+            obx.AddNewField("1");
+            obx.AddNewField(oruUrl);
+            obx.AddNewField("F", 11);
+            obx.AddNewField(MessageHelper.LongDateWithFractionOfSecond(DateTime.Now), 14);            
+
+            var oru = new Message();
+            oru.AddNewSegment(obx);
+
+            var str = oru.SerializeMessage(false);
+
+            Assert.DoesNotContain("&", str);  // Should have \T\ instead
         }
     }
 }

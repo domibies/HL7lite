@@ -9,12 +9,12 @@ namespace HL7.Dotnetcore
 
         public bool IsSubComponentized { get; set; } = false;
 
-        public Component(Encoding encoding)
+        public Component(HL7Encoding encoding)
         {
             this.SubComponentList = new List<SubComponent>();
             this.Encoding = encoding;
         }
-        public Component(string pValue, Encoding encoding)
+        public Component(string pValue, HL7Encoding encoding)
         {
             this.SubComponentList = new List<SubComponent>();
             this.Encoding = encoding;
@@ -33,7 +33,7 @@ namespace HL7.Dotnetcore
             SubComponentList = new List<SubComponent>();
             foreach (string strSubComponent in AllSubComponents)
             {
-                SubComponent subComponent = new SubComponent(Encoding.Decode(strSubComponent));
+                SubComponent subComponent = new SubComponent(this.Encoding.Decode(strSubComponent), this.Encoding);
                 SubComponentList.Add(subComponent);
             }
         }

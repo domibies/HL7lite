@@ -2,8 +2,9 @@
 {
     public class SubComponent : MessageElement
     {
-        public SubComponent(string val)
+        public SubComponent(string val, HL7Encoding encoding)
         {
+            this.Encoding = encoding;
             this.Value = val;
         }
 

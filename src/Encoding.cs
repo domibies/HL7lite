@@ -1,9 +1,10 @@
+using System;
 using System.Globalization;
 using System.Text;
 
 namespace HL7.Dotnetcore
 {
-    public class Encoding
+    public class HL7Encoding
     {
         public string AllDelimiters { get; private set; } = @"|^~\&";
         public char FieldDelimiter { get; set; } = '|'; // \F\
@@ -13,7 +14,7 @@ namespace HL7.Dotnetcore
         public char SubComponentDelimiter { get; set; } = '&'; // \T\
         public string SegmentDelimiter { get; set; } = "\r";
 
-        public Encoding()
+        public HL7Encoding()
         {
         }
 
@@ -42,11 +43,14 @@ namespace HL7.Dotnetcore
             throw new HL7Exception("Segment delimiter not found in message", HL7Exception.BAD_MESSAGE);
         }
 
-        // encoding methods based on https://github.com/elomagic/hl7inspector
+        // Encoding methods based on https://github.com/elomagic/hl7inspector
 
         public  string Encode(string val)
         {
-            StringBuilder sb = new StringBuilder();
+            if (string.IsNullOrWhiteSpace(val))
+                return val;
+
+            var sb = new StringBuilder();
 
             for (int i = 0; i < val.Length; i++) 
             {
@@ -100,11 +104,13 @@ namespace HL7.Dotnetcore
 
         public string Decode(string encodedValue)
         {
-            StringBuilder result = new StringBuilder();
+            if (string.IsNullOrWhiteSpace(encodedValue))
+                return encodedValue;
+
+            var result = new StringBuilder();
             bool no_wrap = false;
 
-            int i;
-            for (i = 0; i < encodedValue.Length; i++)
+            for (int i = 0; i < encodedValue.Length; i++)
             {
                 char c = encodedValue[i];
 
@@ -120,10 +126,7 @@ namespace HL7.Dotnetcore
                 if (li == -1)
                     throw new HL7Exception("Invalid escape sequence in HL7 string");
 
-                    //result.Append(c);
-                    // i--;
-
-                string seq = encodedValue.Substring(i, li);
+                string seq = encodedValue.Substring(i, li-i);
                 i = li;
 
                 if (seq.Length == 0)
@@ -209,7 +212,7 @@ namespace HL7.Dotnetcore
                         break;
                 }
             }
-        
+
             return result.ToString();
         }
     }

@@ -17,7 +17,7 @@ namespace HL7.Dotnetcore
         public string MessageControlID { get; set; }
         public string ProcessingID { get; set; }
         public short SegmentCount { get; set; }
-        public Encoding Encoding { get; set; } = new Encoding();
+        public HL7Encoding Encoding { get; set; } = new HL7Encoding();
 
         public Message()
         {
@@ -72,7 +72,7 @@ namespace HL7.Dotnetcore
 
             if (isValid)
             {
-                try
+                //try
                 {
                     if (allSegments == null || allSegments.Count <= 0)
                     {
@@ -93,12 +93,14 @@ namespace HL7.Dotnetcore
 
                         this.AddNewSegment(newSegment);
                     }
+
                     this.SegmentCount = SegSeqNo;
 
                     string strSerializedMessage = string.Empty;
+
                     try
                     {
-                        strSerializedMessage = serializeMessage(false); 
+                        strSerializedMessage = SerializeMessage(false); 
                     }
                     catch (HL7Exception ex)
                     {
@@ -115,12 +117,18 @@ namespace HL7.Dotnetcore
                         throw new HL7Exception("Unable to serialize to original message - ", HL7Exception.PARSING_ERROR);
                     }
                 }
-                catch (Exception ex)
+                //catch (Exception ex)
                 {
-                    throw new HL7Exception("Failed to parse the message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
+                //    throw new HL7Exception("Failed to parse the message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
                 }
             }
             return isParsed;
+        }
+
+        [Obsolete("Deprecated method. Please use SerializeMessage() instead.")]
+        public string serializeMessage(bool validate)
+        {
+            return this.SerializeMessage(validate);
         }
 
         /// <summary>
@@ -128,7 +136,7 @@ namespace HL7.Dotnetcore
         /// </summary>
         /// <param name="validate">Validate the message before serializing</param>
         /// <returns>string with HL7 message</returns>
-        public string serializeMessage(bool validate)
+        public string SerializeMessage(bool validate)
         {
             if (validate && !this.validateMessage())
                 throw new HL7Exception("Failed to validate the updated message", HL7Exception.BAD_MESSAGE);
@@ -170,7 +178,6 @@ namespace HL7.Dotnetcore
                             }
                             else
                                 strMessage += serializeField(field);
-
                         }
                         strMessage += this.Encoding.SegmentDelimiter;
                     }
@@ -277,10 +284,10 @@ namespace HL7.Dotnetcore
                     }
                 }
                 else
-                    throw new HL7Exception("Segment name not available");
+                    throw new HL7Exception("Segment name not available: " + strValueFormat);
             }
             else
-                throw new HL7Exception("Request format is not valid");
+                throw new HL7Exception("Request format is not valid: " + strValueFormat);
 
             return strValue;
         }
@@ -845,6 +852,6 @@ namespace HL7.Dotnetcore
             }
 
             return isValid;
-        }        
+        }
     }
 }

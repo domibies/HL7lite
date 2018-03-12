@@ -10,13 +10,13 @@ namespace HL7.Dotnetcore
                 
         public string Name { get; set; }
 
-        public Segment(Encoding encoding)
+        public Segment(HL7Encoding encoding)
         {
             this.FieldList = new FieldCollection();
             this.Encoding = encoding;
         }
 
-        public Segment(string name, Encoding encoding)
+        public Segment(string name, HL7Encoding encoding)
         {
             this.FieldList = new FieldCollection();
             this.Name = name;
@@ -25,24 +25,23 @@ namespace HL7.Dotnetcore
 
         protected override void ProcessValue()
         {
-                // _value = _value.TrimEnd(this.Encoding.FieldDelimiter);
-                List<string> allFields = MessageHelper.SplitString(_value, this.Encoding.FieldDelimiter);
+            List<string> allFields = MessageHelper.SplitString(_value, this.Encoding.FieldDelimiter);
 
-                if (allFields.Count > 1)
-                {
-                    allFields.RemoveAt(0);
-                }
-                for (int i=0; i<allFields.Count; i++)
-                {
-                   string strField = allFields[i];
-                    
-                    Field field = new Field(this.Encoding);   
-                    if (Name == "MSH" && i==0)
-                        field.IsDelimiters = true;  // special case
-                    field.Value = strField;
+            if (allFields.Count > 1)
+            {
+                allFields.RemoveAt(0);
+            }
+            for (int i=0; i<allFields.Count; i++)
+            {
+                string strField = allFields[i];
+                
+                Field field = new Field(this.Encoding);   
+                if (Name == "MSH" && i==0)
+                    field.IsDelimiters = true;  // special case
 
-                    FieldList.Add(field);
-                }
+                field.Value = strField;
+                FieldList.Add(field);
+            }
         }
 
         public Segment DeepCopy()
@@ -58,23 +57,26 @@ namespace HL7.Dotnetcore
             this.AddNewField(string.Empty);
         }
 
-        public void AddNewField(string val, bool isDelimiters)
+        public void AddNewField(string content, int position = -1)
+        {
+            this.AddNewField(new Field(content, this.Encoding), position);
+        }
+
+        public void AddNewField(string content, bool isDelimiters)
         {
             var newField = new Field(this.Encoding);
 
             if (isDelimiters)
                 newField.IsDelimiters = true;   // Prevent decoding
 
-            newField.Value = val;
+            newField.Value = content;
             this.AddNewField(newField, -1);
-        }
-        public void AddNewField(string content, int position = -1)
-        {
-            this.AddNewField(new Field(content, this.Encoding), position);
         }
 
         public bool AddNewField(Field field, int position = -1)
         {
+            field.Value = this.Encoding.Encode(field.Value);
+
             try
             {
                 if (position < 0)
