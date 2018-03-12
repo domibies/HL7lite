@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace HL7.Dotnetcore
 {
@@ -58,7 +59,7 @@ namespace HL7.Dotnetcore
             bool isParsed = false;
             try
             {
-                isValid = ValidateMessage();
+                isValid = this.validateMessage();
             }
             catch (HL7Exception ex)
             {
@@ -97,7 +98,7 @@ namespace HL7.Dotnetcore
                     string strSerializedMessage = string.Empty;
                     try
                     {
-                        strSerializedMessage = SerializeMessage(false); 
+                        strSerializedMessage = serializeMessage(false); 
                     }
                     catch (HL7Exception ex)
                     {
@@ -123,10 +124,512 @@ namespace HL7.Dotnetcore
         }
 
         /// <summary>
-        /// validates the HL7 message for basic syntax
+        /// Serialize the message in text format
         /// </summary>
+        /// <param name="validate">Validate the message before serializing</param>
+        /// <returns>string with HL7 message</returns>
+        public string serializeMessage(bool validate)
+        {
+            if (validate && !this.validateMessage())
+                throw new HL7Exception("Failed to validate the updated message", HL7Exception.BAD_MESSAGE);
+
+            string strMessage = string.Empty;
+            string currentSegName = string.Empty;;
+            List<Segment> _segListOrdered = getAllSegmentsInOrder();
+
+            try
+            {
+                try
+                {
+                    foreach (Segment seg in _segListOrdered)
+                    {
+                        currentSegName = seg.Name;
+
+                        strMessage += seg.Name + this.Encoding.FieldDelimiter;
+                        for (int i = 0; i<seg.FieldList.Count; i++)
+                        {
+                            if (i > 0)
+                                strMessage += this.Encoding.FieldDelimiter;
+
+                            var field = seg.FieldList[i];
+                            if (field.IsDelimiters)
+                            {
+                                strMessage += field.Value;
+                                continue;
+                            }
+
+                            if (field.HasRepetitions)
+                            {
+                                for (int j=0; j<field.RepeatitionList.Count; j++)
+                                {
+                                    if (j>0)
+                                        strMessage += this.Encoding.RepeatDelimiter;
+
+                                    strMessage += serializeField(field.RepeatitionList[j]);
+                                }
+                            }
+                            else
+                                strMessage += serializeField(field);
+
+                        }
+                        strMessage += this.Encoding.SegmentDelimiter;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (currentSegName == "MSH")
+                        throw new HL7Exception("Failed to serialize the MSH segment with error - " + ex.Message, HL7Exception.SERIALIZATION_ERROR);
+                    else throw;
+                }
+
+                //strMessage = mshString + DefaultSegmentSeparatorString[msgSegmentSeparatorIndex] + strMessage;
+                return strMessage.Trim(messageTrimChars);
+            }
+            catch (Exception ex)
+            {
+                throw new HL7Exception("Failed to serialize the message with error - " + ex.Message, HL7Exception.SERIALIZATION_ERROR);
+            }
+        }
+
+        [Obsolete("Deprecated method. Please use GetValue() instead.")]
+        public string getValue(string strValueFormat)
+        {
+            return this.GetValue(strValueFormat);
+        }
+        
+        /// <summary>
+        /// Get the Value of specific Field/Component/SubCpomponent, throws error if field/component index is not valid
+        /// </summary>
+        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
+        /// <returns>Value of specified field/component/subcomponent</returns>
+        public string GetValue(string strValueFormat)
+        {
+            bool isValid = false;
+
+            string segmentName = string.Empty;
+            int fieldIndex = 0;
+            int componentIndex = 0;
+            int subComponentIndex = 0;
+            int comCount = 0;
+            string strValue = string.Empty;
+
+            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = AllComponents.Count;
+
+            isValid = validateValueFormat(AllComponents);
+
+            if (isValid)
+            {
+                segmentName = AllComponents[0];
+                if (SegmentList.ContainsKey(segmentName))
+                {
+                    if (comCount == 4)
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        Int32.TryParse(AllComponents[2], out componentIndex);
+                        Int32.TryParse(AllComponents[3], out subComponentIndex);
+
+                        try
+                        {
+                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new HL7Exception("SubComponent not available - " + strValueFormat + " Error: " + ex.Message);
+                        }
+                    }
+                    else if (comCount == 3)
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        Int32.TryParse(AllComponents[2], out componentIndex);
+
+                        try
+                        {
+                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].Value;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new HL7Exception("Component not available - " + strValueFormat + " Error: " + ex.Message);
+                        }
+                    }
+                    else if (comCount == 2)
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        try
+                        {
+                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].Value;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new HL7Exception("Field not available - " + strValueFormat + " Error: " + ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            strValue = SegmentList[segmentName].First().Value;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new HL7Exception("Segment value not available - " + strValueFormat + " Error: " + ex.Message);
+                        }
+                    }
+                }
+                else
+                    throw new HL7Exception("Segment name not available");
+            }
+            else
+                throw new HL7Exception("Request format is not valid");
+
+            return strValue;
+        }
+
+        [Obsolete("Deprecated method. Please use SetValue() instead.")]
+        public bool setValue(string strValueFormat, string strValue)
+        {
+            return this.SetValue(strValueFormat, strValue);
+        }
+
+        /// <summary>
+        /// Sets the Value of specific Field/Component/SubCpomponent, throws error if field/component index is not valid
+        /// </summary>
+        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
+        /// <param name="strValue">Value for the specified field/component</param>
         /// <returns>boolean</returns>
-        private bool ValidateMessage()
+        public bool SetValue(string strValueFormat, string strValue)
+        {
+            bool isValid = false;
+            bool isSet = false;
+
+            string segmentName = string.Empty;
+            int fieldIndex = 0;
+            int componentIndex = 0;
+            int subComponentIndex = 0;
+            int comCount = 0;
+
+            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = AllComponents.Count;
+
+            isValid = validateValueFormat(AllComponents);
+
+            if (isValid)
+            {
+                segmentName = AllComponents[0];
+                if (SegmentList.ContainsKey(segmentName))
+                {
+                    if (comCount == 4)
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        Int32.TryParse(AllComponents[2], out componentIndex);
+                        Int32.TryParse(AllComponents[3], out subComponentIndex);
+
+                        try
+                        {
+                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value = strValue;
+                            isSet = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new HL7Exception("SubComponent not available - " + strValueFormat + " Error: " + ex.Message);
+                        }
+                    }
+                    else if (comCount == 3)
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        Int32.TryParse(AllComponents[2], out componentIndex);
+
+                        try
+                        {
+                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].Value = strValue;
+                            isSet = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new HL7Exception("Component not available - " + strValueFormat + " Error: " + ex.Message);
+                        }
+                    }
+                    else if (comCount == 2)
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        try
+                        {
+                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].Value = strValue;
+                            isSet = true;
+                        }
+                        catch (Exception ex)
+                        {
+                            throw new HL7Exception("Field not available - " + strValueFormat + " Error: " + ex.Message);
+                        }
+                    }
+                    else
+                    {
+                        throw new HL7Exception("Cannot overwrite a segment value");
+                    }
+                }
+                else
+                    throw new HL7Exception("Segment name not available");
+            }
+            else
+                throw new HL7Exception("Request format is not valid");
+
+            return isSet;
+        }
+
+        /// <summary>
+        /// check if specified field has components
+        /// </summary>
+        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
+        /// <returns>boolean</returns>
+        public bool IsComponentized(string strValueFormat)
+        {
+            bool isComponentized = false;
+            bool isValid = false;
+
+            string segmentName = string.Empty;
+            int fieldIndex = 0;
+            int comCount = 0;
+
+            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = AllComponents.Count;
+
+            isValid = validateValueFormat(AllComponents);
+
+            if (isValid)
+            {
+                segmentName = AllComponents[0];
+                if (comCount >= 2)
+                {
+                    try
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+
+                        isComponentized = SegmentList[segmentName].First().FieldList[fieldIndex - 1].IsComponentized;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new HL7Exception("Field not available - " + strValueFormat + " Error: " + ex.Message);
+                    }
+                }
+                else
+                    throw new HL7Exception("Field not identified in request");
+            }
+            else
+                throw new HL7Exception("Request format is not valid");
+
+            return isComponentized;
+        }
+
+        /// <summary>
+        /// check if specified fields has repeatitions
+        /// </summary>
+        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
+        /// <returns>boolean</returns>
+        public bool HasRepetitions(string strValueFormat)
+        {
+            bool hasRepetitions = false;
+            bool isValid = false;
+
+            string segmentName = string.Empty;
+            int fieldIndex = 0;
+            int comCount = 0;
+
+            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = AllComponents.Count;
+
+            isValid = validateValueFormat(AllComponents);
+
+            if (isValid)
+            {
+                segmentName = AllComponents[0];
+                if (comCount >= 2)
+                {
+                    try
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+
+                        hasRepetitions = SegmentList[segmentName].First().FieldList[fieldIndex - 1].HasRepetitions;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new HL7Exception("Field not available - " + strValueFormat + " Error: " + ex.Message);
+                    }
+                }
+                else
+                    throw new HL7Exception("Field not identified in request");
+            }
+            else
+                throw new HL7Exception("Request format is not valid");
+
+            return hasRepetitions;
+        }
+
+        /// <summary>
+        /// check if specified component has sub components
+        /// </summary>
+        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
+        /// <returns>boolean</returns>
+        public bool IsSubComponentized(string strValueFormat)
+        {
+            bool isSubComponentized = false;
+            bool isValid = false;
+
+            string segmentName = string.Empty;
+            int fieldIndex = 0;
+            int componentIndex = 0;
+            int comCount = 0;
+
+            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = AllComponents.Count;
+
+            isValid = validateValueFormat(AllComponents);
+
+            if (isValid)
+            {
+                segmentName = AllComponents[0];
+                if (comCount >= 3)
+                {
+                    try
+                    {
+                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        Int32.TryParse(AllComponents[2], out componentIndex);
+
+                        isSubComponentized = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].IsSubComponentized;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new HL7Exception("Component not available - " + strValueFormat + " Error: " + ex.Message);
+                    }
+                }
+                else
+                    throw new HL7Exception("Component not identified in request");
+            }
+            else
+                throw new HL7Exception("Request format is not valid");
+
+            return isSubComponentized;
+        }
+
+        [Obsolete("Deprecated method. Please use GetACK() instead.")]
+        public Message getACK()
+        {
+            return this.GetACK();
+        }
+
+        /// <summary>
+        /// Builds the acknowledgement message for this message
+        /// </summary>
+        /// <returns>An ACK message if success, otherwise null</returns>
+        public Message GetACK()
+        {
+            string ackMsg;
+            if (this.MessageStructure != "ACK")
+            {
+                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
+                var msh = this.SegmentList["MSH"].First();
+                var delim = this.Encoding.FieldDelimiter;
+
+                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
+                + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
+                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
+
+                ackMsg += "MSA" + delim + "AA" + delim + this.MessageControlID + this.Encoding.SegmentDelimiter;
+            }
+            else
+                return null;
+
+            try 
+            {
+                var ack = new Message(ackMsg);
+                ack.ParseMessage();
+                return ack;
+            }
+            catch 
+            {
+                return null;
+            }
+        }
+
+        [Obsolete("Deprecated method. Please use GetNACK() instead.")]
+        public Message getNACK(string code, string errMsg)
+        {
+            return this.GetNACK(code, errMsg);
+        }
+
+        /// <summary>
+        /// Builds a negative ack for this message
+        /// </summary>
+        /// <param name="code">ack code like AR, AE</param>
+        /// <param name="errMsg">error message to be sent with ACK</param>
+        /// <returns>A NACK message if success, otherwise null</returns>
+        public Message GetNACK(string code, string errMsg)
+        {
+            string ackMsg;
+            if (this.MessageStructure != "ACK")
+            {
+                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
+                var msh = this.SegmentList["MSH"].First();
+                var delim = this.Encoding.FieldDelimiter;
+                
+                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
+                + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
+                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
+                
+                ackMsg += "MSA" + delim + code + delim + this.MessageControlID + delim + errMsg + this.Encoding.SegmentDelimiter;
+            }
+            else
+                return null;
+
+            try 
+            {
+                var nack = new Message(ackMsg);
+                nack.ParseMessage();
+                return nack;
+            }
+            catch 
+            {
+                return null;
+            }
+        }
+
+        public bool AddNewSegment(Segment newSegment)
+        {
+            try
+            {
+                newSegment.SequenceNo = SegmentCount++;
+                if (!SegmentList.ContainsKey(newSegment.Name))
+                    SegmentList[newSegment.Name] = new List<Segment>();
+
+                SegmentList[newSegment.Name].Add(newSegment);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                SegmentCount--;
+                throw new HL7Exception("Unable to add new segment Error - " + ex.Message);
+            }
+        }
+
+        public List<Segment> Segments()
+        {
+            return getAllSegmentsInOrder();
+        }
+
+        public List<Segment> Segments(string segmentName)
+        {
+            return getAllSegmentsInOrder().FindAll(o=> o.Name.Equals(segmentName));
+        }
+
+        public Segment DefaultSegment(string segmentName)
+        {
+            return getAllSegmentsInOrder().First(o => o.Name.Equals(segmentName));
+        }
+
+        /// <summary>
+        /// Validates the HL7 message for basic syntax
+        /// </summary>
+        /// <returns>A boolean indicating whether the whole message is valid or not</returns>
+        private bool validateMessage()
         {
             try
             {
@@ -266,74 +769,10 @@ namespace HL7.Dotnetcore
         }
 
         /// <summary>
-        /// Serialize the message in text format
+        /// Serializes a field into a string with proper encoding
         /// </summary>
-        /// <param name="validate">Validate the message before serializing</param>
-        /// <returns>string with HL7 message</returns>
-        public string SerializeMessage(bool validate)
-        {
-            if (validate && !this.ValidateMessage())
-                throw new HL7Exception("Failed to validate the updated message", HL7Exception.BAD_MESSAGE);
-
-            string strMessage = string.Empty;
-            string currentSegName = string.Empty;;
-            List<Segment> _segListOrdered = getAllSegmentsInOrder();
-
-            try
-            {
-                try
-                {
-                    foreach (Segment seg in _segListOrdered)
-                    {
-                        currentSegName = seg.Name;
-
-                        strMessage += seg.Name + this.Encoding.FieldDelimiter;
-                        for (int i = 0; i<seg.FieldList.Count; i++)
-                        {
-                            if (i > 0)
-                                strMessage += this.Encoding.FieldDelimiter;
-
-                            var field = seg.FieldList[i];
-                            if (field.IsDelimiters)
-                            {
-                                strMessage += field.Value;
-                                continue;
-                            }
-
-                            if (field.HasRepetitions)
-                            {
-                                for (int j=0; j<field.RepeatitionList.Count; j++)
-                                {
-                                    if (j>0)
-                                        strMessage += this.Encoding.RepeatDelimiter;
-
-                                    strMessage += SerializeField(field.RepeatitionList[j]);
-                                }
-                            }
-                            else
-                                strMessage += SerializeField(field);
-
-                        }
-                        strMessage += this.Encoding.SegmentDelimiter;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (currentSegName == "MSH")
-                        throw new HL7Exception("Failed to serialize the MSH segment with error - " + ex.Message, HL7Exception.SERIALIZATION_ERROR);
-                    else throw;
-                }
-
-                //strMessage = mshString + DefaultSegmentSeparatorString[msgSegmentSeparatorIndex] + strMessage;
-                return strMessage.Trim(messageTrimChars);
-            }
-            catch (Exception ex)
-            {
-                throw new HL7Exception("Failed to serialize the message with error - " + ex.Message, HL7Exception.SERIALIZATION_ERROR);
-            }
-        }
-
-        private string SerializeField(Field field)
+        /// <returns>A serialized string</returns>
+        private string serializeField(Field field)
         {
             var strMessage = string.Empty;
 
@@ -360,9 +799,10 @@ namespace HL7.Dotnetcore
             return strMessage;
         }
 
-        //get all segments in order as they appear in origional message
-        //like this is the usual order IN1|1 IN2|1 IN1|2 IN2|2
-        //segmentlist stores segments based on key, so all the IN1s will be stored together without mainting the order
+        /// <summary> 
+        /// Get all segments in order as they appear in original message. This the usual order: IN1|1 IN2|1 IN1|2 IN2|2
+        /// </summary>
+        /// <returns>A list of segments in the proper order</returns>
         private List<Segment> getAllSegmentsInOrder()
         {
             List<Segment> _list = new List<Segment>();
@@ -377,197 +817,27 @@ namespace HL7.Dotnetcore
 
             return _list.OrderBy(o => o.SequenceNo).ToList();
         }
-        
-        /// <summary>
-        /// Get the Value of specific Field/Component/SubCpomponent, throws error if field/component index is not valid
-        /// </summary>
-        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
-        /// <returns>Value of specified field/component/subcomponent</returns>
-        public string getValue(string strValueFormat)
-        {
-            bool isValid = false;
-
-            string segmentName = string.Empty;
-            int fieldIndex = 0;
-            int componentIndex = 0;
-            int subComponentIndex = 0;
-            int comCount = 0;
-            string strValue = string.Empty;
-
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
-
-            isValid = validateValueFormat(AllComponents);
-
-            if (isValid)
-            {
-                segmentName = AllComponents[0];
-                if (SegmentList.ContainsKey(segmentName))
-                {
-                    if (comCount == 4)
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
-                        Int32.TryParse(AllComponents[3], out subComponentIndex);
-
-                        try
-                        {
-                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new HL7Exception("SubComponent not available - " + strValueFormat + " Error: " + ex.Message);
-                        }
-                    }
-                    else if (comCount == 3)
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
-
-                        try
-                        {
-                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].Value;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new HL7Exception("Component not available - " + strValueFormat + " Error: " + ex.Message);
-                        }
-                    }
-                    else if (comCount == 2)
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        try
-                        {
-                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].Value;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new HL7Exception("Field not available - " + strValueFormat + " Error: " + ex.Message);
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            strValue = SegmentList[segmentName].First().Value;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new HL7Exception("Segment value not available - " + strValueFormat + " Error: " + ex.Message);
-                        }
-                    }
-                }
-                else
-                    throw new HL7Exception("Segment name not available");
-            }
-            else
-                throw new HL7Exception("Request format is not valid");
-
-            return strValue;
-        }
 
         /// <summary>
-        /// Sets the Value of specific Field/Component/SubCpomponent, throws error if field/component index is not valid
+        /// Validates the components of a value's position descriptor
         /// </summary>
-        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
-        /// <param name="strValue">Value for the specified field/component</param>
-        /// <returns>boolean</returns>
-        public bool setValue(string strValueFormat, string strValue)
-        {
-            bool isValid = false;
-            bool isSet = false;
-
-            string segmentName = string.Empty;
-            int fieldIndex = 0;
-            int componentIndex = 0;
-            int subComponentIndex = 0;
-            int comCount = 0;
-
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
-
-            isValid = validateValueFormat(AllComponents);
-
-            if (isValid)
-            {
-                segmentName = AllComponents[0];
-                if (SegmentList.ContainsKey(segmentName))
-                {
-                    if (comCount == 4)
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
-                        Int32.TryParse(AllComponents[3], out subComponentIndex);
-
-                        try
-                        {
-                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value = strValue;
-                            isSet = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new HL7Exception("SubComponent not available - " + strValueFormat + " Error: " + ex.Message);
-                        }
-                    }
-                    else if (comCount == 3)
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
-
-                        try
-                        {
-                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].Value = strValue;
-                            isSet = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new HL7Exception("Component not available - " + strValueFormat + " Error: " + ex.Message);
-                        }
-                    }
-                    else if (comCount == 2)
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        try
-                        {
-                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].Value = strValue;
-                            isSet = true;
-                        }
-                        catch (Exception ex)
-                        {
-                            throw new HL7Exception("Field not available - " + strValueFormat + " Error: " + ex.Message);
-                        }
-                    }
-                    else
-                    {
-                        throw new HL7Exception("Cannot overwrite a segment value");
-                    }
-                }
-                else
-                    throw new HL7Exception("Segment name not available");
-            }
-            else
-                throw new HL7Exception("Request format is not valid");
-
-            return isSet;
-        }
-
-        private bool validateValueFormat(List<string> AllComponents)
+        /// <returns>A boolean indicating whether all the components are valid or not</returns>
+        private bool validateValueFormat(List<string> allComponents)
         {
             string segNameRegEx = "[A-Z][A-Z][A-Z1-9]";
             string otherRegEx = @"^[1-9]([0-9]{1,2})?$";
             bool isValid = false;
 
-            if (AllComponents.Count > 0)
+            if (allComponents.Count > 0)
             {
-                if (System.Text.RegularExpressions.Regex.IsMatch(AllComponents[0], segNameRegEx))
+                if (Regex.IsMatch(allComponents[0], segNameRegEx))
                 {
-                    for (int i = 1; i < AllComponents.Count; i++)
+                    for (int i = 1; i < allComponents.Count; i++)
                     {
-                        if (System.Text.RegularExpressions.Regex.IsMatch(AllComponents[i], otherRegEx))
+                        if (Regex.IsMatch(allComponents[i], otherRegEx))
                             isValid = true;
                         else
                             return false;
-
                     }
                 }
                 else
@@ -575,243 +845,6 @@ namespace HL7.Dotnetcore
             }
 
             return isValid;
-        }
-
-        /// <summary>
-        /// check if specified field has components
-        /// </summary>
-        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
-        /// <returns>boolean</returns>
-        public bool IsComponentized(string strValueFormat)
-        {
-            bool isComponentized = false;
-            bool isValid = false;
-
-            string segmentName = string.Empty;
-            int fieldIndex = 0;
-            int comCount = 0;
-
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
-
-            isValid = validateValueFormat(AllComponents);
-
-            if (isValid)
-            {
-                segmentName = AllComponents[0];
-                if (comCount >= 2)
-                {
-                    try
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-
-                        isComponentized = SegmentList[segmentName].First().FieldList[fieldIndex - 1].IsComponentized;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new HL7Exception("Field not available - " + strValueFormat + " Error: " + ex.Message);
-                    }
-                }
-                else
-                    throw new HL7Exception("Field not identified in request");
-            }
-            else
-                throw new HL7Exception("Request format is not valid");
-
-            return isComponentized;
-        }
-
-        /// <summary>
-        /// check if specified fields has repeatitions
-        /// </summary>
-        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
-        /// <returns>boolean</returns>
-        public bool HasRepetitions(string strValueFormat)
-        {
-            bool hasRepetitions = false;
-            bool isValid = false;
-
-            string segmentName = string.Empty;
-            int fieldIndex = 0;
-            int comCount = 0;
-
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
-
-            isValid = validateValueFormat(AllComponents);
-
-            if (isValid)
-            {
-                segmentName = AllComponents[0];
-                if (comCount >= 2)
-                {
-                    try
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-
-                        hasRepetitions = SegmentList[segmentName].First().FieldList[fieldIndex - 1].HasRepetitions;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new HL7Exception("Field not available - " + strValueFormat + " Error: " + ex.Message);
-                    }
-                }
-                else
-                    throw new HL7Exception("Field not identified in request");
-            }
-            else
-                throw new HL7Exception("Request format is not valid");
-
-            return hasRepetitions;
-        }
-
-        /// <summary>
-        /// check if specified component has sub components
-        /// </summary>
-        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
-        /// <returns>boolean</returns>
-        public bool IsSubComponentized(string strValueFormat)
-        {
-            bool isSubComponentized = false;
-            bool isValid = false;
-
-            string segmentName = string.Empty;
-            int fieldIndex = 0;
-            int componentIndex = 0;
-            int comCount = 0;
-
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
-
-            isValid = validateValueFormat(AllComponents);
-
-            if (isValid)
-            {
-                segmentName = AllComponents[0];
-                if (comCount >= 3)
-                {
-                    try
-                    {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
-
-                        isSubComponentized = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].IsSubComponentized;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new HL7Exception("Component not available - " + strValueFormat + " Error: " + ex.Message);
-                    }
-                }
-                else
-                    throw new HL7Exception("Component not identified in request");
-            }
-            else
-                throw new HL7Exception("Request format is not valid");
-
-            return isSubComponentized;
-        }
-
-        /// <summary>
-        /// Builds the acknowledgement message for this message
-        /// </summary>
-        /// <returns>An ACK message if success, otherwise null</returns>
-        public Message getACK()
-        {
-            string ackMsg;
-            if (this.MessageStructure != "ACK")
-            {
-                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
-                var msh = this.SegmentList["MSH"].First();
-                var delim = this.Encoding.FieldDelimiter;
-
-                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
-                + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
-                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
-
-                ackMsg += "MSA" + delim + "AA" + delim + this.MessageControlID + this.Encoding.SegmentDelimiter;
-            }
-            else
-                return null;
-
-            try 
-            {
-                var ack = new Message(ackMsg);
-                ack.ParseMessage();
-                return ack;
-            }
-            catch 
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
-        /// Builds a negative ack for this message
-        /// </summary>
-        /// <param name="code">ack code like AR, AE</param>
-        /// <param name="errMsg">error message to be sent with ACK</param>
-        /// <returns>A NACK message if success, otherwise null</returns>
-        public Message getNACK(string code, string errMsg)
-        {
-            string ackMsg;
-            if (this.MessageStructure != "ACK")
-            {
-                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
-                var msh = this.SegmentList["MSH"].First();
-                var delim = this.Encoding.FieldDelimiter;
-                
-                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
-                + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
-                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
-                
-                ackMsg += "MSA" + delim + code + delim + this.MessageControlID + delim + errMsg + this.Encoding.SegmentDelimiter;
-            }
-            else
-                return null;
-
-            try 
-            {
-                var nack = new Message(ackMsg);
-                nack.ParseMessage();
-                return nack;
-            }
-            catch 
-            {
-                return null;
-            }
-        }
-
-        public bool AddNewSegment(Segment newSegment)
-        {
-            try
-            {
-                newSegment.SequenceNo = SegmentCount++;
-                if (!SegmentList.ContainsKey(newSegment.Name))
-                    SegmentList[newSegment.Name] = new List<Segment>();
-
-                SegmentList[newSegment.Name].Add(newSegment);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                SegmentCount--;
-                throw new HL7Exception("Unable to add new segment Error - " + ex.Message);
-            }
-        }
-
-        public List<Segment> Segments()
-        {
-            return getAllSegmentsInOrder();
-        }
-
-        public List<Segment> Segments(string segmentName)
-        {
-            return getAllSegmentsInOrder().FindAll(o=> o.Name.Equals(segmentName));
-        }
-
-        public Segment DefaultSegment(string segmentName)
-        {
-            return getAllSegmentsInOrder().First(o => o.Name.Equals(segmentName));
-        }
+        }        
     }
 }

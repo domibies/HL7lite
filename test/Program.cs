@@ -60,7 +60,7 @@ namespace HL7.Dotnetcore.Test
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
-            var MSH_1_8 = message.getValue("MSH.8");
+            var MSH_1_8 = message.GetValue("MSH.8");
             Assert.StartsWith("ADT", MSH_1_8);
         }
 
@@ -70,7 +70,7 @@ namespace HL7.Dotnetcore.Test
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
-            var MSH_1_8_1 = message.getValue("MSH.8.1");
+            var MSH_1_8_1 = message.GetValue("MSH.8.1");
             Assert.Equal("ADT", MSH_1_8_1);
         }
 
