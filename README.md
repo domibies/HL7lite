@@ -123,7 +123,7 @@ message.setValue("PV1.2", "I");
 
 // OR
 
-message.Segments("PV1"[0];).Fields(2).Value = "I";
+message.Segments("PV1")[0].Fields(2).Value = "I";
 ````
 
 ### Access some of the required MSH fields with properties
