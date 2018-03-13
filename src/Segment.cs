@@ -75,8 +75,6 @@ namespace HL7.Dotnetcore
 
         public bool AddNewField(Field field, int position = -1)
         {
-            field.Value = this.Encoding.Encode(field.Value);
-
             try
             {
                 if (position < 0)

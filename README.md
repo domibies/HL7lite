@@ -208,6 +208,20 @@ After evaluated and modified required values, the message can be obtained again 
 string strUpdatedMsg = message.SerializeMessage();
 ````
 
+### Encoded segments
+
+Some contents may contain forbidden characters like pipes and ampersands. Whenever there is a possibility of having those characters, the content shall be encoded before calling the 'AddNew' methods, like in the following code:
+
+````cSharp
+var obx = new Segment("OBX", new HL7Encoding());
+
+// Not encoded. Will be split into parts.
+obx.AddNewField("70030^Radiologic Exam, Eye, Detection, FB^CDIRadCodes");  
+
+// Encoded. Won't be parsed nor split.
+obx.AddNewField(obx.Encoding.Encode("domain.com/resource.html?Action=1&ID=2"));  
+````
+
 ### Copying a segment
 
 The DeepCopy method allows to perform a clone of a segment when building new messages. Countersense, if a segment is referenced directly when adding segments to a message, a change in the segment will affect both the origin and new messages.
