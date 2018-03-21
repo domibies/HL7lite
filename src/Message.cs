@@ -76,7 +76,7 @@ namespace HL7.Dotnetcore
                 {
                     if (allSegments == null || allSegments.Count <= 0)
                     {
-                        allSegments = MessageHelper.SplitString(HL7Message, this.Encoding.SegmentDelimiter);
+                        allSegments = MessageHelper.SplitMessage(HL7Message);
                     }
 
                     short SegSeqNo = 0;
@@ -220,21 +220,21 @@ namespace HL7.Dotnetcore
             int comCount = 0;
             string strValue = string.Empty;
 
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
+            List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = allComponents.Count;
 
-            isValid = validateValueFormat(AllComponents);
+            isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
-                segmentName = AllComponents[0];
+                segmentName = allComponents[0];
                 if (SegmentList.ContainsKey(segmentName))
                 {
                     if (comCount == 4)
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
-                        Int32.TryParse(AllComponents[3], out subComponentIndex);
+                        Int32.TryParse(allComponents[1], out fieldIndex);
+                        Int32.TryParse(allComponents[2], out componentIndex);
+                        Int32.TryParse(allComponents[3], out subComponentIndex);
 
                         try
                         {
@@ -247,8 +247,8 @@ namespace HL7.Dotnetcore
                     }
                     else if (comCount == 3)
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
+                        Int32.TryParse(allComponents[1], out fieldIndex);
+                        Int32.TryParse(allComponents[2], out componentIndex);
 
                         try
                         {
@@ -261,7 +261,7 @@ namespace HL7.Dotnetcore
                     }
                     else if (comCount == 2)
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        Int32.TryParse(allComponents[1], out fieldIndex);
                         try
                         {
                             strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].Value;
@@ -660,7 +660,7 @@ namespace HL7.Dotnetcore
 
                     //check Segment Name & 4th character of each segment
                     char fourthCharMSH = HL7Message[3];
-                    allSegments = MessageHelper.SplitString(HL7Message, Encoding.SegmentDelimiter);
+                    allSegments = MessageHelper.SplitMessage(HL7Message);
 
                     foreach (string strSegment in allSegments)
                     {

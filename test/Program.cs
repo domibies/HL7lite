@@ -15,7 +15,6 @@ namespace HL7.Dotnetcore.Test
         public static void Main()
         {
             var test = new HL7Test();
-            test.EncodingForOutput();
         }
 
         public HL7Test()
