@@ -58,39 +58,36 @@ namespace HL7.Dotnetcore
 
                 if (c == this.ComponentDelimiter) {
                     sb.Append(this.EscapeCharacter);
-                    sb.Append('S');
+                    sb.Append("S");
                     sb.Append(this.EscapeCharacter);
                 } 
                 else if (c == this.EscapeCharacter) {
                     sb.Append(this.EscapeCharacter);
-                    sb.Append('E');
+                    sb.Append("E");
                     sb.Append(this.EscapeCharacter);
                 } 
                 else if (c == this.FieldDelimiter) {
                     sb.Append(this.EscapeCharacter);
-                    sb.Append('F');
+                    sb.Append("F");
                     sb.Append(this.EscapeCharacter);
                 } 
                 else if (c == this.RepeatDelimiter) {
                     sb.Append(this.EscapeCharacter);
-                    sb.Append('R');
+                    sb.Append("R");
                     sb.Append(this.EscapeCharacter);
                 } 
                 else if (c == this.SubComponentDelimiter) {
                     sb.Append(this.EscapeCharacter);
-                    sb.Append('T');
+                    sb.Append("T");
                     sb.Append(this.EscapeCharacter);
-                } 
-                else if(c == 13) {
-                    sb.Append(".br");
                 } 
                 else if(c < 32) {
                     string v = string.Format("{0:X2}",(int)c);
-                    if((v.Length | 2) != 0) 
+                    if ((v.Length | 2) != 0) 
                         v = "0" + v;
 
                     sb.Append(this.EscapeCharacter);
-                    sb.Append('X');
+                    sb.Append("X");
                     sb.Append(v);
                     sb.Append(this.EscapeCharacter);
                 } 
@@ -108,7 +105,6 @@ namespace HL7.Dotnetcore
                 return encodedValue;
 
             var result = new StringBuilder();
-            bool no_wrap = false;
 
             for (int i = 0; i < encodedValue.Length; i++)
             {
@@ -132,83 +128,37 @@ namespace HL7.Dotnetcore
                 if (seq.Length == 0)
                     continue;
             
-                char control = seq[0];
-                string value = seq.Substring(1);
-
-                switch (control)
+                switch (seq)
                 {
-                    case 'H': // Start higlighting
+                    case "H": // Start higlighting
                         result.Append("<B>");
                         break;
-                    case 'N': // normal text (end highlighting)
+                    case "N": // normal text (end highlighting)
                         result.Append("</B>");
                         break;
-                    case 'F': // field separator
+                    case "F": // field separator
                         result.Append(this.FieldDelimiter);
                         break;
-                    case 'S': // component separator
+                    case "S": // component separator
                         result.Append(this.ComponentDelimiter);
                         break;
-                    case 'T': // subcomponent separator
+                    case "T": // subcomponent separator
                         result.Append(this.SubComponentDelimiter);
                         break;
-                    case 'R': // repetition separator
+                    case "R": // repetition separator
                         result.Append(this.RepeatDelimiter);
                         break;
-                    case 'E': // escape character
+                    case "E": // escape character
                         result.Append(this.EscapeCharacter);
                         break;
-                    case 'X': // hexadecimal data
-                        result.Append(((char)int.Parse(value, NumberStyles.AllowHexSpecifier)));
-                        break;
-                    // case 'Z': { /* TODO "Locally escape sequence" support */; break; }
-                    // case 'C': { /* TODO "Single byte character set" support */; break; }        // single byte character set
-                    // case 'M': { /* TODO "Multi byte character set" support */; break; }         // multi byte character set
-                    case '.':
-                        if (value.Equals("br"))
-                        {
-                            result.Append("<BR>");
-                        }
-                        else if (value.Equals("sp"))
-                        {
-                            result.Append("<BR>");
-                        }
-                        else if (value.Equals("fi"))
-                        {
-                            if (no_wrap)
-                                result.Append("</nobr>");
-                            no_wrap = false;
-                        }
-                        else if (value.Equals("nf"))
-                        {
-                            result.Append("<nobr>");
-                            no_wrap = true;
-                        }
-                        else if (value.StartsWith("in"))
-                        {
-                            // Indent <number> of spaces, where <number> is a positive or negative integer. This command cannot appear after the first printable character of a line.
-                        }
-                        else if (value.StartsWith("ti"))
-                        {
-                            // Temporarily indent <number> of spaces where number is a positive or negative integer. This command cannot appear after the first printable character of a line.
-                        }
-                        else if (value.StartsWith("sk"))
-                        {
-                            // Skip <number> spaces to the right. Example .sk+3   OR  .sk-2
-                        }
-                        else if (value.Equals("ce"))
-                        {
-                            // End current output line and center the next line.
-                        }
-                        else
-                        {
-                            result.Append(seq);
-                            // setStatus(Status.ERROR, "Unsupported escape sequence '" + seq + "' in hl7 object");
-                        }
+                    case ".br":
+                        result.Append("<BR>");
                         break;
                     default:
-                        result.Append(seq);
-                        // setStatus(Status.ERROR, "Unsupported escape sequence '" + seq + "' in hl7 object");
+                        if (seq.StartsWith("X"))
+                            result.Append(((char)int.Parse(seq.Substring(1), NumberStyles.AllowHexSpecifier)));
+                        else
+                            result.Append(seq);
                         break;
                 }
             }

@@ -8,7 +8,6 @@ namespace HL7.Dotnetcore
     public class Message
     {
         private List<string> allSegments = null;
-        private char[] messageTrimChars = new char[] {(char)11, (char)13, (char)28, (char)32 };    // 11 - VT(\v), 28 - FS, 13 - CR(\r)
         internal Dictionary<string, List<Segment>> SegmentList { get; set;} = new Dictionary<string, List<Segment>>();
 
         public string HL7Message { get; set; }
@@ -72,7 +71,7 @@ namespace HL7.Dotnetcore
 
             if (isValid)
             {
-                //try
+                try
                 {
                     if (allSegments == null || allSegments.Count <= 0)
                     {
@@ -117,9 +116,9 @@ namespace HL7.Dotnetcore
                         throw new HL7Exception("Unable to serialize to original message - ", HL7Exception.PARSING_ERROR);
                     }
                 }
-                //catch (Exception ex)
+                catch (Exception ex)
                 {
-                //    throw new HL7Exception("Failed to parse the message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
+                    throw new HL7Exception("Failed to parse the message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
                 }
             }
             return isParsed;
@@ -189,8 +188,7 @@ namespace HL7.Dotnetcore
                     else throw;
                 }
 
-                //strMessage = mshString + DefaultSegmentSeparatorString[msgSegmentSeparatorIndex] + strMessage;
-                return strMessage.Trim(messageTrimChars);
+                return strMessage;
             }
             catch (Exception ex)
             {
@@ -642,12 +640,10 @@ namespace HL7.Dotnetcore
             {
                 if (!string.IsNullOrEmpty(HL7Message))
                 {
-                    HL7Message = HL7Message.Trim(messageTrimChars);
-
-                    //check message length - MSH+Delemeters+12Fields in MSH
+                    //check message length - MSH+Delimeters+12Fields in MSH
                     if (HL7Message.Length < 20)
                     {
-                        throw new HL7Exception("Message Length too short" + HL7Message.Length + " fields.", HL7Exception.BAD_MESSAGE);
+                        throw new HL7Exception("Message Length too short: " + HL7Message.Length + " chars.", HL7Exception.BAD_MESSAGE);
                     }
 
                     //check if message starts with header segment
@@ -674,14 +670,14 @@ namespace HL7.Dotnetcore
 
                         if (!isValidSegName)
                         {
-                            throw new HL7Exception("Invalid segment name found :" + strSegment, HL7Exception.BAD_MESSAGE);
+                            throw new HL7Exception("Invalid segment name found: " + strSegment, HL7Exception.BAD_MESSAGE);
                         }
 
                         char fourthCharSEG = strSegment[3];
 
                         if (fourthCharMSH != fourthCharSEG)
                         {
-                            throw new HL7Exception("Invalid segment found :" + strSegment, HL7Exception.BAD_MESSAGE);
+                            throw new HL7Exception("Invalid segment found: " + strSegment, HL7Exception.BAD_MESSAGE);
                         }
                     }
 

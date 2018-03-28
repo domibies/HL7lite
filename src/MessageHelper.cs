@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace HL7.Dotnetcore
 {
@@ -31,6 +32,18 @@ namespace HL7.Dotnetcore
         public static string LongDateWithFractionOfSecond(DateTime dt)
         {
             return dt.ToString("yyyyMMddHHmmss.FFFF");
+        }
+
+        public static string[] ExtractMessages(string messages)
+        {
+            var expr = "\x0B(.*?)\x1C\x0D";
+            var matches = Regex.Matches(messages, expr);
+            
+            var list = new List<string>();
+            foreach (Match m in matches)
+                list.Add(m.Groups[1].Value);
+
+            return list.ToArray();
         }
     }
 }

@@ -14,7 +14,7 @@ namespace HL7.Dotnetcore.Test
 
         public static void Main()
         {
-            var test = new HL7Test();
+            // var test = new HL7Test();
         }
 
         public HL7Test()
