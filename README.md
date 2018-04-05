@@ -10,6 +10,8 @@ For more information about the original implementation read:
 
 The field encoding and decoding methods have been based on https://github.com/elomagic/hl7inspector
 
+## Object construction
+
 ### Create a Message object and pass raw HL7 message in text format
 
 ````cSharp
@@ -27,6 +29,24 @@ catch(Exception ex)
     // Handle the exception
 }
 `````
+
+### Message extraction
+
+If the HL7 message is coming from a MLLP connection (see [the official documentation]( www.hl7.org/documentcenter/public/wg/inm/mllp_transport_specification.PDF)), the message needs to be cleared from the MLLP prefixes and suffixes. Also, consider there can be more than one message in a single MLLP frame.
+
+For this purpose, there is an `ExtractMessages()` method, to be used as follows:
+
+````cSharp
+// extract the messages from a buffer containing a MLLP frame
+var messages = MessageHelper.ExtractMessages(buffer);
+
+// construct and process each message
+foreach (var strMsg in messages)
+{
+    Message message = new Message(strMsg);
+    // do something with the message object
+}
+````
 
 ## Accessing Segments
 
