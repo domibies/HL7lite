@@ -83,16 +83,18 @@ namespace HL7.Dotnetcore.Test
         [Fact]
         public void AddComponents()
         {
+            var encoding = new HL7Encoding();
+            
             //Create a Segment with name ZIB
-            Segment newSeg = new Segment("ZIB", new HL7Encoding());
+            Segment newSeg = new Segment("ZIB", encoding);
 
             // Create Field ZIB_1
-            Field ZIB_1 = new Field("ZIB1", new HL7Encoding());
+            Field ZIB_1 = new Field("ZIB1", encoding);
             // Create Field ZIB_5
-            Field ZIB_5 = new Field("ZIB5", new HL7Encoding());
+            Field ZIB_5 = new Field("ZIB5", encoding);
 
             // Create Component ZIB.5.2
-            Component com1 = new Component("ZIB.5.2", new HL7Encoding());
+            Component com1 = new Component("ZIB.5.2", encoding);
 
             // Add Component ZIB.5.2 to Field ZIB_5
             // 2nd parameter here specifies the component position, for inserting segment on particular position
