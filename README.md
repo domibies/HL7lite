@@ -30,6 +30,17 @@ catch(Exception ex)
 }
 `````
 
+### Adding a message header
+
+For adding a header segment to a new message object, use the `AddSegmentMSH()` method, after constructing an empty message:
+
+````cSharp
+message.AddSegmentMSH(sendingApplication, sendingFacility, 
+    receivingApplication, receivingFacility,
+    security, messageType, 
+    messageControlId, processingId, version);
+````
+
 ### Message extraction
 
 If the HL7 message is coming from a MLLP connection (see [the official documentation]( www.hl7.org/documentcenter/public/wg/inm/mllp_transport_specification.PDF)), the message needs to be cleared from the MLLP prefixes and suffixes. Also, consider there can be more than one message in a single MLLP frame.
@@ -253,13 +264,13 @@ oru.AddNewSegment(pid);
 
 ### Generate ACKs
 
-AA ACK
+To generate an ACK message
 
 ````cSharp
 Message ack = message.getACK();
 ````
 
-To generate negative ACK message with error message
+To generate negative ACK (NACK) message with error message
 
 ````cSharp
 Message nack = message.getNACK("AR", "Invalid Processing ID");

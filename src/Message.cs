@@ -552,6 +552,7 @@ namespace HL7.Dotnetcore
             try
             {
                 newSegment.SequenceNo = SegmentCount++;
+
                 if (!SegmentList.ContainsKey(newSegment.Name))
                     SegmentList[newSegment.Name] = new List<Segment>();
 
@@ -561,7 +562,7 @@ namespace HL7.Dotnetcore
             catch (Exception ex)
             {
                 SegmentCount--;
-                throw new HL7Exception("Unable to add new segment Error - " + ex.Message);
+                throw new HL7Exception("Unable to add new segment. Error - " + ex.Message);
             }
         }
 
@@ -578,6 +579,21 @@ namespace HL7.Dotnetcore
         public Segment DefaultSegment(string segmentName)
         {
             return getAllSegmentsInOrder().First(o => o.Name.Equals(segmentName));
+        }
+
+        public void AddSegmentMSH(string sendingApplication, string sendingFacility, string receivingApplication, string receivingFacility,
+            string security, string messageType, string messageControlID, string processingID, string version)
+        {
+                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
+                var delim = this.Encoding.FieldDelimiter;
+
+                string response = "MSH" + this.Encoding.AllDelimiters + delim + sendingApplication + delim + sendingFacility + delim 
+                + receivingApplication + delim + receivingFacility + delim
+                + dateString + delim + security + delim + messageType + delim + messageControlID + delim 
+                + processingID + delim + version + this.Encoding.SegmentDelimiter;
+
+                var message = new Message(response);
+                this.AddNewSegment(message.DefaultSegment("MSH"));
         }
 
         /// <summary>
@@ -597,8 +613,9 @@ namespace HL7.Dotnetcore
                 var msh = this.SegmentList["MSH"].First();
                 var delim = this.Encoding.FieldDelimiter;
                 
-                response = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[3].Value + delim + msh.FieldList[2].Value + delim + msh.FieldList[1].Value + delim 
-                + msh.FieldList[4].Value + delim + dateString + delim + delim + "ACK" + delim + this.MessageControlID + delim 
+                response = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[3].Value + delim + msh.FieldList[4].Value + delim 
+                + msh.FieldList[1].Value + delim + msh.FieldList[2].Value + delim
+                + dateString + delim + delim + "ACK" + delim + this.MessageControlID + delim 
                 + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
                 
                 response += "MSA" + delim + code + delim + this.MessageControlID + (isNack ? delim + errMsg : string.Empty) + this.Encoding.SegmentDelimiter;
