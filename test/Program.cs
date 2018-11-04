@@ -1,21 +1,17 @@
 using System;
 using System.IO;
 using System.Reflection;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using HL7.Dotnetcore;
 
 namespace HL7.Dotnetcore.Test
 {
+    [TestClass]
     public class HL7Test
     {
         private string HL7_ORM;
         private string HL7_ADT;
-
-        public static void Main()
-        {
-            // var test = new HL7Test();
-        }
 
         public HL7Test()
         {
@@ -24,63 +20,63 @@ namespace HL7.Dotnetcore.Test
             this.HL7_ADT = File.ReadAllText(path + "Sample-ADT.txt");
         }
 
-        [Fact]
+        [TestMethod]
         public void SmokeTest()
         {
             Message message = new Message(this.HL7_ORM);
-            Assert.NotNull(message);
+            Assert.IsNotNull(message);
         }
 
-        [Fact]
+        [TestMethod]
         public void ParseTest()
         {
             var message = new Message(this.HL7_ORM);
 
             var isParsed = message.ParseMessage();
-            Assert.True(isParsed);
+            Assert.IsTrue(isParsed);
         }
 
-        [Fact]
+        [TestMethod]
         public void ReadSegmentTest()
         {
             var message = new Message(this.HL7_ORM);
             message.ParseMessage();
 
             Segment MSH_1 = message.Segments("MSH")[0];
-            Assert.NotNull(MSH_1);
+            Assert.IsNotNull(MSH_1);
         }
 
-        [Fact]
+        [TestMethod]
         public void ReadDefaultSegmentTest()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
             Segment MSH_1 = message.DefaultSegment("MSH");
-            Assert.NotNull(MSH_1);
+            Assert.IsNotNull(MSH_1);
         }
 
-        [Fact]
+        [TestMethod]
         public void ReadField()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
             var MSH_1_8 = message.GetValue("MSH.8");
-            Assert.StartsWith("ADT", MSH_1_8);
+            Assert.IsTrue(MSH_1_8.StartsWith("ADT"));
         }
 
-        [Fact]
+        [TestMethod]
         public void ReadComponent()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
             var MSH_1_8_1 = message.GetValue("MSH.8.1");
-            Assert.Equal("ADT", MSH_1_8_1);
+            Assert.AreEqual("ADT", MSH_1_8_1);
         }
 
-        [Fact]
+        [TestMethod]
         public void AddComponents()
         {
             var encoding = new HL7Encoding();
@@ -113,21 +109,21 @@ namespace HL7.Dotnetcore.Test
             message.AddNewSegment(newSeg);
 
             string serializedMessage = message.SerializeMessage(false);
-            Assert.Equal("ZIB|ZIB1||||ZIB5^^ZIB.5.3\r", serializedMessage);
+            Assert.AreEqual("ZIB|ZIB1||||ZIB5^^ZIB.5.3\r", serializedMessage);
         }
 
-        [Fact]
+        [TestMethod]
         public void EmptyFields()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
             var NK1 = message.DefaultSegment("NK1").GetAllFields();
-            Assert.Equal(34, NK1.Count);
-            Assert.Equal(string.Empty, NK1[33].Value);
+            Assert.AreEqual(34, NK1.Count);
+            Assert.AreEqual(string.Empty, NK1[33].Value);
         }
 
-        [Fact]
+        [TestMethod]
         public void EncodingForOutput()
         {
             const string oruUrl = "domain.com/resource.html?Action=1&ID=2";  // Text with special character (&)
@@ -146,10 +142,10 @@ namespace HL7.Dotnetcore.Test
 
             var str = oru.SerializeMessage(false);
 
-            Assert.DoesNotContain("&", str);  // Should have \T\ instead
+            Assert.IsFalse(str.Contains("&"));  // Should have \T\ instead
         }
         
-        [Fact]
+        [TestMethod]
         public void AddField()
         {
             var enc = new HL7Encoding();
@@ -164,7 +160,46 @@ namespace HL7.Dotnetcore.Test
             message.AddNewSegment(mshSeg);
             var str = message.SerializeMessage(false);
 
-            Assert.Equal("PID|2\r", str);
+            Assert.AreEqual("PID|2\r", str);
+        }
+
+        [TestMethod]
+        public void GetAck()
+        {
+            var message = new Message(this.HL7_ADT);
+            message.ParseMessage();
+            var ack = message.GetACK();
+
+            var MSH_1_9 = message.GetValue("MSH.9");
+            var MSH_1_9_A = ack.GetValue("MSH.9");
+            var MSA_1_1 = ack.GetValue("MSA.1");
+            var MSA_1_2 = ack.GetValue("MSA.2");
+
+            Assert.AreEqual(MSA_1_1, "AA");
+            Assert.AreEqual(MSH_1_9, MSH_1_9_A);
+            Assert.AreEqual(MSH_1_9, MSA_1_2);
+        }
+
+        [TestMethod]
+        public void GetNack()
+        {
+            var message = new Message(this.HL7_ADT);
+            message.ParseMessage();
+
+            var error = "Error message";
+            var code = "AR";
+            var ack = message.GetNACK(code, error);
+
+            var MSH_1_9 = message.GetValue("MSH.9");
+            var MSH_1_9_A = ack.GetValue("MSH.9");
+            var MSA_1_1 = ack.GetValue("MSA.1");
+            var MSA_1_2 = ack.GetValue("MSA.2");
+            var MSA_1_3 = ack.GetValue("MSA.3");
+
+            Assert.AreEqual(MSH_1_9, MSH_1_9_A);
+            Assert.AreEqual(MSH_1_9, MSA_1_2);
+            Assert.AreEqual(MSA_1_1, code);
+            Assert.AreEqual(MSA_1_3, error);
         }
     }
 }

@@ -527,32 +527,7 @@ namespace HL7.Dotnetcore
         /// <returns>An ACK message if success, otherwise null</returns>
         public Message GetACK()
         {
-            string ackMsg;
-            if (this.MessageStructure != "ACK")
-            {
-                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
-                var msh = this.SegmentList["MSH"].First();
-                var delim = this.Encoding.FieldDelimiter;
-
-                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
-                + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
-                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
-
-                ackMsg += "MSA" + delim + "AA" + delim + this.MessageControlID + this.Encoding.SegmentDelimiter;
-            }
-            else
-                return null;
-
-            try 
-            {
-                var ack = new Message(ackMsg);
-                ack.ParseMessage();
-                return ack;
-            }
-            catch 
-            {
-                return null;
-            }
+            return this.createAckMessage("AA", false, null);
         }
 
         [Obsolete("Deprecated method. Please use GetNACK() instead.")]
@@ -565,36 +540,11 @@ namespace HL7.Dotnetcore
         /// Builds a negative ack for this message
         /// </summary>
         /// <param name="code">ack code like AR, AE</param>
-        /// <param name="errMsg">error message to be sent with ACK</param>
+        /// <param name="errMsg">error message to be sent with NACK</param>
         /// <returns>A NACK message if success, otherwise null</returns>
         public Message GetNACK(string code, string errMsg)
         {
-            string ackMsg;
-            if (this.MessageStructure != "ACK")
-            {
-                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
-                var msh = this.SegmentList["MSH"].First();
-                var delim = this.Encoding.FieldDelimiter;
-                
-                ackMsg = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim + msh.FieldList[2].Value + delim 
-                + msh.FieldList[3].Value + delim + dateString + delim + msh.FieldList[7].Value + delim + "ACK" + delim + this.MessageControlID + delim 
-                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
-                
-                ackMsg += "MSA" + delim + code + delim + this.MessageControlID + delim + errMsg + this.Encoding.SegmentDelimiter;
-            }
-            else
-                return null;
-
-            try 
-            {
-                var nack = new Message(ackMsg);
-                nack.ParseMessage();
-                return nack;
-            }
-            catch 
-            {
-                return null;
-            }
+            return this.createAckMessage(code, true, errMsg);
         }
 
         public bool AddNewSegment(Segment newSegment)
@@ -628,6 +578,44 @@ namespace HL7.Dotnetcore
         public Segment DefaultSegment(string segmentName)
         {
             return getAllSegmentsInOrder().First(o => o.Name.Equals(segmentName));
+        }
+
+        /// <summary>
+        /// Builds an ACK or NACK message for this message
+        /// </summary>
+        /// <param name="code">ack code like AA, AR, AE</param>
+        /// <param name="isNack">true for generating a NACK message, otherwise false</param>
+        /// <param name="errMsg">error message to be sent with NACK</param>
+        /// <returns>An ACK or NACK message if success, otherwise null</returns>
+        private Message createAckMessage(string code, bool isNack, string errMsg)
+        {
+            string response;
+
+            if (this.MessageStructure != "ACK")
+            {
+                var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
+                var msh = this.SegmentList["MSH"].First();
+                var delim = this.Encoding.FieldDelimiter;
+                
+                response = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[3].Value + delim + msh.FieldList[2].Value + delim + msh.FieldList[1].Value + delim 
+                + msh.FieldList[4].Value + delim + dateString + delim + delim + "ACK" + delim + this.MessageControlID + delim 
+                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
+                
+                response += "MSA" + delim + code + delim + this.MessageControlID + (isNack ? delim + errMsg : string.Empty) + this.Encoding.SegmentDelimiter;
+            }
+            else
+                return null;
+
+            try 
+            {
+                var message = new Message(response);
+                message.ParseMessage();
+                return message;
+            }
+            catch 
+            {
+                return null;
+            }
         }
 
         /// <summary>
