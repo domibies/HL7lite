@@ -170,6 +170,20 @@ namespace HL7.Dotnetcore.Test
             message.ParseMessage();
             var ack = message.GetACK();
 
+            var MSH_1_2 = message.GetValue("MSH.2");
+            var MSH_1_3 = message.GetValue("MSH.3");
+            var MSH_1_4 = message.GetValue("MSH.4");
+            var MSH_1_5 = message.GetValue("MSH.5");
+            var MSH_1_2_A = ack.GetValue("MSH.2");
+            var MSH_1_3_A = ack.GetValue("MSH.3");
+            var MSH_1_4_A = ack.GetValue("MSH.4");
+            var MSH_1_5_A = ack.GetValue("MSH.5");
+
+            Assert.AreEqual(MSH_1_2, MSH_1_4_A);
+            Assert.AreEqual(MSH_1_3, MSH_1_5_A);
+            Assert.AreEqual(MSH_1_4, MSH_1_2_A);
+            Assert.AreEqual(MSH_1_5, MSH_1_3_A);
+
             var MSH_1_9 = message.GetValue("MSH.9");
             var MSH_1_9_A = ack.GetValue("MSH.9");
             var MSA_1_1 = ack.GetValue("MSA.1");
@@ -189,6 +203,20 @@ namespace HL7.Dotnetcore.Test
             var error = "Error message";
             var code = "AR";
             var ack = message.GetNACK(code, error);
+
+            var MSH_1_2 = message.GetValue("MSH.2");
+            var MSH_1_3 = message.GetValue("MSH.3");
+            var MSH_1_4 = message.GetValue("MSH.4");
+            var MSH_1_5 = message.GetValue("MSH.5");
+            var MSH_1_2_A = ack.GetValue("MSH.2");
+            var MSH_1_3_A = ack.GetValue("MSH.3");
+            var MSH_1_4_A = ack.GetValue("MSH.4");
+            var MSH_1_5_A = ack.GetValue("MSH.5");
+
+            Assert.AreEqual(MSH_1_2, MSH_1_4_A);
+            Assert.AreEqual(MSH_1_3, MSH_1_5_A);
+            Assert.AreEqual(MSH_1_4, MSH_1_2_A);
+            Assert.AreEqual(MSH_1_5, MSH_1_3_A);
 
             var MSH_1_9 = message.GetValue("MSH.9");
             var MSH_1_9_A = ack.GetValue("MSH.9");
