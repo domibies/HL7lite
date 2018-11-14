@@ -195,6 +195,13 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
+        public void AddSegmentMSH()
+        {
+            var message = new Message();
+            message.AddSegmentMSH("test", "sendingFacility", "test","test", "test", "ADR^A19", "test", "D", "2.5");
+        }
+
+        [TestMethod]
         public void GetNack()
         {
             var message = new Message(this.HL7_ADT);

@@ -593,6 +593,7 @@ namespace HL7.Dotnetcore
                 + processingID + delim + version + this.Encoding.SegmentDelimiter;
 
                 var message = new Message(response);
+                message.ParseMessage();
                 this.AddNewSegment(message.DefaultSegment("MSH"));
         }
 
