@@ -56,6 +56,7 @@ namespace HL7.Dotnetcore
         {
             bool isValid = false;
             bool isParsed = false;
+
             try
             {
                 isValid = this.validateMessage();
@@ -74,11 +75,10 @@ namespace HL7.Dotnetcore
                 try
                 {
                     if (allSegments == null || allSegments.Count <= 0)
-                    {
                         allSegments = MessageHelper.SplitMessage(HL7Message);
-                    }
 
                     short SegSeqNo = 0;
+
                     foreach (string strSegment in allSegments)
                     {
                         if (string.IsNullOrWhiteSpace(strSegment))
@@ -99,7 +99,7 @@ namespace HL7.Dotnetcore
 
                     try
                     {
-                        strSerializedMessage = SerializeMessage(false); 
+                        strSerializedMessage = this.SerializeMessage(false); 
                     }
                     catch (HL7Exception ex)
                     {
@@ -121,13 +121,8 @@ namespace HL7.Dotnetcore
                     throw new HL7Exception("Failed to parse the message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
                 }
             }
+            
             return isParsed;
-        }
-
-        [Obsolete("Deprecated method. Please use SerializeMessage() instead.")]
-        public string serializeMessage(bool validate)
-        {
-            return this.SerializeMessage(validate);
         }
 
         /// <summary>
@@ -151,14 +146,17 @@ namespace HL7.Dotnetcore
                     foreach (Segment seg in _segListOrdered)
                     {
                         currentSegName = seg.Name;
-
                         strMessage += seg.Name + this.Encoding.FieldDelimiter;
-                        for (int i = 0; i<seg.FieldList.Count; i++)
+
+                        int startField = currentSegName == "MSH" ? 1 : 0;
+
+                        for (int i = startField; i<seg.FieldList.Count; i++)
                         {
-                            if (i > 0)
+                            if (i > startField)
                                 strMessage += this.Encoding.FieldDelimiter;
 
                             var field = seg.FieldList[i];
+
                             if (field.IsDelimiters)
                             {
                                 strMessage += field.Value;
@@ -167,9 +165,9 @@ namespace HL7.Dotnetcore
 
                             if (field.HasRepetitions)
                             {
-                                for (int j=0; j<field.RepeatitionList.Count; j++)
+                                for (int j = 0; j < field.RepeatitionList.Count; j++)
                                 {
-                                    if (j>0)
+                                    if (j > 0)
                                         strMessage += this.Encoding.RepeatDelimiter;
 
                                     strMessage += serializeField(field.RepeatitionList[j]);
@@ -185,7 +183,8 @@ namespace HL7.Dotnetcore
                 {
                     if (currentSegName == "MSH")
                         throw new HL7Exception("Failed to serialize the MSH segment with error - " + ex.Message, HL7Exception.SERIALIZATION_ERROR);
-                    else throw;
+                    else 
+                        throw;
                 }
 
                 return strMessage;
@@ -196,12 +195,6 @@ namespace HL7.Dotnetcore
             }
         }
 
-        [Obsolete("Deprecated method. Please use GetValue() instead.")]
-        public string getValue(string strValueFormat)
-        {
-            return this.GetValue(strValueFormat);
-        }
-        
         /// <summary>
         /// Get the Value of specific Field/Component/SubCpomponent, throws error if field/component index is not valid
         /// </summary>
@@ -226,6 +219,7 @@ namespace HL7.Dotnetcore
             if (isValid)
             {
                 segmentName = allComponents[0];
+
                 if (SegmentList.ContainsKey(segmentName))
                 {
                     if (comCount == 4)
@@ -260,6 +254,7 @@ namespace HL7.Dotnetcore
                     else if (comCount == 2)
                     {
                         Int32.TryParse(allComponents[1], out fieldIndex);
+
                         try
                         {
                             strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].Value;
@@ -282,18 +277,16 @@ namespace HL7.Dotnetcore
                     }
                 }
                 else
+                {
                     throw new HL7Exception("Segment name not available: " + strValueFormat);
+                }
             }
             else
+            {
                 throw new HL7Exception("Request format is not valid: " + strValueFormat);
+            }
 
             return strValue;
-        }
-
-        [Obsolete("Deprecated method. Please use SetValue() instead.")]
-        public bool setValue(string strValueFormat, string strValue)
-        {
-            return this.SetValue(strValueFormat, strValue);
         }
 
         /// <summary>
@@ -492,13 +485,13 @@ namespace HL7.Dotnetcore
             if (isValid)
             {
                 segmentName = AllComponents[0];
+
                 if (comCount >= 3)
                 {
                     try
                     {
                         Int32.TryParse(AllComponents[1], out fieldIndex);
                         Int32.TryParse(AllComponents[2], out componentIndex);
-
                         isSubComponentized = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].IsSubComponentized;
                     }
                     catch (Exception ex)
@@ -515,12 +508,6 @@ namespace HL7.Dotnetcore
             return isSubComponentized;
         }
 
-        [Obsolete("Deprecated method. Please use GetACK() instead.")]
-        public Message getACK()
-        {
-            return this.GetACK();
-        }
-
         /// <summary>
         /// Builds the acknowledgement message for this message
         /// </summary>
@@ -528,12 +515,6 @@ namespace HL7.Dotnetcore
         public Message GetACK()
         {
             return this.createAckMessage("AA", false, null);
-        }
-
-        [Obsolete("Deprecated method. Please use GetNACK() instead.")]
-        public Message getNACK(string code, string errMsg)
-        {
-            return this.GetNACK(code, errMsg);
         }
 
         /// <summary>
@@ -588,9 +569,9 @@ namespace HL7.Dotnetcore
                 var delim = this.Encoding.FieldDelimiter;
 
                 string response = "MSH" + this.Encoding.AllDelimiters + delim + sendingApplication + delim + sendingFacility + delim 
-                + receivingApplication + delim + receivingFacility + delim
-                + dateString + delim + security + delim + messageType + delim + messageControlID + delim 
-                + processingID + delim + version + this.Encoding.SegmentDelimiter;
+                    + receivingApplication + delim + receivingFacility + delim
+                    + dateString + delim + security + delim + messageType + delim + messageControlID + delim 
+                    + processingID + delim + version + this.Encoding.SegmentDelimiter;
 
                 var message = new Message(response);
                 message.ParseMessage();
@@ -614,15 +595,17 @@ namespace HL7.Dotnetcore
                 var msh = this.SegmentList["MSH"].First();
                 var delim = this.Encoding.FieldDelimiter;
                 
-                response = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[3].Value + delim + msh.FieldList[4].Value + delim 
-                + msh.FieldList[1].Value + delim + msh.FieldList[2].Value + delim
-                + dateString + delim + delim + "ACK" + delim + this.MessageControlID + delim 
-                + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
+                response = "MSH" + this.Encoding.AllDelimiters + delim + msh.FieldList[4].Value + delim + msh.FieldList[5].Value + delim 
+                    + msh.FieldList[2].Value + delim + msh.FieldList[3].Value + delim
+                    + dateString + delim + delim + "ACK" + delim + this.MessageControlID + delim 
+                    + this.ProcessingID + delim + this.Version + this.Encoding.SegmentDelimiter;
                 
                 response += "MSA" + delim + code + delim + this.MessageControlID + (isNack ? delim + errMsg : string.Empty) + this.Encoding.SegmentDelimiter;
             }
             else
+            {
                 return null;
+            }
 
             try 
             {
@@ -690,7 +673,7 @@ namespace HL7.Dotnetcore
                     string _fieldDelimiters_Message = allSegments[0].Substring(3, 8 - 3);
                     this.Encoding.EvaluateDelimiters(_fieldDelimiters_Message);
 
-                    //count field separators, MSH.12 is required so there should be at least 11 field separators in MSH
+                    // Count field separators, MSH.12 is required so there should be at least 11 field separators in MSH
                     int countFieldSepInMSH = allSegments[0].Count(f => f == Encoding.FieldDelimiter);
 
                     if (countFieldSepInMSH < 11)
@@ -698,8 +681,9 @@ namespace HL7.Dotnetcore
                         throw new HL7Exception("MSH segment doesn't contain all the required fields", HL7Exception.BAD_MESSAGE);
                     }
 
-                    //Find Message Version
+                    // Find Message Version
                     var MSHFields = MessageHelper.SplitString(allSegments[0], Encoding.FieldDelimiter);
+
                     if (MSHFields.Count >= 12)
                     {
                         this.Version = MessageHelper.SplitString(MSHFields[11], Encoding.ComponentDelimiter)[0];
@@ -710,13 +694,14 @@ namespace HL7.Dotnetcore
                     }
 
                     //Find Message Type & Trigger Event
-
                     try
                     {
                         string MSH_9 = MSHFields[8];
+
                         if (!string.IsNullOrEmpty(MSH_9))
                         {
                             var MSH_9_comps = MessageHelper.SplitString(MSH_9, this.Encoding.ComponentDelimiter);
+
                             if (MSH_9_comps.Count >= 3)
                             {
                                 this.MessageStructure = MSH_9_comps[2];
@@ -788,13 +773,12 @@ namespace HL7.Dotnetcore
             if (field.ComponentList.Count > 0)
             {
                 int indexCom = 0;
+
                 foreach (Component com in field.ComponentList)
                 {
                     indexCom++;
                     if (com.SubComponentList.Count > 0)
-                    {
                         strMessage += string.Join(this.Encoding.SubComponentDelimiter.ToString(), com.SubComponentList.Select(sc => this.Encoding.Encode(sc.Value)));
-                    }
                     else
                         strMessage += this.Encoding.Encode(com.Value);
 
@@ -850,7 +834,9 @@ namespace HL7.Dotnetcore
                     }
                 }
                 else
+                {
                     isValid = false;
+                }
             }
 
             return isValid;

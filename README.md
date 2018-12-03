@@ -10,6 +10,11 @@ For more information about the original implementation read:
 
 The field encoding and decoding methods have been based on https://github.com/elomagic/hl7inspector
 
+## Breaking changes
+Since version 2.9, the MSH segment will have an extra field at the beginning of the segment list, containing the field separator. This is according to [the HL7 standard]( https://www.hl7.org/documentcenter/public_temp_CACD15D9-1C23-BA17-0C050D19F5A35765/wg/conf/HL7MSH.htm), as mentioned in Issue #26. Every field index in that segment should be increased by one.
+
+Since version 2.9, some previously deprecated methods starting with lowercase have been removed. The replacement methods starting with uppercase shall be used instead.
+
 ## Object construction
 
 ### Create a Message object and pass raw HL7 message in text format
@@ -104,7 +109,7 @@ Segment IN1 = message.Segments("IN1")[0];
 ### Access field values
 
 ````cSharp
-string SendingFacility = message.getValue("MSH.4");
+string SendingFacility = message.GetValue("MSH.4");
 
 // OR
 
@@ -150,7 +155,7 @@ Field PID3_R2 = message.Segments("PID")[0].Fields(3).Repetitions(2);
 ### Update value of any field i.e. to update PV1.2 – patient class
 
 ````cSharp
-message.setValue("PV1.2", "I");
+message.SetValue("PV1.2", "I");
 
 // OR
 
@@ -170,7 +175,7 @@ string messageStructure = message.MessageStructure;
 ### Access particular component i.e. PID.5.1 – Patient Family Name
 
 ````cSharp
-string PatName1 = message.getValue("PID.5.1");
+string PatName1 = message.GetValue("PID.5.1");
 
 // OR
 
@@ -194,7 +199,7 @@ message.Segments("PID")[0].Fields(5).Components(1).Value = "Jayant";
 
 // OR
 
-message.setValue("PID.5.1", "Jayant");
+message.SetValue("PID.5.1", "Jayant");
 ````
 
 ### Adding new Segment
@@ -267,20 +272,20 @@ oru.AddNewSegment(pid);
 To generate an ACK message
 
 ````cSharp
-Message ack = message.getACK();
+Message ack = message.GetACK();
 ````
 
 To generate negative ACK (NACK) message with error message
 
 ````cSharp
-Message nack = message.getNACK("AR", "Invalid Processing ID");
+Message nack = message.GetNACK("AR", "Invalid Processing ID");
 ````
 
 It may be required to change the application and facility fields
 
 ````cSharp
-Message ack = message.getACK();
-ack.setValue("MSH.3", myHL7AppName);
-ack.setValue("MSH.4", myHL7Facility);
+Message ack = message.GetACK();
+ack.SetValue("MSH.3", appName);
+ack.SetValue("MSH.4", facility);
 
 ````

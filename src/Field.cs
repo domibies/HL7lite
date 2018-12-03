@@ -30,12 +30,12 @@ namespace HL7.Dotnetcore
 
         protected override void ProcessValue()
         {
-            if (this.IsDelimiters)  // Special case for the delimiters field (MSH)
+            if (this.IsDelimiters)  // Special case for the delimiters fields (MSH)
             {
                 var subcomponent = new SubComponent(_value, this.Encoding);
 
                 this.ComponentList = new ComponentCollection();
-                Component component = new Component(this.Encoding);
+                Component component = new Component(this.Encoding, true);
 
                 component.SubComponentList.Add(subcomponent);
 
@@ -61,12 +61,14 @@ namespace HL7.Dotnetcore
                 List<string> allComponents = MessageHelper.SplitString(_value, this.Encoding.ComponentDelimiter);
 
                 this.ComponentList = new ComponentCollection();
+
                 foreach (string strComponent in allComponents)
                 {
                     Component component = new Component(this.Encoding);
                     component.Value = strComponent;
                     this.ComponentList.Add(component);
                 }
+
                 this.IsComponentized = this.ComponentList.Count > 1;
             }
         }
@@ -77,11 +79,11 @@ namespace HL7.Dotnetcore
             this.Encoding = encoding;
         }
 
-        public Field(string pValue, HL7Encoding encoding)
+        public Field(string value, HL7Encoding encoding)
         {
             this.ComponentList = new ComponentCollection();
             this.Encoding = encoding;
-            this.Value = pValue;
+            this.Value = value;
         }
 
         public bool AddNewComponent(Component com)
@@ -97,11 +99,11 @@ namespace HL7.Dotnetcore
             }
         }
 
-        public bool AddNewComponent(Component com, int position)
+        public bool AddNewComponent(Component component, int position)
         {
             try
             {
-                this.ComponentList.Add(com, position);
+                this.ComponentList.Add(component, position);
                 return true;
             }
             catch (Exception ex)
@@ -153,18 +155,15 @@ namespace HL7.Dotnetcore
 
     internal class FieldCollection : List<Field>
     {
-        internal FieldCollection() : base()
-        {
-            
-        }
-
         internal new Field this[int index]
         {
             get
             {
                 Field field = null;
+
                 if (index < base.Count)
                     field = base[index];
+
                 return field;
             }
             set
@@ -192,7 +191,9 @@ namespace HL7.Dotnetcore
             int listCount = base.Count;
 
             if (position < listCount)
+            {
                 base[position] = field;
+            }
             else
             {
                 for (int fieldIndex = listCount; fieldIndex < position; fieldIndex++)
@@ -200,6 +201,7 @@ namespace HL7.Dotnetcore
                     Field blankField = new Field(string.Empty, field.Encoding);
                     base.Add(blankField);
                 }
+                
                 base.Add(field);
             }
         }

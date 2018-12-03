@@ -13,6 +13,12 @@ namespace HL7.Dotnetcore.Test
         private string HL7_ORM;
         private string HL7_ADT;
 
+        public static void Main(string[] args)
+        {
+            // var test = new HL7Test();
+            // test.GetAck();
+        }
+
         public HL7Test()
         {
             var path = Path.GetDirectoryName(typeof(HL7Test).GetTypeInfo().Assembly.Location) + "/";
@@ -25,6 +31,9 @@ namespace HL7.Dotnetcore.Test
         {
             Message message = new Message(this.HL7_ORM);
             Assert.IsNotNull(message);
+
+            // message.ParseMessage();
+            // File.WriteAllText("SmokeTestResult.txt", message.SerializeMessage(false));
         }
 
         [TestMethod]
@@ -52,8 +61,8 @@ namespace HL7.Dotnetcore.Test
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
-            Segment MSH_1 = message.DefaultSegment("MSH");
-            Assert.IsNotNull(MSH_1);
+            Segment MSH = message.DefaultSegment("MSH");
+            Assert.IsNotNull(MSH);
         }
 
         [TestMethod]
@@ -62,8 +71,8 @@ namespace HL7.Dotnetcore.Test
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
-            var MSH_1_8 = message.GetValue("MSH.8");
-            Assert.IsTrue(MSH_1_8.StartsWith("ADT"));
+            var MSH_9 = message.GetValue("MSH.9");
+            Assert.AreEqual("ADT^O01", MSH_9);
         }
 
         [TestMethod]
@@ -72,8 +81,8 @@ namespace HL7.Dotnetcore.Test
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
 
-            var MSH_1_8_1 = message.GetValue("MSH.8.1");
-            Assert.AreEqual("ADT", MSH_1_8_1);
+            var MSH_9_1 = message.GetValue("MSH.9.1");
+            Assert.AreEqual("ADT", MSH_9_1);
         }
 
         [TestMethod]
@@ -149,18 +158,28 @@ namespace HL7.Dotnetcore.Test
         public void AddField()
         {
             var enc = new HL7Encoding();
-            Segment mshSeg = new Segment("PID", enc);
+            Segment PID = new Segment("PID", enc);
             // Creates a new Field
-            mshSeg.AddNewField("1", 1);
+            PID.AddNewField("1", 1);
 
             // Overwrites the old Field
-            mshSeg.AddNewField("2", 1);
+            PID.AddNewField("2", 1);
 
             Message message = new Message();
-            message.AddNewSegment(mshSeg);
+            message.AddNewSegment(PID);
             var str = message.SerializeMessage(false);
 
             Assert.AreEqual("PID|2\r", str);
+        }
+
+        [TestMethod]
+        public void GetMSH1()
+        {
+            var message = new Message(this.HL7_ADT);
+            message.ParseMessage();
+
+            var MSH_1 = message.GetValue("MSH.1");
+            Assert.AreEqual("|", MSH_1);
         }
 
         [TestMethod]
@@ -170,28 +189,28 @@ namespace HL7.Dotnetcore.Test
             message.ParseMessage();
             var ack = message.GetACK();
 
-            var MSH_1_2 = message.GetValue("MSH.2");
-            var MSH_1_3 = message.GetValue("MSH.3");
-            var MSH_1_4 = message.GetValue("MSH.4");
-            var MSH_1_5 = message.GetValue("MSH.5");
-            var MSH_1_2_A = ack.GetValue("MSH.2");
-            var MSH_1_3_A = ack.GetValue("MSH.3");
-            var MSH_1_4_A = ack.GetValue("MSH.4");
-            var MSH_1_5_A = ack.GetValue("MSH.5");
+            var MSH_3 = message.GetValue("MSH.3");
+            var MSH_4 = message.GetValue("MSH.4");
+            var MSH_5 = message.GetValue("MSH.5");
+            var MSH_6 = message.GetValue("MSH.6");
+            var MSH_3_A = ack.GetValue("MSH.3");
+            var MSH_4_A = ack.GetValue("MSH.4");
+            var MSH_5_A = ack.GetValue("MSH.5");
+            var MSH_6_A = ack.GetValue("MSH.6");
 
-            Assert.AreEqual(MSH_1_2, MSH_1_4_A);
-            Assert.AreEqual(MSH_1_3, MSH_1_5_A);
-            Assert.AreEqual(MSH_1_4, MSH_1_2_A);
-            Assert.AreEqual(MSH_1_5, MSH_1_3_A);
+            Assert.AreEqual(MSH_3, MSH_5_A);
+            Assert.AreEqual(MSH_4, MSH_6_A);
+            Assert.AreEqual(MSH_5, MSH_3_A);
+            Assert.AreEqual(MSH_6, MSH_4_A);
 
-            var MSH_1_9 = message.GetValue("MSH.9");
-            var MSH_1_9_A = ack.GetValue("MSH.9");
+            var MSH_10 = message.GetValue("MSH.10");
+            var MSH_10_A = ack.GetValue("MSH.10");
             var MSA_1_1 = ack.GetValue("MSA.1");
             var MSA_1_2 = ack.GetValue("MSA.2");
 
             Assert.AreEqual(MSA_1_1, "AA");
-            Assert.AreEqual(MSH_1_9, MSH_1_9_A);
-            Assert.AreEqual(MSH_1_9, MSA_1_2);
+            Assert.AreEqual(MSH_10, MSH_10_A);
+            Assert.AreEqual(MSH_10, MSA_1_2);
         }
 
         [TestMethod]
@@ -211,28 +230,28 @@ namespace HL7.Dotnetcore.Test
             var code = "AR";
             var ack = message.GetNACK(code, error);
 
-            var MSH_1_2 = message.GetValue("MSH.2");
-            var MSH_1_3 = message.GetValue("MSH.3");
-            var MSH_1_4 = message.GetValue("MSH.4");
-            var MSH_1_5 = message.GetValue("MSH.5");
-            var MSH_1_2_A = ack.GetValue("MSH.2");
-            var MSH_1_3_A = ack.GetValue("MSH.3");
-            var MSH_1_4_A = ack.GetValue("MSH.4");
-            var MSH_1_5_A = ack.GetValue("MSH.5");
+            var MSH_3 = message.GetValue("MSH.3");
+            var MSH_4 = message.GetValue("MSH.4");
+            var MSH_5 = message.GetValue("MSH.5");
+            var MSH_6 = message.GetValue("MSH.6");
+            var MSH_3_A = ack.GetValue("MSH.3");
+            var MSH_4_A = ack.GetValue("MSH.4");
+            var MSH_5_A = ack.GetValue("MSH.5");
+            var MSH_6_A = ack.GetValue("MSH.6");
 
-            Assert.AreEqual(MSH_1_2, MSH_1_4_A);
-            Assert.AreEqual(MSH_1_3, MSH_1_5_A);
-            Assert.AreEqual(MSH_1_4, MSH_1_2_A);
-            Assert.AreEqual(MSH_1_5, MSH_1_3_A);
+            Assert.AreEqual(MSH_3, MSH_5_A);
+            Assert.AreEqual(MSH_4, MSH_6_A);
+            Assert.AreEqual(MSH_5, MSH_3_A);
+            Assert.AreEqual(MSH_6, MSH_4_A);
 
-            var MSH_1_9 = message.GetValue("MSH.9");
-            var MSH_1_9_A = ack.GetValue("MSH.9");
+            var MSH_10 = message.GetValue("MSH.10");
+            var MSH_10_A = ack.GetValue("MSH.10");
             var MSA_1_1 = ack.GetValue("MSA.1");
             var MSA_1_2 = ack.GetValue("MSA.2");
             var MSA_1_3 = ack.GetValue("MSA.3");
 
-            Assert.AreEqual(MSH_1_9, MSH_1_9_A);
-            Assert.AreEqual(MSH_1_9, MSA_1_2);
+            Assert.AreEqual(MSH_10, MSH_10_A);
+            Assert.AreEqual(MSH_10, MSA_1_2);
             Assert.AreEqual(MSA_1_1, code);
             Assert.AreEqual(MSA_1_3, error);
         }

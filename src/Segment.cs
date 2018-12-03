@@ -31,16 +31,26 @@ namespace HL7.Dotnetcore
             {
                 allFields.RemoveAt(0);
             }
-            for (int i=0; i<allFields.Count; i++)
+            
+            for (int i = 0; i < allFields.Count; i++)
             {
                 string strField = allFields[i];
-                
                 Field field = new Field(this.Encoding);   
-                if (Name == "MSH" && i==0)
+
+                if (Name == "MSH" && i == 0)
                     field.IsDelimiters = true;  // special case
 
                 field.Value = strField;
-                FieldList.Add(field);
+                this.FieldList.Add(field);
+            }
+
+            if (this.Name == "MSH")
+            {
+                var field1 = new Field(this.Encoding);
+                field1.IsDelimiters = true;
+                field1.Value = this.Encoding.FieldDelimiter.ToString();
+
+                this.FieldList.Insert(0,field1);
             }
         }
 
@@ -101,11 +111,11 @@ namespace HL7.Dotnetcore
 
             try
             {
-                field = FieldList[position];
+                field = this.FieldList[position];
             }
             catch (Exception ex)
             {
-                throw new HL7Exception("Field not availalbe Error - " + ex.Message);
+                throw new HL7Exception("Field not available Error - " + ex.Message);
             }
 
             return field;
@@ -113,7 +123,7 @@ namespace HL7.Dotnetcore
 
         public List<Field> GetAllFields()
         {
-            return FieldList;
+            return this.FieldList;
         }
     }
 }

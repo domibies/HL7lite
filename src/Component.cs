@@ -9,8 +9,11 @@ namespace HL7.Dotnetcore
 
         public bool IsSubComponentized { get; set; } = false;
 
-        public Component(HL7Encoding encoding)
+        private bool isDelimiter = false;
+
+        public Component(HL7Encoding encoding, bool isDelimiter = false)
         {
+            this.isDelimiter = isDelimiter;
             this.SubComponentList = new List<SubComponent>();
             this.Encoding = encoding;
         }
@@ -23,15 +26,21 @@ namespace HL7.Dotnetcore
 
         protected override void ProcessValue()
         {
-            List<string> AllSubComponents = MessageHelper.SplitString(_value, this.Encoding.SubComponentDelimiter);
+            List<string> allSubComponents;
+            
+            if (this.isDelimiter)
+                allSubComponents = new List<string>(new [] {this.Value});
+            else
+                allSubComponents = MessageHelper.SplitString(_value, this.Encoding.SubComponentDelimiter);
 
-            if (AllSubComponents.Count > 1)
+            if (allSubComponents.Count > 1)
             {
                 this.IsSubComponentized = true;
             }
 
-            SubComponentList = new List<SubComponent>();
-            foreach (string strSubComponent in AllSubComponents)
+            this.SubComponentList = new List<SubComponent>();
+
+            foreach (string strSubComponent in allSubComponents)
             {
                 SubComponent subComponent = new SubComponent(this.Encoding.Decode(strSubComponent), this.Encoding);
                 SubComponentList.Add(subComponent);
@@ -70,10 +79,12 @@ namespace HL7.Dotnetcore
         {
             get
             {
-                Component com = null;
+                Component component = null;
+
                 if (index < base.Count)
-                    com = base[index];
-                return com;
+                    component = base[index];
+
+                return component;
             }
             set
             {
@@ -84,10 +95,10 @@ namespace HL7.Dotnetcore
         /// <summary>
         /// Add Component at next position
         /// </summary>
-        /// <param name="com">Component</param>
-        internal new void Add(Component com)
+        /// <param name="component">Component</param>
+        internal new void Add(Component component)
         {
-            base.Add(com);
+            base.Add(component);
         }
 
         /// <summary>
@@ -101,15 +112,18 @@ namespace HL7.Dotnetcore
             position = position - 1;
 
             if (position < listCount)
+            {
                 base[position] = component;
+            }
             else
             {
                 for (int comIndex = listCount; comIndex < position; comIndex++)
                 {
-                    Component blankCom = new Component(component.Encoding);
-                    blankCom.Value = string.Empty;
-                    base.Add(blankCom);
+                    Component blankComponent = new Component(component.Encoding);
+                    blankComponent.Value = string.Empty;
+                    base.Add(blankComponent);
                 }
+
                 base.Add(component);
             }
         }
