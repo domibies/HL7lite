@@ -289,3 +289,18 @@ ack.SetValue("MSH.3", appName);
 ack.SetValue("MSH.4", facility);
 
 ````
+
+## Null elements
+
+Null elements (fields, components or subcomponents), also referred to as Present But Null, are expressed in HL7 messages as double quotes, like (see last field):
+
+````
+EVN|A04|20110613083617||""
+````
+
+Whenever requested individually, those elements are returned as `null`, rather than double quotes:
+
+````cSharp
+var expectEmpty = evn.Fields(3).Value; // Will return an empty string
+var expectNull = evn.Fields(4).Value; // Will return null
+````

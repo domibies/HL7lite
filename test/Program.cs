@@ -255,5 +255,20 @@ namespace HL7.Dotnetcore.Test
             Assert.AreEqual(MSA_1_1, code);
             Assert.AreEqual(MSA_1_3, error);
         }
+
+        [TestMethod]
+        public void EmptyAndNullFields()
+        {
+            const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\r\nEVN|A04|20110613083617||\"\"";
+
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+            var evn = message.Segments("EVN")[0];
+
+            var expectEmpty = evn.Fields(3).Value;
+            Assert.AreEqual(string.Empty, expectEmpty);
+            var expectNull = evn.Fields(4).Value;
+            Assert.AreEqual(null, expectNull);
+        }
     }
 }
