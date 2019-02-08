@@ -74,12 +74,12 @@ namespace HL7.Dotnetcore
             {
                 try
                 {
-                    if (allSegments == null || allSegments.Count <= 0)
-                        allSegments = MessageHelper.SplitMessage(HL7Message);
+                    if (this.allSegments == null || this.allSegments.Count <= 0)
+                        this.allSegments = MessageHelper.SplitMessage(HL7Message);
 
                     short SegSeqNo = 0;
 
-                    foreach (string strSegment in allSegments)
+                    foreach (string strSegment in this.allSegments)
                     {
                         if (string.IsNullOrWhiteSpace(strSegment))
                             continue;
@@ -143,8 +143,15 @@ namespace HL7.Dotnetcore
             {
                 try
                 {
+                    // var first = true;
+
                     foreach (Segment seg in _segListOrdered)
                     {
+                        // if (!first)
+                        //     strMessage += this.Encoding.SegmentDelimiter;
+                        // else
+                        //    first = false;
+
                         currentSegName = seg.Name;
                         strMessage += seg.Name + this.Encoding.FieldDelimiter;
 
@@ -176,6 +183,7 @@ namespace HL7.Dotnetcore
                             else
                                 strMessage += serializeField(field);
                         }
+                        
                         strMessage += this.Encoding.SegmentDelimiter;
                     }
                 }
@@ -642,12 +650,13 @@ namespace HL7.Dotnetcore
                     }
 
                     this.Encoding.EvaluateSegmentDelimiter(this.HL7Message);
+                    this.HL7Message = string.Join(this.Encoding.SegmentDelimiter, MessageHelper.SplitMessage(this.HL7Message)) + this.Encoding.SegmentDelimiter;
 
                     //check Segment Name & 4th character of each segment
                     char fourthCharMSH = HL7Message[3];
-                    allSegments = MessageHelper.SplitMessage(HL7Message);
+                    this.allSegments = MessageHelper.SplitMessage(HL7Message);
 
-                    foreach (string strSegment in allSegments)
+                    foreach (string strSegment in this.allSegments)
                     {
                         if (string.IsNullOrWhiteSpace(strSegment))
                             continue;
@@ -670,11 +679,11 @@ namespace HL7.Dotnetcore
                         }
                     }
 
-                    string _fieldDelimiters_Message = allSegments[0].Substring(3, 8 - 3);
+                    string _fieldDelimiters_Message = this.allSegments[0].Substring(3, 8 - 3);
                     this.Encoding.EvaluateDelimiters(_fieldDelimiters_Message);
 
                     // Count field separators, MSH.12 is required so there should be at least 11 field separators in MSH
-                    int countFieldSepInMSH = allSegments[0].Count(f => f == Encoding.FieldDelimiter);
+                    int countFieldSepInMSH = this.allSegments[0].Count(f => f == Encoding.FieldDelimiter);
 
                     if (countFieldSepInMSH < 11)
                     {
@@ -682,7 +691,7 @@ namespace HL7.Dotnetcore
                     }
 
                     // Find Message Version
-                    var MSHFields = MessageHelper.SplitString(allSegments[0], Encoding.FieldDelimiter);
+                    var MSHFields = MessageHelper.SplitString(this.allSegments[0], Encoding.FieldDelimiter);
 
                     if (MSHFields.Count >= 12)
                     {

@@ -26,7 +26,7 @@ namespace HL7.Dotnetcore
 
         public static List<string> SplitMessage(string message)
         {
-            return message.Split(lineSeparators, StringSplitOptions.None).ToList();
+            return message.Split(lineSeparators, StringSplitOptions.None).Where(m => !string.IsNullOrWhiteSpace(m)).ToList();
         }
 
         public static string LongDateWithFractionOfSecond(DateTime dt)

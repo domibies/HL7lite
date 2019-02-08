@@ -16,7 +16,7 @@ namespace HL7.Dotnetcore.Test
         public static void Main(string[] args)
         {
             // var test = new HL7Test();
-            // test.GetAck();
+            // test.ParseTest2();
         }
 
         public HL7Test()
@@ -37,13 +37,23 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void ParseTest()
+        public void ParseTest1()
         {
             var message = new Message(this.HL7_ORM);
 
             var isParsed = message.ParseMessage();
             Assert.IsTrue(isParsed);
         }
+
+        [TestMethod]
+        public void ParseTest2()
+        {
+            var message = new Message(this.HL7_ADT);
+
+            var isParsed = message.ParseMessage();
+            Assert.IsTrue(isParsed);
+        }
+
 
         [TestMethod]
         public void ReadSegmentTest()
@@ -66,7 +76,7 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void ReadField()
+        public void ReadFieldTest()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
@@ -76,7 +86,7 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void ReadComponent()
+        public void ReadComponentTest()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
@@ -86,7 +96,7 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void AddComponents()
+        public void AddComponentsTest()
         {
             var encoding = new HL7Encoding();
             
@@ -122,7 +132,7 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void EmptyFields()
+        public void EmptyFieldsTest()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
@@ -133,7 +143,7 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void EncodingForOutput()
+        public void EncodingForOutputTest()
         {
             const string oruUrl = "domain.com/resource.html?Action=1&ID=2";  // Text with special character (&)
             
@@ -155,7 +165,7 @@ namespace HL7.Dotnetcore.Test
         }
         
         [TestMethod]
-        public void AddField()
+        public void AddFieldTest()
         {
             var enc = new HL7Encoding();
             Segment PID = new Segment("PID", enc);
@@ -173,7 +183,7 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void GetMSH1()
+        public void GetMSH1Test()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
@@ -183,7 +193,7 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void GetAck()
+        public void GetAckTest()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
@@ -214,14 +224,14 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void AddSegmentMSH()
+        public void AddSegmentMSHTest()
         {
             var message = new Message();
             message.AddSegmentMSH("test", "sendingFacility", "test","test", "test", "ADR^A19", "test", "D", "2.5");
         }
 
         [TestMethod]
-        public void GetNack()
+        public void GetNackTest()
         {
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
@@ -257,7 +267,7 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void EmptyAndNullFields()
+        public void EmptyAndNullFieldsTest()
         {
             const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\r\nEVN|A04|20110613083617||\"\"";
 
