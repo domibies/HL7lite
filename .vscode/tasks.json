@@ -30,7 +30,7 @@
             "group": "build"
         },
         {
-            "label": "Publish Nuget",
+            "label": "Pack Nuget Package",
             "command": "dotnet",
             "type": "process",
             "args": [ 
