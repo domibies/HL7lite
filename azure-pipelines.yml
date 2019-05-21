@@ -28,6 +28,7 @@ steps:
     versioningScheme: 'off'
 
 - task: DotNetCoreCLI@2
+  displayName: Prepare nuget package
   inputs:
     command: 'pack'
     feedsToUse: 'select'
