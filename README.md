@@ -2,6 +2,7 @@
 
 [![NuGet](https://img.shields.io/nuget/v/HL7-dotnetcore.svg)](https://www.nuget.org/packages/HL7-dotnetcore/)
 [![github](https://img.shields.io/github/stars/Efferent-Health/HL7-dotnetcore.svg)]()
+[![Build Status](https://efferent.visualstudio.com/open-source/_apis/build/status/Efferent-Health.HL7-dotnetcore?branchName=master)](https://efferent.visualstudio.com/open-source/_build/latest?definitionId=8&branchName=master)
 
 This is a lightweight library for building and parsing HL7 2.x messages, for .Net Standard and .Net Core. It is not tied to any particular version of HL7 nor validates against one. 
 
