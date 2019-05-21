@@ -27,3 +27,16 @@ steps:
     feedsToUse: 'select'
     versioningScheme: 'off'
 
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'pack'
+    feedsToUse: 'select'
+    packagesToPack: 'src/*.csproj'
+    versioningScheme: 'off'
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifacts
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
