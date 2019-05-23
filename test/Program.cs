@@ -282,14 +282,26 @@ namespace HL7.Dotnetcore.Test
             Assert.AreEqual(null, expectNull);
         }
 
-
         [TestMethod]
-        public void MessageWithNullsIsReversable() {
+        public void MessageWithNullsIsReversable() 
+        {
             const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\r\nEVN|A04|20110613083617||\"\"\r\n";
             var message = new Message(sampleMessage);
             message.ParseMessage();
             var serialized = message.SerializeMessage(false);
             Assert.AreEqual(sampleMessage, serialized);
+        }
+
+        [TestMethod]
+        public void RemoveSegment() 
+        {
+            var message = new Message(this.HL7_ADT);
+            message.ParseMessage();
+            Assert.AreEqual(message.Segments("NK1").Count, 2);
+            message.RemoveSegment("NK1", 1);
+            Assert.AreEqual(message.Segments("NK1").Count, 1);
+            message.RemoveSegment("NK1");
+            Assert.AreEqual(message.Segments("NK1").Count, 0);
         }
     }
 }

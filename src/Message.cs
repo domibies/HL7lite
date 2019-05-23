@@ -529,13 +529,18 @@ namespace HL7.Dotnetcore
         /// Builds a negative ack for this message
         /// </summary>
         /// <param name="code">ack code like AR, AE</param>
-        /// <param name="errMsg">error message to be sent with NACK</param>
+        /// <param name="errMsg">Error message to be sent with NACK</param>
         /// <returns>A NACK message if success, otherwise null</returns>
         public Message GetNACK(string code, string errMsg)
         {
             return this.createAckMessage(code, true, errMsg);
         }
 
+        /// <summary>
+        /// Adds a segemnt to the message
+        /// </summary>
+        /// <param name="newSegment">Segment to be appended to the end of the message</param>
+        /// <returns>True if added sucessfully, otherwise false</returns>
         public bool AddNewSegment(Segment newSegment)
         {
             try
@@ -555,6 +560,32 @@ namespace HL7.Dotnetcore
             }
         }
 
+        /// <summary>
+        /// Removes a segment from the message
+        /// </summary>
+        /// <param name="segmentName">Segment to be removed/param>
+        /// <param name="index">Zero-based index of the sement to be removed, in case of multiple. Default is 0.</param>
+        /// <returns>True if found and removed sucessfully, otherwise false</returns>
+        public bool RemoveSegment(string segmentName, int index = 0) 
+        {
+            try
+            {
+                if (!SegmentList.ContainsKey(segmentName))
+                    return false;
+
+                var list = SegmentList[segmentName];
+                if (list.Count <= index)
+                    return false;
+
+                list.RemoveAt(index);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new HL7Exception("Unable to add remove segment. Error - " + ex.Message);
+            }
+        }
+
         public List<Segment> Segments()
         {
             return getAllSegmentsInOrder();
@@ -570,6 +601,18 @@ namespace HL7.Dotnetcore
             return getAllSegmentsInOrder().First(o => o.Name.Equals(segmentName));
         }
 
+        /// <summary>
+        /// Addsthe header segment to a new message
+        /// </summary>
+        /// <param name="sendingApplication">Sending application name</param>
+        /// <param name="sendingFacility">Sending facility name</param>
+        /// <param name="receivingApplication">Receiving application name</param>
+        /// <param name="receivingFacility">Receiving facility name</param>
+        /// <param name="security">Security features. Can be null.</param>
+        /// <param name="messageType">Message type ^ trigger event</param>
+        /// <param name="messageControlID">Message control unique ID</param>
+        /// <param name="processingID">Processing ID ^ processing mode</param>
+        /// <param name="version">HL7 message version (2.x)</param>
         public void AddSegmentMSH(string sendingApplication, string sendingFacility, string receivingApplication, string receivingFacility,
             string security, string messageType, string messageControlID, string processingID, string version)
         {
@@ -578,7 +621,7 @@ namespace HL7.Dotnetcore
 
                 string response = "MSH" + this.Encoding.AllDelimiters + delim + sendingApplication + delim + sendingFacility + delim 
                     + receivingApplication + delim + receivingFacility + delim
-                    + dateString + delim + security + delim + messageType + delim + messageControlID + delim 
+                    + dateString + delim + (security ?? string.Empty) + delim + messageType + delim + messageControlID + delim 
                     + processingID + delim + version + this.Encoding.SegmentDelimiter;
 
                 var message = new Message(response);

@@ -220,7 +220,7 @@ newSeg.AddNewField(ZIB_1);
 newSeg.AddNewField(ZIB_5, 5);
  
 // Add segment ZIB to message
-message.AddNewSegment(newSeg);
+bool success = message.AddNewSegment(newSeg);
 ````
 
 New Segment would look like this:
@@ -233,6 +233,18 @@ After evaluated and modified required values, the message can be obtained again 
 
 ````cSharp
 string strUpdatedMsg = message.SerializeMessage();
+````
+
+### Remove a Segment
+
+Segments are removed individually, including the case where there are repeated segments with the same name
+
+````cSharp
+    // Remove the first segment with name NK1
+    bool success = message.RemoveSegment("NK1") 
+
+    // Remove the second segment with name NK1
+    bool success = message.RemoveSegment("NK1", 1) 
 ````
 
 ### Encoded segments
