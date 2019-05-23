@@ -16,12 +16,6 @@ stages:
         arguments: '--configuration Release'
         feedsToUse: 'select'
         versioningScheme: 'off'
-    - task: PublishBuildArtifacts@1
-      displayName: Publish artifacts
-      inputs:
-        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-        ArtifactName: 'drop'
-        publishLocation: 'Container'
     - task: DotNetCoreCLI@2
       displayName: Unit tests
       inputs:
@@ -36,16 +30,11 @@ stages:
     pool:
       vmImage: 'ubuntu-latest'
     steps:
-    - task: DownloadBuildArtifacts@0
-      displayName: Retrieving build artifacts
-      inputs:
-        buildType: 'current'
-        downloadType: 'specific'
-        downloadPath: '$(System.DefaultWorkingDirectory)'
     - task: DotNetCoreCLI@2
       displayName: Prepare nuget package
       inputs:
         command: 'pack'
+        arguments: '--configuration Release'
         feedsToUse: 'select'
         packagesToPack: '**/HL7-dotnetcore.csproj'
         versioningScheme: 'off'
@@ -53,6 +42,6 @@ stages:
       displayName: 'Publish nuget package'
       inputs:
         command: push
-        packagesToPush: '**/*.nupkg'
+        packagesToPush: '$(Build.ArtifactStagingDirectory)/**/*.nupkg'
         nuGetFeedType: external
         publishFeedCredentials: Nuget.org
