@@ -1,9 +1,16 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
     "version": "2.0.0",
-    "command": "dotnet",
     "tasks": [
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/test/HL7test.csproj"
+            ],
+            "problemMatcher": "$tsc"
+        },
         {
             "label": "Build Release",
             "command": "dotnet",
@@ -20,16 +27,6 @@
             }
         },
         {
-            "label": "Build Debug",
-            "command": "dotnet",
-            "type": "process",
-            "args": [ 
-                "build"
-            ],
-            "problemMatcher": "$msCompile",
-            "group": "build"
-        },
-        {
             "label": "Pack Nuget Package",
             "command": "dotnet",
             "type": "process",
@@ -40,6 +37,6 @@
             ],
             "problemMatcher": "$msCompile",
             "group": "none"
-        },
+        }
     ]
 }

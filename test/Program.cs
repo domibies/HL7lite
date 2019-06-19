@@ -16,7 +16,7 @@ namespace HL7.Dotnetcore.Test
         public static void Main(string[] args)
         {
             // var test = new HL7Test();
-            // test.ParseTest2();
+            // test.ParseDateTime();
         }
 
         public HL7Test()
@@ -302,6 +302,51 @@ namespace HL7.Dotnetcore.Test
             Assert.AreEqual(message.Segments("NK1").Count, 1);
             message.RemoveSegment("NK1");
             Assert.AreEqual(message.Segments("NK1").Count, 0);
+        }
+
+        [DataTestMethod]
+        [DataRow("   20151231234500.1234+2358   ")]
+        [DataRow("20151231234500.1234+2358")]
+        [DataRow("20151231234500.1234-2358")]
+        [DataRow("20151231234500.1234")]
+        [DataRow("20151231234500.12")]
+        [DataRow("20151231234500")]
+        [DataRow("201512312345")]
+        [DataRow("2015123123")]
+        [DataRow("20151231")]
+        [DataRow("201512")]
+        [DataRow("2015")]
+        public void ParseDateTime_Smoke_Positive(string dateTimeString)
+        {
+            var date = MessageHelper.ParseDateTime(dateTimeString);
+            Assert.IsNotNull(date);
+        }
+
+        [DataTestMethod]
+        [DataRow("   20151231234500.1234+23581")]
+        [DataRow("20151231234500.1234+23")]
+        [DataRow("20151231234500.12345")]
+        [DataRow("20151231234500.")]
+        [DataRow("2015123123450")]
+        [DataRow("20151231234")]
+        [DataRow("201512312")]
+        [DataRow("2015123")]
+        [DataRow("20151")]
+        [DataRow("201")]
+        public void ParseDateTime_Smoke_Negative(string dateTimeString)
+        {
+            var date = MessageHelper.ParseDateTime(dateTimeString);
+            Assert.IsNull(date);
+        }
+
+        [TestMethod]
+        public void ParseDateTime_Correctness()
+        {
+            TimeSpan offset;
+            var date = MessageHelper.ParseDateTime("20151231234500.1234-2358", out offset).Value;
+            //Assert.AreEqual(0, d
+            Assert.AreEqual(date, new DateTime(2015,12,31,23,45,00,123));
+            Assert.AreEqual(offset, new TimeSpan(-23,58,0));
         }
     }
 }
