@@ -161,6 +161,29 @@ string msgControlID = message.MessageControlID;
 string messageStructure = message.MessageStructure;
 ````
 
+### Generate ACKs
+
+To generate an ACK message
+
+````cSharp
+Message ack = message.GetACK();
+````
+
+To generate negative ACK (NACK) message with error message
+
+````cSharp
+Message nack = message.GetNACK("AR", "Invalid Processing ID");
+````
+
+It may be required to change the application and facility fields
+
+````cSharp
+Message ack = message.GetACK();
+ack.SetValue("MSH.3", appName);
+ack.SetValue("MSH.4", facility);
+
+````
+
 ## Accessing Components
 
 ### Access particular component i.e. PID.5.1 – Patient Family Name
@@ -270,29 +293,6 @@ Segment pid = ormMessage.DefaultSegment("PID").DeepCopy();
 oru.AddNewSegment(pid);
 ````
 
-### Generate ACKs
-
-To generate an ACK message
-
-````cSharp
-Message ack = message.GetACK();
-````
-
-To generate negative ACK (NACK) message with error message
-
-````cSharp
-Message nack = message.GetNACK("AR", "Invalid Processing ID");
-````
-
-It may be required to change the application and facility fields
-
-````cSharp
-Message ack = message.GetACK();
-ack.SetValue("MSH.3", appName);
-ack.SetValue("MSH.4", facility);
-
-````
-
 ### Null elements
 
 Null elements (fields, components or subcomponents), also referred to as Present But Null, are expressed in HL7 messages as double quotes, like (see last field):
@@ -306,6 +306,21 @@ Whenever requested individually, those elements are returned as `null`, rather t
 ````cSharp
 var expectEmpty = evn.Fields(3).Value; // Will return an empty string
 var expectNull = evn.Fields(4).Value; // Will return null
+````
+
+### Date Handling
+
+A couple of date handling methods have been added, for parsing elements containing valid date/times, including time zones, as described in [the HL7 standard](http://www.hl7.eu/refactored/dtDTM.html). Examples:
+
+````csharp
+// With time zone
+string value1 = "20151231234500.1234+2358";
+TimeSpan offset;
+DateTime dt1 = MessageHelper.ParseDateTime(value1, out offset);
+
+// Date/time only
+string value2 = "20151231234500";
+DateTime dt2 = MessageHelper.ParseDateTime(value2);
 ````
 
 ## Credits
