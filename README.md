@@ -316,11 +316,25 @@ A couple of date handling methods have been added, for parsing elements containi
 // With time zone
 string value1 = "20151231234500.1234+2358";
 TimeSpan offset;
-DateTime dt1 = MessageHelper.ParseDateTime(value1, out offset);
+DateTime? dt1 = MessageHelper.ParseDateTime(value1, out offset);
 
 // Date/time only
 string value2 = "20151231234500";
-DateTime dt2 = MessageHelper.ParseDateTime(value2);
+DateTime? dt2 = MessageHelper.ParseDateTime(value2);
+````
+
+`ParseDateTime` will catch exceptions by default and return `null` in case of invalid dates. For preventing this mechanism, add an extra argument as `true`, like:
+
+````csharp
+try
+{
+    var dt1 = MessageHelper.ParseDateTime(value1, out TimeSpan offse, true);
+    var dt2 = MessageHelper.ParseDateTime(value2, true);
+}
+catch 
+{
+    // do something here
+}
 ````
 
 ## Credits

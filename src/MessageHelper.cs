@@ -46,13 +46,12 @@ namespace HL7.Dotnetcore
             return list.ToArray();
         }
 
-        public static DateTime? ParseDateTime(string dateTimeString)
+        public static DateTime? ParseDateTime(string dateTimeString, bool throwExeption = false)
         {
-            TimeSpan offset;
-            return ParseDateTime(dateTimeString, out offset);
+            return ParseDateTime(dateTimeString, out TimeSpan offset, throwExeption);
         }
 
-        public static DateTime? ParseDateTime(string dateTimeString, out TimeSpan offset)
+        public static DateTime? ParseDateTime(string dateTimeString, out TimeSpan offset, bool throwExeption = false)
         {
             var expr = @"^\s*((?:19|20)[0-9]{2})(?:(1[0-2]|0[1-9])(?:(3[0-1]|[1-2][0-9]|0[1-9])(?:([0-1][0-9]|2[0-3])(?:([0-5][0-9])(?:([0-5][0-9](?:\.[0-9]{1,4})?)?)?)?)?)?)?(?:([+-][0-1][0-9]|[+-]2[0-3])([0-5][0-9]))?\s*$";
             var matches = Regex.Matches(dateTimeString, expr, RegexOptions.Singleline);
@@ -60,8 +59,8 @@ namespace HL7.Dotnetcore
             try
             {
                 if (matches.Count != 1)
-                    return null;
-                
+                    throw new FormatException("Invalid date format");
+
                 var groups = matches[0].Groups;
                 int year = int.Parse(groups[1].Value);
                 int month = groups[2].Success ? int.Parse(groups[2].Value) : 1;
@@ -81,6 +80,9 @@ namespace HL7.Dotnetcore
             }
             catch
             {
+                if (throwExeption)
+                    throw;
+
                 return null;
             }
         }

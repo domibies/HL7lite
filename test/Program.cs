@@ -348,5 +348,39 @@ namespace HL7.Dotnetcore.Test
             Assert.AreEqual(date, new DateTime(2015,12,31,23,45,00,123));
             Assert.AreEqual(offset, new TimeSpan(-23,58,0));
         }
+
+        [TestMethod]
+        public void ParseDateTime_WithException()
+        {
+            try
+            {
+                var date = MessageHelper.ParseDateTime("201", true);
+                Assert.Fail();
+            }
+            catch (AssertFailedException)
+            {
+                throw;
+            }
+            catch
+            {
+            }
+        }
+
+        [TestMethod]
+        public void ParseDateTimeOffset_WithException()
+        {
+            try
+            {
+                var date = MessageHelper.ParseDateTime("201", out TimeSpan offset, true);
+                Assert.Fail();
+            }
+            catch (AssertFailedException)
+            {
+                throw;
+            }
+            catch
+            {
+            }
+        }
     }
 }

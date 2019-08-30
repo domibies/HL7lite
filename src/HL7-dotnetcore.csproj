@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Description>Lightweight HL7 2.x library compatible with .Net Standard and .Net Core</Description>
     <Copyright>(c) Efferent Health, LLC</Copyright>
-    <VersionPrefix>2.14.0</VersionPrefix>
+    <VersionPrefix>2.15.0</VersionPrefix>
     <TargetFrameworks>netstandard1.3;netstandard1.5;netstandard1.6;netstandard2.0</TargetFrameworks>
     <AssemblyName>HL7-dotnetcore</AssemblyName>
     <PackageId>HL7-dotnetcore</PackageId>
@@ -19,13 +19,13 @@
     <RepositoryUrl>https://github.com/Efferent-Health/HL7-dotnetcore</RepositoryUrl>
   </PropertyGroup>
 
-<PropertyGroup>
-     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
- </PropertyGroup>
+  <PropertyGroup>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+  </PropertyGroup>
 
   <ItemGroup>
-     <None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
- </ItemGroup>
+    <None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Runtime" Version="4.3.0" />
