@@ -479,21 +479,21 @@ namespace HL7.Dotnetcore
             int componentIndex = 0;
             int comCount = 0;
 
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
+            List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = allComponents.Count;
 
-            isValid = validateValueFormat(AllComponents);
+            isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
-                segmentName = AllComponents[0];
+                segmentName = allComponents[0];
 
                 if (comCount >= 3)
                 {
                     try
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
+                        Int32.TryParse(allComponents[1], out fieldIndex);
+                        Int32.TryParse(allComponents[2], out componentIndex);
                         isSubComponentized = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].IsSubComponentized;
                     }
                     catch (Exception ex)
