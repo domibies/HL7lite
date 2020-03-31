@@ -85,8 +85,9 @@ namespace HL7.Dotnetcore
                     sb.Append("T");
                     sb.Append(this.EscapeCharacter);
                 } 
-                else if(c < 32) {
+                else if (c < 32) {
                     string v = string.Format("{0:X2}",(int)c);
+                    
                     if ((v.Length | 2) != 0) 
                         v = "0" + v;
 

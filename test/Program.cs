@@ -3,8 +3,6 @@ using System.IO;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using HL7.Dotnetcore;
-
 namespace HL7.Dotnetcore.Test
 {
     [TestClass]
@@ -16,7 +14,7 @@ namespace HL7.Dotnetcore.Test
         public static void Main(string[] args)
         {
             // var test = new HL7Test();
-            // test.ParseDateTime();
+            // test.RepetitionTest();
         }
 
         public HL7Test()
@@ -381,6 +379,27 @@ namespace HL7.Dotnetcore.Test
             catch
             {
             }
+        }
+
+        [DataTestMethod]
+        [DataRow("PV1.7.1", "1447312459")]
+        [DataRow("PV1.7(1).1", "1447312459")]
+        [DataRow("PV1.7[1].1", "1447312459")]
+        [DataRow("PV1.7(2).1", "DOEM06")]
+        [DataRow("PV1.7[2].1", "DOEM06")]
+        [DataRow("PV1.7[2].3", "MICHAEL")]
+        public void RepetitionTest(string index, string expected)
+        {
+            var sampleMessage = 
+                @"MSH|^~\&|EPIC||||20191107134803|ALEVIB01|ORM^O01|23|T|2.3|||||||||||
+PID|1||1005555^^^NYU MRN^MRN||OSTRICH^DODUO||19820605|M||U|000 PARK AVE SOUTH^^NEW YORK^NY^10010^US^^^60|60|(555)555-5555^HOME^PH|||S|||999-99-9999|||U||N||||||||
+PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAEL^^^^^^EPIC^^^^PNPI~DOEM06^DOE^MICHAEL^^^^^^KID^^^^KID|1447312459^DOE^MICHAEL^^^^^^EPIC^^^^PNPI~DOEM06^DOE^MICHAEL^^^^^^KID^^^^KID|||||||||||496779945|||||||||||||||||||||||||20191107|||||||V";
+
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+
+            string attendingDrId = message.GetValue(index);
+            Assert.AreEqual(expected, attendingDrId);
         }
     }
 }

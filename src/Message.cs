@@ -19,6 +19,10 @@ namespace HL7.Dotnetcore
         public short SegmentCount { get; set; }
         public HL7Encoding Encoding { get; set; } = new HL7Encoding();
 
+        public const string segmentRegex = "^[A-Z][A-Z][A-Z1-9]$";
+        public const string fieldRegex = @"^([0-9]+)([\(\[]([0-9]+)[\)\]]){0,1}$";
+        public const string otherRegEx = @"^[1-9]([0-9]{1,2})?$";
+
         public Message()
         {
         }
@@ -207,7 +211,6 @@ namespace HL7.Dotnetcore
             bool isValid = false;
 
             string segmentName = string.Empty;
-            int fieldIndex = 0;
             int componentIndex = 0;
             int subComponentIndex = 0;
             int comCount = 0;
@@ -224,15 +227,17 @@ namespace HL7.Dotnetcore
 
                 if (SegmentList.ContainsKey(segmentName))
                 {
+                    var segment = SegmentList[segmentName].First();
+
                     if (comCount == 4)
                     {
-                        Int32.TryParse(allComponents[1], out fieldIndex);
                         Int32.TryParse(allComponents[2], out componentIndex);
                         Int32.TryParse(allComponents[3], out subComponentIndex);
 
                         try
                         {
-                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value;
+                            var field = this.getField(segment, allComponents[1]);
+                            strValue = field.ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value;
                         }
                         catch (Exception ex)
                         {
@@ -241,12 +246,12 @@ namespace HL7.Dotnetcore
                     }
                     else if (comCount == 3)
                     {
-                        Int32.TryParse(allComponents[1], out fieldIndex);
                         Int32.TryParse(allComponents[2], out componentIndex);
 
                         try
                         {
-                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].Value;
+                            var field = this.getField(segment, allComponents[1]);
+                            strValue = field.ComponentList[componentIndex - 1].Value;
                         }
                         catch (Exception ex)
                         {
@@ -255,11 +260,10 @@ namespace HL7.Dotnetcore
                     }
                     else if (comCount == 2)
                     {
-                        Int32.TryParse(allComponents[1], out fieldIndex);
-
                         try
                         {
-                            strValue = SegmentList[segmentName].First().FieldList[fieldIndex - 1].Value;
+                            var field = this.getField(segment, allComponents[1]);
+                            strValue = field.Value;
                         }
                         catch (Exception ex)
                         {
@@ -270,7 +274,7 @@ namespace HL7.Dotnetcore
                     {
                         try
                         {
-                            strValue = SegmentList[segmentName].First().Value;
+                            strValue = segment.Value;
                         }
                         catch (Exception ex)
                         {
@@ -303,30 +307,32 @@ namespace HL7.Dotnetcore
             bool isSet = false;
 
             string segmentName = string.Empty;
-            int fieldIndex = 0;
             int componentIndex = 0;
             int subComponentIndex = 0;
             int comCount = 0;
 
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
+            List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = allComponents.Count;
 
-            isValid = validateValueFormat(AllComponents);
+            isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
-                segmentName = AllComponents[0];
+                segmentName = allComponents[0];
+
                 if (SegmentList.ContainsKey(segmentName))
                 {
+                    var segment = SegmentList[segmentName].First();
+
                     if (comCount == 4)
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
-                        Int32.TryParse(AllComponents[3], out subComponentIndex);
+                        Int32.TryParse(allComponents[2], out componentIndex);
+                        Int32.TryParse(allComponents[3], out subComponentIndex);
 
                         try
                         {
-                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value = strValue;
+                            var field = this.getField(segment, allComponents[1]);
+                            field.ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value = strValue;
                             isSet = true;
                         }
                         catch (Exception ex)
@@ -336,12 +342,12 @@ namespace HL7.Dotnetcore
                     }
                     else if (comCount == 3)
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
-                        Int32.TryParse(AllComponents[2], out componentIndex);
+                        Int32.TryParse(allComponents[2], out componentIndex);
 
                         try
                         {
-                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].Value = strValue;
+                            var field = this.getField(segment, allComponents[1]);
+                            field.ComponentList[componentIndex - 1].Value = strValue;
                             isSet = true;
                         }
                         catch (Exception ex)
@@ -351,10 +357,10 @@ namespace HL7.Dotnetcore
                     }
                     else if (comCount == 2)
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
                         try
                         {
-                            SegmentList[segmentName].First().FieldList[fieldIndex - 1].Value = strValue;
+                            var field = this.getField(segment, allComponents[1]);
+                            field.Value = strValue;
                             isSet = true;
                         }
                         catch (Exception ex)
@@ -387,24 +393,25 @@ namespace HL7.Dotnetcore
             bool isValid = false;
 
             string segmentName = string.Empty;
-            int fieldIndex = 0;
             int comCount = 0;
 
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
+            List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = allComponents.Count;
 
-            isValid = validateValueFormat(AllComponents);
+            isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
-                segmentName = AllComponents[0];
+                segmentName = allComponents[0];
+
                 if (comCount >= 2)
                 {
                     try
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        var segment = SegmentList[segmentName].First();
+                        var field = this.getField(segment, allComponents[1]);
 
-                        isComponentized = SegmentList[segmentName].First().FieldList[fieldIndex - 1].IsComponentized;
+                        isComponentized = field.IsComponentized;
                     }
                     catch (Exception ex)
                     {
@@ -431,24 +438,25 @@ namespace HL7.Dotnetcore
             bool isValid = false;
 
             string segmentName = string.Empty;
-            int fieldIndex = 0;
             int comCount = 0;
 
-            List<string> AllComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = AllComponents.Count;
+            List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            comCount = allComponents.Count;
 
-            isValid = validateValueFormat(AllComponents);
+            isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
-                segmentName = AllComponents[0];
+                segmentName = allComponents[0];
+
                 if (comCount >= 2)
                 {
                     try
                     {
-                        Int32.TryParse(AllComponents[1], out fieldIndex);
+                        var segment = SegmentList[segmentName].First();
+                        var field = this.getField(segment, allComponents[1]);
 
-                        hasRepetitions = SegmentList[segmentName].First().FieldList[fieldIndex - 1].HasRepetitions;
+                        hasRepetitions = field.HasRepetitions;
                     }
                     catch (Exception ex)
                     {
@@ -475,7 +483,6 @@ namespace HL7.Dotnetcore
             bool isValid = false;
 
             string segmentName = string.Empty;
-            int fieldIndex = 0;
             int componentIndex = 0;
             int comCount = 0;
 
@@ -492,9 +499,11 @@ namespace HL7.Dotnetcore
                 {
                     try
                     {
-                        Int32.TryParse(allComponents[1], out fieldIndex);
+                        var segment = SegmentList[segmentName].First();
+                        var field = this.getField(segment, allComponents[1]);
+
                         Int32.TryParse(allComponents[2], out componentIndex);
-                        isSubComponentized = SegmentList[segmentName].First().FieldList[fieldIndex - 1].ComponentList[componentIndex - 1].IsSubComponentized;
+                        isSubComponentized = field.ComponentList[componentIndex - 1].IsSubComponentized;
                     }
                     catch (Exception ex)
                     {
@@ -676,6 +685,32 @@ namespace HL7.Dotnetcore
             }
         }
 
+
+        private Field getField(Segment segment, string index)
+        {
+            int repetition = 0;
+            var matches = System.Text.RegularExpressions.Regex.Matches(index, fieldRegex);
+
+            if (matches.Count < 1)
+                throw new Exception("Invalid field index");
+
+            Int32.TryParse(matches[0].Groups[1].Value, out int fieldIndex);
+            fieldIndex--;
+
+            if (matches[0].Length > 3)
+            {
+                Int32.TryParse(matches[0].Groups[3].Value, out repetition);
+                repetition--;
+            }
+
+            var field = segment.FieldList[fieldIndex];
+
+            if (field.HasRepetitions)
+                field = field.RepeatitionList[repetition];
+
+            return field;
+        }
+
         /// <summary>
         /// Validates the HL7 message for basic syntax
         /// </summary>
@@ -712,8 +747,7 @@ namespace HL7.Dotnetcore
 
                         bool isValidSegName = false;
                         string segmentName = strSegment.Substring(0, 3);
-                        string segNameRegEx = "[A-Z][A-Z][A-Z1-9]";
-                        isValidSegName = System.Text.RegularExpressions.Regex.IsMatch(segmentName, segNameRegEx);
+                        isValidSegName = System.Text.RegularExpressions.Regex.IsMatch(segmentName, segmentRegex);
 
                         if (!isValidSegName)
                         {
@@ -872,17 +906,17 @@ namespace HL7.Dotnetcore
         /// <returns>A boolean indicating whether all the components are valid or not</returns>
         private bool validateValueFormat(List<string> allComponents)
         {
-            string segNameRegEx = "[A-Z][A-Z][A-Z1-9]";
-            string otherRegEx = @"^[1-9]([0-9]{1,2})?$";
             bool isValid = false;
 
             if (allComponents.Count > 0)
             {
-                if (Regex.IsMatch(allComponents[0], segNameRegEx))
+                if (Regex.IsMatch(allComponents[0], segmentRegex))
                 {
                     for (int i = 1; i < allComponents.Count; i++)
                     {
-                        if (Regex.IsMatch(allComponents[i], otherRegEx))
+                        if (i == 1 && Regex.IsMatch(allComponents[i], fieldRegex))
+                            isValid = true;
+                        else if (i > 1 && Regex.IsMatch(allComponents[i], otherRegEx))
                             isValid = true;
                         else
                             return false;

@@ -38,6 +38,14 @@ stages:
         feedsToUse: 'select'
         packagesToPack: '**/HL7-dotnetcore.csproj'
         versioningScheme: 'off'
+    - task: DotNetCoreCLI@2
+      displayName: Prepare nuget package
+      inputs:
+        command: 'pack'
+        arguments: '--configuration Debug'
+        feedsToUse: 'select'
+        packagesToPack: '**/HL7-dotnetcore.csproj'
+        versioningScheme: 'off'
     - task: NuGetCommand@2
       displayName: 'Publish nuget package'
       inputs:

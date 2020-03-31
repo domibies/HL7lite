@@ -26,6 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--PackageReference Include="hl7-dotnetcore" Version="2.17.0" /-->
     <ProjectReference Include="..\src\HL7-dotnetcore.csproj" />
   </ItemGroup>
 </Project>

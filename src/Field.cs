@@ -20,6 +20,7 @@ namespace HL7.Dotnetcore
             {
                 if (_RepetitionList == null)
                     _RepetitionList = new List<Field>();
+                    
                 return _RepetitionList;
             }
             set
