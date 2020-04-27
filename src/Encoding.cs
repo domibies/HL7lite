@@ -89,7 +89,7 @@ namespace HL7.Dotnetcore
                     sb.Append("T");
                     sb.Append(this.EscapeCharacter);
                 } 
-                else if (c < 32) 
+                else if (c == 10 || c == 13) // All other non-visible characters will be preserved
                 {
                     string v = string.Format("{0:X2}",(int)c);
                     

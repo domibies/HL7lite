@@ -291,6 +291,16 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
+        public void MessageWithTabsIsReversable() 
+        {
+            const string sampleMessage = "MSH|^~\\&|Sending\tApplication|Sending\tFacility|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\r\nEVN|A04|20110613083617\r\n";
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+            var serialized = message.SerializeMessage(false);
+            Assert.AreEqual(sampleMessage, serialized);
+        }
+
+        [TestMethod]
         public void RemoveSegment() 
         {
             var message = new Message(this.HL7_ADT);
