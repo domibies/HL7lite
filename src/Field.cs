@@ -116,18 +116,15 @@ namespace HL7.Dotnetcore
         public Component Components(int position)
         {
             position = position - 1;
-            Component com = null;
 
             try
             {
-                com = ComponentList[position];
+                return ComponentList[position];
             }
             catch (Exception ex)
             {
                 throw new HL7Exception("Component not available Error - " + ex.Message);
             }
-
-            return com;
         }
 
         public List<Component> Components()

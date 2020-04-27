@@ -39,8 +39,8 @@ namespace HL7.Dotnetcore
         {
             var expr = "\x0B(.*?)\x1C\x0D";
             var matches = Regex.Matches(messages, expr, RegexOptions.Singleline);
-
             var list = new List<string>();
+
             foreach (Match m in matches)
                 list.Add(m.Groups[1].Value);
 
@@ -101,11 +101,11 @@ namespace HL7.Dotnetcore
             
             byte[] data = encoding.GetBytes(message);
             byte[] buffer = new byte[data.Length + 3];
-            buffer[0] = 11;//VT
+            buffer[0] = 11; // VT
 
             Array.Copy(data, 0, buffer, 1, data.Length);
-            buffer[buffer.Length - 2] = 28;//FS
-            buffer[buffer.Length - 1] = 13;//CR
+            buffer[buffer.Length - 2] = 28; // FS
+            buffer[buffer.Length - 1] = 13; // CR
 
             return buffer;
         }

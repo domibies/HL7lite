@@ -28,9 +28,7 @@ namespace HL7.Dotnetcore
             List<string> allFields = MessageHelper.SplitString(_value, this.Encoding.FieldDelimiter);
 
             if (allFields.Count > 1)
-            {
                 allFields.RemoveAt(0);
-            }
             
             for (int i = 0; i < allFields.Count; i++)
             {
@@ -38,7 +36,7 @@ namespace HL7.Dotnetcore
                 Field field = new Field(this.Encoding);   
 
                 if (Name == "MSH" && i == 0)
-                    field.IsDelimiters = true;  // special case
+                    field.IsDelimiters = true; // special case
 
                 field.Value = strField;
                 this.FieldList.Add(field);
@@ -77,7 +75,7 @@ namespace HL7.Dotnetcore
             var newField = new Field(this.Encoding);
 
             if (isDelimiters)
-                newField.IsDelimiters = true;   // Prevent decoding
+                newField.IsDelimiters = true; // Prevent decoding
 
             newField.Value = content;
             this.AddNewField(newField, -1);
@@ -96,6 +94,7 @@ namespace HL7.Dotnetcore
                     position = position - 1;
                     this.FieldList.Add(field, position);
                 }
+                
                 return true;
             }
             catch (Exception ex)
@@ -107,18 +106,15 @@ namespace HL7.Dotnetcore
         public Field Fields(int position)
         {
             position = position - 1;
-            Field field = null;
 
             try
             {
-                field = this.FieldList[position];
+                return this.FieldList[position];
             }
             catch (Exception ex)
             {
                 throw new HL7Exception("Field not available Error - " + ex.Message);
             }
-
-            return field;
         }
 
         public List<Field> GetAllFields()

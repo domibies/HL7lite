@@ -1,4 +1,3 @@
-using System;
 using System.Globalization;
 using System.Text;
 
@@ -60,32 +59,38 @@ namespace HL7.Dotnetcore
             {
                 char c = val[i];
 
-                if (c == this.ComponentDelimiter) {
+                if (c == this.ComponentDelimiter) 
+                {
                     sb.Append(this.EscapeCharacter);
                     sb.Append("S");
                     sb.Append(this.EscapeCharacter);
                 } 
-                else if (c == this.EscapeCharacter) {
+                else if (c == this.EscapeCharacter) 
+                {
                     sb.Append(this.EscapeCharacter);
                     sb.Append("E");
                     sb.Append(this.EscapeCharacter);
                 } 
-                else if (c == this.FieldDelimiter) {
+                else if (c == this.FieldDelimiter) 
+                {
                     sb.Append(this.EscapeCharacter);
                     sb.Append("F");
                     sb.Append(this.EscapeCharacter);
                 } 
-                else if (c == this.RepeatDelimiter) {
+                else if (c == this.RepeatDelimiter) 
+                {
                     sb.Append(this.EscapeCharacter);
                     sb.Append("R");
                     sb.Append(this.EscapeCharacter);
                 } 
-                else if (c == this.SubComponentDelimiter) {
+                else if (c == this.SubComponentDelimiter) 
+                {
                     sb.Append(this.EscapeCharacter);
                     sb.Append("T");
                     sb.Append(this.EscapeCharacter);
                 } 
-                else if (c < 32) {
+                else if (c < 32) 
+                {
                     string v = string.Format("{0:X2}",(int)c);
                     
                     if ((v.Length | 2) != 0) 

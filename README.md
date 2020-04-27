@@ -223,7 +223,7 @@ message.SetValue("PID.5.1", "Jayant");
 ### Adding new Segment
 
 ````cSharp
-//Create a Segment with name ZIB
+// Create a Segment with name ZIB
 Segment newSeg = new Segment("ZIB");
  
 // Create Field ZIB_1

@@ -9,7 +9,7 @@ namespace HL7.Dotnetcore
     public class Message
     {
         private List<string> allSegments = null;
-        internal Dictionary<string, List<Segment>> SegmentList { get; set;} = new Dictionary<string, List<Segment>>();
+        internal Dictionary<string, List<Segment>> SegmentList { get; set; } = new Dictionary<string, List<Segment>>();
 
         public string HL7Message { get; set; }
         public string Version { get; set; }
@@ -19,9 +19,9 @@ namespace HL7.Dotnetcore
         public short SegmentCount { get; set; }
         public HL7Encoding Encoding { get; set; } = new HL7Encoding();
 
-        public const string segmentRegex = "^[A-Z][A-Z][A-Z1-9]$";
-        public const string fieldRegex = @"^([0-9]+)([\(\[]([0-9]+)[\)\]]){0,1}$";
-        public const string otherRegEx = @"^[1-9]([0-9]{1,2})?$";
+        private const string segmentRegex = "^[A-Z][A-Z][A-Z1-9]$";
+        private const string fieldRegex = @"^([0-9]+)([\(\[]([0-9]+)[\)\]]){0,1}$";
+        private const string otherRegEx = @"^[1-9]([0-9]{1,2})?$";
 
         public Message()
         {
@@ -89,11 +89,12 @@ namespace HL7.Dotnetcore
                         if (string.IsNullOrWhiteSpace(strSegment))
                             continue;
 
-                        Segment newSegment = new Segment(this.Encoding);
-                        string segmentName = strSegment.Substring(0, 3);
-                        newSegment.Name = segmentName;
-                        newSegment.Value = strSegment;
-                        newSegment.SequenceNo = SegSeqNo++;
+                        Segment newSegment = new Segment(this.Encoding)
+                        {
+                            Name = strSegment.Substring(0, 3),
+                            Value = strSegment,
+                            SequenceNo = SegSeqNo++
+                        };
 
                         this.AddNewSegment(newSegment);
                     }
@@ -208,18 +209,14 @@ namespace HL7.Dotnetcore
         /// <returns>Value of specified field/component/subcomponent</returns>
         public string GetValue(string strValueFormat)
         {
-            bool isValid = false;
-
             string segmentName = string.Empty;
             int componentIndex = 0;
             int subComponentIndex = 0;
-            int comCount = 0;
             string strValue = string.Empty;
-
             List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = allComponents.Count;
 
-            isValid = validateValueFormat(allComponents);
+            int comCount = allComponents.Count;
+            bool isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
@@ -303,18 +300,13 @@ namespace HL7.Dotnetcore
         /// <returns>boolean</returns>
         public bool SetValue(string strValueFormat, string strValue)
         {
-            bool isValid = false;
             bool isSet = false;
-
             string segmentName = string.Empty;
             int componentIndex = 0;
             int subComponentIndex = 0;
-            int comCount = 0;
-
             List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = allComponents.Count;
-
-            isValid = validateValueFormat(allComponents);
+            int comCount = allComponents.Count;
+            bool isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
@@ -390,15 +382,10 @@ namespace HL7.Dotnetcore
         public bool IsComponentized(string strValueFormat)
         {
             bool isComponentized = false;
-            bool isValid = false;
-
             string segmentName = string.Empty;
-            int comCount = 0;
-
             List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = allComponents.Count;
-
-            isValid = validateValueFormat(allComponents);
+            int comCount = allComponents.Count;
+            bool isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
@@ -435,15 +422,10 @@ namespace HL7.Dotnetcore
         public bool HasRepetitions(string strValueFormat)
         {
             bool hasRepetitions = false;
-            bool isValid = false;
-
             string segmentName = string.Empty;
-            int comCount = 0;
-
             List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = allComponents.Count;
-
-            isValid = validateValueFormat(allComponents);
+            int comCount = allComponents.Count;
+            bool isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
@@ -480,16 +462,11 @@ namespace HL7.Dotnetcore
         public bool IsSubComponentized(string strValueFormat)
         {
             bool isSubComponentized = false;
-            bool isValid = false;
-
             string segmentName = string.Empty;
             int componentIndex = 0;
-            int comCount = 0;
-
             List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
-            comCount = allComponents.Count;
-
-            isValid = validateValueFormat(allComponents);
+            int comCount = allComponents.Count;
+            bool isValid = validateValueFormat(allComponents);
 
             if (isValid)
             {
@@ -721,13 +698,13 @@ namespace HL7.Dotnetcore
             {
                 if (!string.IsNullOrEmpty(HL7Message))
                 {
-                    //check message length - MSH+Delimeters+12Fields in MSH
+                    // Check message length - MSH+Delimeters+12Fields in MSH
                     if (HL7Message.Length < 20)
                     {
                         throw new HL7Exception("Message Length too short: " + HL7Message.Length + " chars.", HL7Exception.BAD_MESSAGE);
                     }
 
-                    //check if message starts with header segment
+                    // Check if message starts with header segment
                     if (!HL7Message.StartsWith("MSH"))
                     {
                         throw new HL7Exception("MSH segment not found at the beggining of the message", HL7Exception.BAD_MESSAGE);
@@ -736,7 +713,7 @@ namespace HL7.Dotnetcore
                     this.Encoding.EvaluateSegmentDelimiter(this.HL7Message);
                     this.HL7Message = string.Join(this.Encoding.SegmentDelimiter, MessageHelper.SplitMessage(this.HL7Message)) + this.Encoding.SegmentDelimiter;
 
-                    //check Segment Name & 4th character of each segment
+                    // Check Segment Name & 4th character of each segment
                     char fourthCharMSH = HL7Message[3];
                     this.allSegments = MessageHelper.SplitMessage(HL7Message);
 
@@ -745,11 +722,10 @@ namespace HL7.Dotnetcore
                         if (string.IsNullOrWhiteSpace(strSegment))
                             continue;
 
-                        bool isValidSegName = false;
                         string segmentName = strSegment.Substring(0, 3);
-                        isValidSegName = System.Text.RegularExpressions.Regex.IsMatch(segmentName, segmentRegex);
+                        bool isValidSegmentName = System.Text.RegularExpressions.Regex.IsMatch(segmentName, segmentRegex);
 
-                        if (!isValidSegName)
+                        if (!isValidSegmentName)
                         {
                             throw new HL7Exception("Invalid segment name found: " + strSegment, HL7Exception.BAD_MESSAGE);
                         }
@@ -785,7 +761,7 @@ namespace HL7.Dotnetcore
                         throw new HL7Exception("HL7 version not found in the MSH segment", HL7Exception.REQUIRED_FIELD_MISSING);
                     }
 
-                    //Find Message Type & Trigger Event
+                    // Find Message Type & Trigger Event
                     try
                     {
                         string MSH_9 = MSHFields[8];

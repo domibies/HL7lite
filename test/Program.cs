@@ -98,7 +98,7 @@ namespace HL7.Dotnetcore.Test
         {
             var encoding = new HL7Encoding();
             
-            //Create a Segment with name ZIB
+            // Create a Segment with name ZIB
             Segment newSeg = new Segment("ZIB", encoding);
 
             // Create Field ZIB_1
@@ -342,7 +342,7 @@ namespace HL7.Dotnetcore.Test
         {
             TimeSpan offset;
             var date = MessageHelper.ParseDateTime("20151231234500.1234-2358", out offset).Value;
-            //Assert.AreEqual(0, d
+            // Assert.AreEqual(0, d
             Assert.AreEqual(date, new DateTime(2015,12,31,23,45,00,123));
             Assert.AreEqual(offset, new TimeSpan(-23,58,0));
         }

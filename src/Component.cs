@@ -34,9 +34,7 @@ namespace HL7.Dotnetcore
                 allSubComponents = MessageHelper.SplitString(_value, this.Encoding.SubComponentDelimiter);
 
             if (allSubComponents.Count > 1)
-            {
                 this.IsSubComponentized = true;
-            }
 
             this.SubComponentList = new List<SubComponent>();
 
@@ -50,18 +48,15 @@ namespace HL7.Dotnetcore
         public SubComponent SubComponents(int position)
         {
             position = position - 1;
-            SubComponent sub = null;
 
             try
             {
-                sub = SubComponentList[position];
+                return SubComponentList[position];
             }
             catch (Exception ex)
             {
                 throw new HL7Exception("SubComponent not availalbe Error-" + ex.Message);
             }
-
-            return sub;
         }
 
         public List<SubComponent> SubComponents()
