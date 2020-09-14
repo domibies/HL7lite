@@ -442,12 +442,12 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             orcSegment.Fields(12).Components(2).Value = "should not be removed";
             orcSegment.Fields(12).Components(3).Value = "should not be removed";
             orcSegment.Fields(12).Components(4).Value = ""; // should not be removed because in between valid values
-            orcSegment.Fields(12).Components(5).Value = "should not be removed";
+            orcSegment.Fields(12).Components(5).Value = "should not be removed";
             orcSegment.Fields(12).Components(6).Value = ""; // should be removed because trailing
-            orcSegment.Fields(12).Components(7).Value = ""; // should be removed because trailing
-            orcSegment.Fields(12).Components(8).Value = ""; // should be removed because trailing
+            orcSegment.Fields(12).Components(7).Value = ""; // should be removed because trailing
+            orcSegment.Fields(12).Components(8).Value = ""; // should be removed because trailing
 
-            orcSegment.Fields(12).RemoveEmptyTrailingComponents();
+            orcSegment.Fields(12).RemoveEmptyTrailingComponents();
             message.AddNewSegment(orcSegment);
 
             string serializedMessage = message.SerializeMessage(false);
