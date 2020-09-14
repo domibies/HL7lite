@@ -149,5 +149,25 @@ namespace HL7.Dotnetcore
             }
             return null;
         }
+
+        public bool RemoveEmptyTrailingComponents()
+        {
+            try
+            {
+                for (var eachComponent = ComponentList.Count - 1; eachComponent >= 0; eachComponent--)
+                {
+                    if (ComponentList[eachComponent].Value == "")
+                        ComponentList.Remove(ComponentList[eachComponent]);
+                    else
+                        break;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new HL7Exception("Error removing trailing comonents - " + ex.Message);
+            }
+        }
     }
 }

@@ -262,6 +262,42 @@ After evaluated and modified required values, the message can be obtained again 
 string strUpdatedMsg = message.SerializeMessage();
 ````
 
+### Remove Trailing Components
+
+```csharp
+var message = new Message();
+
+// create ORC segment
+var orcSegment = new Segment("ORC", new HL7Encoding());
+
+// add fields
+for (int eachField = 1; eachField <= 12; eachField++)
+{
+    orcSegment.AddEmptyField();
+}
+
+// add components to field 12
+for (int eachField = 1; eachField < 8; eachField++)
+{
+    orcSegment.Fields(12).AddNewComponent(new Component(new HL7Encoding()));
+}
+
+// add values to components
+orcSegment.Fields(12).Components(1).Value = "should not be removed";
+orcSegment.Fields(12).Components(2).Value = "should not be removed";
+orcSegment.Fields(12).Components(3).Value = "should not be removed";
+orcSegment.Fields(12).Components(4).Value = ""; // should not be removed because in between valid values
+orcSegment.Fields(12).Components(5).Value = "should not be removed";
+orcSegment.Fields(12).Components(6).Value = ""; // should be removed because trailing
+orcSegment.Fields(12).Components(7).Value = ""; // should be removed because trailing
+orcSegment.Fields(12).Components(8).Value = ""; // should be removed because trailing
+
+orcSegment.Fields(12).RemoveEmptyTrailingComponents();
+message.AddNewSegment(orcSegment);
+
+string serializedMessage = message.SerializeMessage(false);
+```
+
 ### Remove a Segment
 
 Segments are removed individually, including the case where there are repeated segments with the same name

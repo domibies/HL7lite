@@ -421,5 +421,63 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             string attendingDrId = message.GetValue(index);
             Assert.AreEqual(expected, attendingDrId);
         }
+
+        [TestMethod]
+        public void RemoveTrailingComponentsTest_OnlyTrailingComponentsRemoved()
+        {
+            var message = new Message();
+
+            var orcSegment = new Segment("ORC", new HL7Encoding());
+            for (int eachField = 1; eachField <= 12; eachField++)
+            {
+                orcSegment.AddEmptyField();
+            }
+
+            for (int eachComponent = 1; eachComponent < 8; eachComponent++)
+            {
+                orcSegment.Fields(12).AddNewComponent(new Component(new HL7Encoding()));
+            }
+
+            orcSegment.Fields(12).Components(1).Value = "should not be removed";
+            orcSegment.Fields(12).Components(2).Value = "should not be removed";
+            orcSegment.Fields(12).Components(3).Value = "should not be removed";
+            orcSegment.Fields(12).Components(4).Value = ""; // should not be removed because in between valid values
+            orcSegment.Fields(12).Components(5).Value = "should not be removed";
+            orcSegment.Fields(12).Components(6).Value = ""; // should be removed because trailing
+            orcSegment.Fields(12).Components(7).Value = ""; // should be removed because trailing
+            orcSegment.Fields(12).Components(8).Value = ""; // should be removed because trailing
+
+            orcSegment.Fields(12).RemoveEmptyTrailingComponents();
+            message.AddNewSegment(orcSegment);
+
+            string serializedMessage = message.SerializeMessage(false);
+            Assert.AreEqual(orcSegment.Fields(12).Components().Count, 5);
+            Assert.AreEqual("ORC||||||||||||should not be removed^should not be removed^should not be removed^^should not be removed\r", serializedMessage);
+        }
+
+        [TestMethod]
+        public void RemoveTrailingComponentsTest_RemoveAllFieldComponentsIfEmpty()
+        {
+            var message = new Message();
+
+            var orcSegment = new Segment("ORC", new HL7Encoding());
+            for (int eachField = 1; eachField <= 12; eachField++)
+            {
+                orcSegment.AddEmptyField();
+            }
+
+            for (int eachComponent = 1; eachComponent < 8; eachComponent++)
+            {
+                orcSegment.Fields(12).AddNewComponent(new Component(new HL7Encoding()));
+                orcSegment.Fields(12).Components(eachComponent).Value = "";
+            }
+
+            orcSegment.Fields(12).RemoveEmptyTrailingComponents();
+            message.AddNewSegment(orcSegment);
+
+            string serializedMessage = message.SerializeMessage(false);
+            Assert.AreEqual(orcSegment.Fields(12).Components().Count, 0);
+            Assert.AreEqual("ORC||||||||||||\r", serializedMessage);
+        }
     }
 }
