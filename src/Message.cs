@@ -152,7 +152,11 @@ namespace HL7.Dotnetcore
                     foreach (Segment seg in _segListOrdered)
                     {
                         currentSegName = seg.Name;
-                        strMessage.Append(seg.Name).Append(Encoding.FieldDelimiter);
+
+                        strMessage.Append(seg.Name);
+                        
+                        if (seg.FieldList.Count > 0)
+                            strMessage.Append(Encoding.FieldDelimiter);
 
                         int startField = currentSegName == "MSH" ? 1 : 0;
 
@@ -730,9 +734,7 @@ namespace HL7.Dotnetcore
                             throw new HL7Exception("Invalid segment name found: " + strSegment, HL7Exception.BAD_MESSAGE);
                         }
 
-                        char fourthCharSEG = strSegment[3];
-
-                        if (fourthCharMSH != fourthCharSEG)
+                        if (strSegment.Length > 3 && fourthCharMSH != strSegment[3])
                         {
                             throw new HL7Exception("Invalid segment found: " + strSegment, HL7Exception.BAD_MESSAGE);
                         }

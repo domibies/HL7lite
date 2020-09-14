@@ -14,7 +14,7 @@ namespace HL7.Dotnetcore.Test
         public static void Main(string[] args)
         {
             // var test = new HL7Test();
-            // test.RepetitionTest();
+            // test.MessageWithSegmentNameOnly();
         }
 
         public HL7Test()
@@ -284,6 +284,16 @@ namespace HL7.Dotnetcore.Test
         public void MessageWithNullsIsReversable() 
         {
             const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\r\nEVN|A04|20110613083617||\"\"\r\n";
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+            var serialized = message.SerializeMessage(false);
+            Assert.AreEqual(sampleMessage, serialized);
+        }
+
+        [TestMethod]
+        public void MessageWithSegmentNameOnly() 
+        {
+            const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\r\nPID\r\nEVN|A04|20110613083617||\"\"\r\n";
             var message = new Message(sampleMessage);
             message.ParseMessage();
             var serialized = message.SerializeMessage(false);

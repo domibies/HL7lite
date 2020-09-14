@@ -27,8 +27,7 @@ namespace HL7.Dotnetcore
         {
             List<string> allFields = MessageHelper.SplitString(_value, this.Encoding.FieldDelimiter);
 
-            if (allFields.Count > 1)
-                allFields.RemoveAt(0);
+            allFields.RemoveAt(0);
             
             for (int i = 0; i < allFields.Count; i++)
             {
