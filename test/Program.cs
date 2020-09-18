@@ -281,6 +281,28 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
+        public void MessageWithDoubleNewlineTest()
+        {
+            const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\n\nEVN|A04|20110613083617||\r\n";
+
+            var message = new Message(sampleMessage);
+            var isParsed = message.ParseMessage();
+            Assert.IsTrue(isParsed);
+            Assert.IsTrue(message.SegmentCount > 0);
+        }
+
+        [TestMethod]
+        public void MessageWithDoubleCarriageReturnTest()
+        {
+            const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\n\nEVN|A04|20110613083617||\r\n";
+
+            var message = new Message(sampleMessage);
+            var isParsed = message.ParseMessage();
+            Assert.IsTrue(isParsed);
+            Assert.IsTrue(message.SegmentCount > 0);
+        }
+
+        [TestMethod]
         public void MessageWithNullsIsReversable() 
         {
             const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\r\nEVN|A04|20110613083617||\"\"\r\n";
