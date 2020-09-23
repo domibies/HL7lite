@@ -16,6 +16,7 @@ Message message = new Message(strMsg);
 // Parse this message
 
 bool isParsed = false;
+
 try
 {
     isParsed = message.ParseMessage();
@@ -51,6 +52,7 @@ var messages = MessageHelper.ExtractMessages(buffer);
 foreach (var strMsg in messages)
 {
     Message message = new Message(strMsg);
+    message.ParseMessage(); // Required by most operations
     // do something with the message object
 }
 ````
@@ -187,6 +189,8 @@ ack.SetValue("MSH.3", appName);
 ack.SetValue("MSH.4", facility);
 
 ````
+
+Take into account that a message shall be previously parsed before attempting to generate an ACK or NACK message.
 
 ## Accessing Components
 
