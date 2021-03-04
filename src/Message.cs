@@ -605,10 +605,17 @@ namespace HL7.Dotnetcore
                 var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
                 var delim = this.Encoding.FieldDelimiter;
 
-                string response = "MSH" + this.Encoding.AllDelimiters + delim + sendingApplication + delim + sendingFacility + delim 
-                    + receivingApplication + delim + receivingFacility + delim
-                    + dateString + delim + (security ?? string.Empty) + delim + messageType + delim + messageControlID + delim 
-                    + processingID + delim + version + this.Encoding.SegmentDelimiter;
+                string response = "MSH" + this.Encoding.AllDelimiters + delim + 
+                    sendingApplication + delim + 
+                    sendingFacility + delim +
+                    receivingApplication + delim + 
+                    receivingFacility + delim +
+                    this.Encoding.Encode(dateString) + delim + 
+                    (security ?? string.Empty) + delim + 
+                    messageType + delim + 
+                    messageControlID + delim +
+                    processingID + delim + 
+                    version + this.Encoding.SegmentDelimiter;
 
                 var message = new Message(response);
                 message.ParseMessage();
@@ -758,7 +765,7 @@ namespace HL7.Dotnetcore
 
                     if (MSHFields.Count >= 12)
                     {
-                        this.Version = MessageHelper.SplitString(MSHFields[11], Encoding.ComponentDelimiter)[0];
+                        this.Version = MessageHelper.SplitString(this.Encoding.Decode(MSHFields[11]), Encoding.ComponentDelimiter)[0];
                     }
                     else
                     {
@@ -768,7 +775,7 @@ namespace HL7.Dotnetcore
                     // Find Message Type & Trigger Event
                     try
                     {
-                        string MSH_9 = MSHFields[8];
+                        string MSH_9 = this.Encoding.Decode(MSHFields[8]);
 
                         if (!string.IsNullOrEmpty(MSH_9))
                         {
@@ -801,7 +808,7 @@ namespace HL7.Dotnetcore
 
                     try
                     {
-                        this.MessageControlID = MSHFields[9];
+                        this.MessageControlID = this.Encoding.Decode(MSHFields[9]);
 
                         if (string.IsNullOrEmpty(this.MessageControlID))
                             throw new HL7Exception("MSH.10 - Message Control ID not found", HL7Exception.REQUIRED_FIELD_MISSING);
@@ -813,7 +820,7 @@ namespace HL7.Dotnetcore
 
                     try
                     {
-                        this.ProcessingID = MSHFields[10];
+                        this.ProcessingID = this.Encoding.Decode(MSHFields[10]);
 
                         if (string.IsNullOrEmpty(this.ProcessingID))
                             throw new HL7Exception("MSH.11 - Processing ID not found", HL7Exception.REQUIRED_FIELD_MISSING);

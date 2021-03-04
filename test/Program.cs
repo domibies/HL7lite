@@ -14,7 +14,7 @@ namespace HL7.Dotnetcore.Test
         public static void Main(string[] args)
         {
             // var test = new HL7Test();
-            // test.MessageWithSegmentNameOnly();
+            // test.CustomDelimiter();
         }
 
         public HL7Test()
@@ -426,6 +426,27 @@ namespace HL7.Dotnetcore.Test
             catch
             {
             }
+        }
+
+        [TestMethod]
+        public void CustomDelimiter()
+        {
+            var encoding = new HL7Encoding 
+            {
+                FieldDelimiter = '1',
+                ComponentDelimiter = '2',
+                SubComponentDelimiter = '3',
+                RepeatDelimiter = '4',
+                EscapeCharacter = '5'
+            };
+                
+            var message = new Message();
+            message.Encoding = encoding;
+            message.AddSegmentMSH("FIRST", "SECOND", "THIRD", "FOURTH",
+                "FIFTH", "ORU2R05F5", "SIXTH", "SEVENTH", "2.8");
+            var result = message.SerializeMessage(false);            
+
+            Assert.AreEqual("MSH124531", result.Substring(0, 9));
         }
 
         [DataTestMethod]

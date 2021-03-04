@@ -5,7 +5,6 @@ namespace HL7.Dotnetcore
 {
     public class HL7Encoding
     {
-        public string AllDelimiters { get; private set; } = @"|^~\&";
         public char FieldDelimiter { get; set; } = '|'; // \F\
         public char ComponentDelimiter { get; set; } = '^'; // \S\
         public char RepeatDelimiter { get; set; } = '~';  // \R\
@@ -13,6 +12,7 @@ namespace HL7.Dotnetcore
         public char SubComponentDelimiter { get; set; } = '&'; // \T\
         public string SegmentDelimiter { get; set; } = "\r";
         public string PresentButNull { get; set; } = "\"\"";
+        public string AllDelimiters => "" + FieldDelimiter + ComponentDelimiter + RepeatDelimiter + EscapeCharacter + SubComponentDelimiter;
 
         public HL7Encoding()
         {
