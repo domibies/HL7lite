@@ -442,6 +442,18 @@ PID|1||MRN_123^^^IDX^MRN||Smith\F\\S\\R\\E\\T\^John||19600101|M";
             Assert.AreEqual(@"Smith|^~\&", attendingDrId);
         }
 
+        [TestMethod]
+        public void SkipInvalidEscapeSequenceTest()
+        {
+            var sampleMessage = 
+                @"MSH|^~\&|TEST^TEST|TEST|||11111||ADT^A08|11111|P|2.4|||AL||D||||||
+ZZ1|1|139378|20201230100000|ghg^ghgh-HA||s1^OP-Saal 1|gh^gjhg 1|ghg^ghjg-HA|BSV 4\5 re.||||||";
+
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+
+            string serializedMessage = message.SerializeMessage(false);
+        }
 
         [TestMethod]
         public void CustomDelimiterTest()

@@ -130,7 +130,13 @@ namespace HL7.Dotnetcore
                 int li = encodedValue.IndexOf(this.EscapeCharacter, i);
 
                 if (li == -1)
-                    throw new HL7Exception("Invalid escape sequence in HL7 string");
+                {
+                    // throw new HL7Exception("Invalid escape sequence in HL7 string");
+                    result.Append(this.EscapeCharacter);
+                    result.Append(encodedValue[i]);
+                    continue;
+                }
+                
 
                 string seq = encodedValue.Substring(i, li-i);
                 i = li;
