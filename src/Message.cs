@@ -175,12 +175,12 @@ namespace HL7.Dotnetcore
 
                             if (field.HasRepetitions)
                             {
-                                for (int j = 0; j < field.RepeatitionList.Count; j++)
+                                for (int j = 0; j < field.RepetitionList.Count; j++)
                                 {
                                     if (j > 0)
                                         strMessage.Append(Encoding.RepeatDelimiter);
 
-                                    serializeField(field.RepeatitionList[j], strMessage);
+                                    serializeField(field.RepetitionList[j], strMessage);
                                 }
                             }
                             else
@@ -696,9 +696,11 @@ namespace HL7.Dotnetcore
             var field = segment.FieldList[fieldIndex];
 
             if (field.HasRepetitions)
-                field = field.RepeatitionList[repetition];
-
-            return field;
+                return field.RepetitionList[repetition];
+            else if (repetition == 0)
+                return field;
+            else
+                return null;
         }
 
         /// <summary>

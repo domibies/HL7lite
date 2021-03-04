@@ -14,7 +14,7 @@ namespace HL7.Dotnetcore
         public bool HasRepetitions { get; set; } = false;
         public bool IsDelimiters { get; set; } = false;
 
-        internal List<Field> RepeatitionList
+        internal List<Field> RepetitionList
         {
             get
             {
@@ -136,7 +136,7 @@ namespace HL7.Dotnetcore
         {
             if (this.HasRepetitions)
             {
-                return RepeatitionList;
+                return RepetitionList;
             }
             return null;
         }
@@ -145,7 +145,7 @@ namespace HL7.Dotnetcore
         {
             if (this.HasRepetitions)
             {
-                return RepeatitionList[repeatitionNumber - 1];
+                return RepetitionList[repeatitionNumber - 1];
             }
             return null;
         }

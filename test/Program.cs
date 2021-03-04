@@ -498,6 +498,34 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
         }
 
         [TestMethod]
+        public void InvalidRepetitionTest()
+        {
+            var sampleMessage = 
+                @"MSH|^~\&|SYSTEM1|ABC|SYSTEM2||201803262027||DFT^P03|20180326202737608457|P|2.3||||||8859/1
+EVN|P03|20180326202540
+PID|1|0002381795|0002381795||Supermann^Peter^^^Herr||19990101|M|||Hamburgerstrasse 123^^Mimamu^BL^12345^CH||123456~123456^^CP||D|2|02|321|8.2.24.||| 
+PV1||A|00004620^00001318^1318||||000123456^Superfrau^Maria W.^|^Superarzt^Anton^L|00097012345^Superarzt^Herbert^~~0009723456^Superarzt^Markus^||||||||000998765^Assistent A^ONKO^D||0087123456||||||||||||||||||||2140||O|||201905220600|201908201100|||||";
+
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+
+            // Check for invalid repetition number
+            try
+            {
+                var value = message.GetValue("PV1.8(2).1");
+                Assert.IsNull(value);
+                value = message.GetValue("PV1.8(3).1");
+                Assert.IsNull(value);
+
+                Assert.Fail("Unexpected non-exception");
+            }
+            catch
+            {
+                // Pass
+            }
+        }
+
+        [TestMethod]
         public void RemoveTrailingComponentsTest_OnlyTrailingComponentsRemoved()
         {
             var message = new Message();
