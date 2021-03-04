@@ -429,7 +429,22 @@ namespace HL7.Dotnetcore.Test
         }
 
         [TestMethod]
-        public void CustomDelimiter()
+        public void GetValueTest()
+        {
+            var sampleMessage = 
+                @"MSH|^~\&|EPIC||||20191107134803|ALEVIB01|ORM^O01|23|T|2.3|||||||||||
+PID|1||MRN_123^^^IDX^MRN||Smith\F\\S\\R\\E\\T\^John||19600101|M";
+
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+
+            string attendingDrId = message.GetValue("PID.5.1");
+            Assert.AreEqual(@"Smith|^~\&", attendingDrId);
+        }
+
+
+        [TestMethod]
+        public void CustomDelimiterTest()
         {
             var encoding = new HL7Encoding 
             {
