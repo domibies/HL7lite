@@ -14,7 +14,7 @@ namespace HL7.Dotnetcore.Test
         public static void Main(string[] args)
         {
             // var test = new HL7Test();
-            // test.MessageWithSegmentNameOnly();
+            // test.CustomDelimiter();
         }
 
         public HL7Test()
@@ -338,10 +338,15 @@ namespace HL7.Dotnetcore.Test
             var message = new Message(this.HL7_ADT);
             message.ParseMessage();
             Assert.AreEqual(message.Segments("NK1").Count, 2);
+            Assert.AreEqual(message.SegmentCount, 5);
+
             message.RemoveSegment("NK1", 1);
             Assert.AreEqual(message.Segments("NK1").Count, 1);
+            Assert.AreEqual(message.SegmentCount, 4);
+
             message.RemoveSegment("NK1");
             Assert.AreEqual(message.Segments("NK1").Count, 0);
+            Assert.AreEqual(message.SegmentCount, 3);
         }
 
         [DataTestMethod]
@@ -423,6 +428,54 @@ namespace HL7.Dotnetcore.Test
             }
         }
 
+        [TestMethod]
+        public void GetValueTest()
+        {
+            var sampleMessage = 
+                @"MSH|^~\&|EPIC||||20191107134803|ALEVIB01|ORM^O01|23|T|2.3|||||||||||
+PID|1||MRN_123^^^IDX^MRN||Smith\F\\S\\R\\E\\T\^John||19600101|M";
+
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+
+            string attendingDrId = message.GetValue("PID.5.1");
+            Assert.AreEqual(@"Smith|^~\&", attendingDrId);
+        }
+
+        [TestMethod]
+        public void SkipInvalidEscapeSequenceTest()
+        {
+            var sampleMessage = 
+                @"MSH|^~\&|TEST^TEST|TEST|||11111||ADT^A08|11111|P|2.4|||AL||D||||||
+ZZ1|1|139378|20201230100000|ghg^ghgh-HA||s1^OP-Saal 1|gh^gjhg 1|ghg^ghjg-HA|BSV 4\5 re.||||||";
+
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+
+            string serializedMessage = message.SerializeMessage(false);
+        }
+
+        [TestMethod]
+        public void CustomDelimiterTest()
+        {
+            var encoding = new HL7Encoding 
+            {
+                FieldDelimiter = '1',
+                ComponentDelimiter = '2',
+                SubComponentDelimiter = '3',
+                RepeatDelimiter = '4',
+                EscapeCharacter = '5'
+            };
+                
+            var message = new Message();
+            message.Encoding = encoding;
+            message.AddSegmentMSH("FIRST", "SECOND", "THIRD", "FOURTH",
+                "FIFTH", "ORU2R05F5", "SIXTH", "SEVENTH", "2.8");
+            var result = message.SerializeMessage(false);            
+
+            Assert.AreEqual("MSH124531", result.Substring(0, 9));
+        }
+
         [DataTestMethod]
         [DataRow("PV1.7.1", "1447312459")]
         [DataRow("PV1.7(1).1", "1447312459")]
@@ -442,6 +495,34 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
 
             string attendingDrId = message.GetValue(index);
             Assert.AreEqual(expected, attendingDrId);
+        }
+
+        [TestMethod]
+        public void InvalidRepetitionTest()
+        {
+            var sampleMessage = 
+                @"MSH|^~\&|SYSTEM1|ABC|SYSTEM2||201803262027||DFT^P03|20180326202737608457|P|2.3||||||8859/1
+EVN|P03|20180326202540
+PID|1|0002381795|0002381795||Supermann^Peter^^^Herr||19990101|M|||Hamburgerstrasse 123^^Mimamu^BL^12345^CH||123456~123456^^CP||D|2|02|321|8.2.24.||| 
+PV1||A|00004620^00001318^1318||||000123456^Superfrau^Maria W.^|^Superarzt^Anton^L|00097012345^Superarzt^Herbert^~~0009723456^Superarzt^Markus^||||||||000998765^Assistent A^ONKO^D||0087123456||||||||||||||||||||2140||O|||201905220600|201908201100|||||";
+
+            var message = new Message(sampleMessage);
+            message.ParseMessage();
+
+            // Check for invalid repetition number
+            try
+            {
+                var value = message.GetValue("PV1.8(2).1");
+                Assert.IsNull(value);
+                value = message.GetValue("PV1.8(3).1");
+                Assert.IsNull(value);
+
+                Assert.Fail("Unexpected non-exception");
+            }
+            catch
+            {
+                // Pass
+            }
         }
 
         [TestMethod]

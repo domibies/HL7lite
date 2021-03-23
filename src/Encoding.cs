@@ -5,7 +5,6 @@ namespace HL7.Dotnetcore
 {
     public class HL7Encoding
     {
-        public string AllDelimiters { get; private set; } = @"|^~\&";
         public char FieldDelimiter { get; set; } = '|'; // \F\
         public char ComponentDelimiter { get; set; } = '^'; // \S\
         public char RepeatDelimiter { get; set; } = '~';  // \R\
@@ -13,6 +12,7 @@ namespace HL7.Dotnetcore
         public char SubComponentDelimiter { get; set; } = '&'; // \T\
         public string SegmentDelimiter { get; set; } = "\r";
         public string PresentButNull { get; set; } = "\"\"";
+        public string AllDelimiters => "" + FieldDelimiter + ComponentDelimiter + RepeatDelimiter + EscapeCharacter + SubComponentDelimiter;
 
         public HL7Encoding()
         {
@@ -130,7 +130,13 @@ namespace HL7.Dotnetcore
                 int li = encodedValue.IndexOf(this.EscapeCharacter, i);
 
                 if (li == -1)
-                    throw new HL7Exception("Invalid escape sequence in HL7 string");
+                {
+                    // throw new HL7Exception("Invalid escape sequence in HL7 string");
+                    result.Append(this.EscapeCharacter);
+                    result.Append(encodedValue[i]);
+                    continue;
+                }
+                
 
                 string seq = encodedValue.Substring(i, li-i);
                 i = li;

@@ -175,12 +175,12 @@ namespace HL7.Dotnetcore
 
                             if (field.HasRepetitions)
                             {
-                                for (int j = 0; j < field.RepeatitionList.Count; j++)
+                                for (int j = 0; j < field.RepetitionList.Count; j++)
                                 {
                                     if (j > 0)
                                         strMessage.Append(Encoding.RepeatDelimiter);
 
-                                    serializeField(field.RepeatitionList[j], strMessage);
+                                    serializeField(field.RepetitionList[j], strMessage);
                                 }
                             }
                             else
@@ -293,7 +293,7 @@ namespace HL7.Dotnetcore
                 throw new HL7Exception("Request format is not valid: " + strValueFormat);
             }
 
-            return strValue;
+            return this.Encoding.Decode(strValue);
         }
 
         /// <summary>
@@ -521,10 +521,10 @@ namespace HL7.Dotnetcore
         }
 
         /// <summary>
-        /// Adds a segemnt to the message
+        /// Adds a segment to the message
         /// </summary>
         /// <param name="newSegment">Segment to be appended to the end of the message</param>
-        /// <returns>True if added sucessfully, otherwise false</returns>
+        /// <returns>True if added successfully, otherwise false</returns>
         public bool AddNewSegment(Segment newSegment)
         {
             try
@@ -547,9 +547,9 @@ namespace HL7.Dotnetcore
         /// <summary>
         /// Removes a segment from the message
         /// </summary>
-        /// <param name="segmentName">Segment to be removed/param>
-        /// <param name="index">Zero-based index of the sement to be removed, in case of multiple. Default is 0.</param>
-        /// <returns>True if found and removed sucessfully, otherwise false</returns>
+        /// <param name="segmentName">Segment to be removed</param>
+        /// <param name="index">Zero-based index of the segment to be removed, in case of multiple. Default is 0.</param>
+        /// <returns>True if found and removed successfully, otherwise false</returns>
         public bool RemoveSegment(string segmentName, int index = 0) 
         {
             try
@@ -562,6 +562,8 @@ namespace HL7.Dotnetcore
                     return false;
 
                 list.RemoveAt(index);
+                SegmentCount--;
+
                 return true;
             }
             catch (Exception ex)
@@ -603,10 +605,17 @@ namespace HL7.Dotnetcore
                 var dateString = MessageHelper.LongDateWithFractionOfSecond(DateTime.Now);
                 var delim = this.Encoding.FieldDelimiter;
 
-                string response = "MSH" + this.Encoding.AllDelimiters + delim + sendingApplication + delim + sendingFacility + delim 
-                    + receivingApplication + delim + receivingFacility + delim
-                    + dateString + delim + (security ?? string.Empty) + delim + messageType + delim + messageControlID + delim 
-                    + processingID + delim + version + this.Encoding.SegmentDelimiter;
+                string response = "MSH" + this.Encoding.AllDelimiters + delim + 
+                    sendingApplication + delim + 
+                    sendingFacility + delim +
+                    receivingApplication + delim + 
+                    receivingFacility + delim +
+                    this.Encoding.Encode(dateString) + delim + 
+                    (security ?? string.Empty) + delim + 
+                    messageType + delim + 
+                    messageControlID + delim +
+                    processingID + delim + 
+                    version + this.Encoding.SegmentDelimiter;
 
                 var message = new Message(response);
                 message.ParseMessage();
@@ -687,9 +696,11 @@ namespace HL7.Dotnetcore
             var field = segment.FieldList[fieldIndex];
 
             if (field.HasRepetitions)
-                field = field.RepeatitionList[repetition];
-
-            return field;
+                return field.RepetitionList[repetition];
+            else if (repetition == 0)
+                return field;
+            else
+                return null;
         }
 
         /// <summary>
@@ -756,7 +767,7 @@ namespace HL7.Dotnetcore
 
                     if (MSHFields.Count >= 12)
                     {
-                        this.Version = MessageHelper.SplitString(MSHFields[11], Encoding.ComponentDelimiter)[0];
+                        this.Version = MessageHelper.SplitString(this.Encoding.Decode(MSHFields[11]), Encoding.ComponentDelimiter)[0];
                     }
                     else
                     {
@@ -766,7 +777,7 @@ namespace HL7.Dotnetcore
                     // Find Message Type & Trigger Event
                     try
                     {
-                        string MSH_9 = MSHFields[8];
+                        string MSH_9 = this.Encoding.Decode(MSHFields[8]);
 
                         if (!string.IsNullOrEmpty(MSH_9))
                         {
@@ -799,7 +810,7 @@ namespace HL7.Dotnetcore
 
                     try
                     {
-                        this.MessageControlID = MSHFields[9];
+                        this.MessageControlID = this.Encoding.Decode(MSHFields[9]);
 
                         if (string.IsNullOrEmpty(this.MessageControlID))
                             throw new HL7Exception("MSH.10 - Message Control ID not found", HL7Exception.REQUIRED_FIELD_MISSING);
@@ -811,7 +822,7 @@ namespace HL7.Dotnetcore
 
                     try
                     {
-                        this.ProcessingID = MSHFields[10];
+                        this.ProcessingID = this.Encoding.Decode(MSHFields[10]);
 
                         if (string.IsNullOrEmpty(this.ProcessingID))
                             throw new HL7Exception("MSH.11 - Processing ID not found", HL7Exception.REQUIRED_FIELD_MISSING);
