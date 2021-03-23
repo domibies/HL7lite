@@ -13,8 +13,9 @@ namespace HL7.Dotnetcore.Test
 
         public static void Main(string[] args)
         {
-            // var test = new HL7Test();
+            var test = new HL7Test();
             // test.CustomDelimiter();
+            test.ParseTest1();
         }
 
         public HL7Test()

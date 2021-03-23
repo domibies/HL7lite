@@ -59,7 +59,35 @@ namespace HL7.Dotnetcore
             {
                 char c = val[i];
 
-                if (c == this.ComponentDelimiter) 
+                if (c == '<')
+                {
+                    // special case <B>
+                    if (val.Length >= i + 3 && val[i+1] == 'B' && val[i+2] == '>')
+                    {
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append("H");
+                        sb.Append(this.EscapeCharacter);
+                        i += 2; // +1 in loop
+                    }
+
+                    // special case </B>
+                    if (val.Length >= i + 4 && val[i + 1] == '/' && val[i + 2] == 'B' && val[i + 3] == '>')
+                    {
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append("N");
+                        sb.Append(this.EscapeCharacter);
+                        i += 3; // +1 in loop
+                    }
+                    // special case <BR>
+                    if (val.Length >= i + 4 && val[i + 1] == 'B' && val[i + 2] == 'R' && val[i + 3] == '>')
+                    {
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append(".br");
+                        sb.Append(this.EscapeCharacter);
+                        i += 3; // +1 in loop
+                    }
+                }
+                else if (c == this.ComponentDelimiter) 
                 {
                     sb.Append(this.EscapeCharacter);
                     sb.Append("S");
@@ -93,7 +121,7 @@ namespace HL7.Dotnetcore
                 {
                     string v = string.Format("{0:X2}",(int)c);
                     
-                    if ((v.Length | 2) != 0) 
+                    if ((v.Length % 2) != 0) // make number of digits even, this test would only be needed for values > 0xFF
                         v = "0" + v;
 
                     sb.Append(this.EscapeCharacter);
