@@ -5,15 +5,15 @@ This is a lightweight library for building and parsing HL7 2.x messages, for .Ne
 
 The resulting assembly is strongly named.
 
-It is a seperately maintained for of
+It is a seperately maintained fork of
 https://github.com/Efferent-Health/HL7-dotnetcore
 
-Which is a fork of 
+Which, on it's turn, is a fork of 
 https://github.com/j4jayant/hl7-cSharp-parser
 
 
 All credits for code before this fork goes to the maintainters of those repositories. Thanks.
-This fork will branch into a different direction.
+This fork will branch into a different direction, hence the new name.
  
 
 ## Object construction
