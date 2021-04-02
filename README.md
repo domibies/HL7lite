@@ -1,5 +1,4 @@
-[![Build Status](https://dev.azure.com/dmdevcode/HL7lite/_apis/build/status/HL7lite-ASP.NET%20Core-CI?branchName=master)](https://dev.azure.com/dmdevcode/HL7lite/_build/latest?definitionId=3&branchName=master)
-
+[![Build status](https://dev.azure.com/dmdevcode/HL7lite/_apis/build/status/HL7lite-ASP.NET%20Core-CI)]
 # HL7lite
 
 
