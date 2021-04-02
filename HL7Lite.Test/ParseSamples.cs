@@ -3,7 +3,7 @@ using System.IO;
 using HL7lite;
 using Xunit;
 
-namespace HL7Lite.Test
+namespace HL7lite.Test
 {
     public class ParseSamples
     {

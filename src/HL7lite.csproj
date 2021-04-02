@@ -9,6 +9,8 @@
     <PackageTags>hl7;hl7lite;dotnetcore</PackageTags>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/domibies/HL7lite</RepositoryUrl>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\HL7lite.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <PropertyGroup>

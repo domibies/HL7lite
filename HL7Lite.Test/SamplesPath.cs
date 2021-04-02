@@ -2,7 +2,7 @@
 using System.IO;
 using System.Reflection;
 
-namespace HL7Lite.Test
+namespace HL7lite.Test
 {
     public static class SamplesPath
     {

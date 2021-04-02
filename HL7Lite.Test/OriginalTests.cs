@@ -3,7 +3,7 @@ using System.IO;
 using HL7lite;
 using Xunit;
 
-namespace HL7Lite.Test
+namespace HL7lite.Test
 {
     public class OriginalTests
     {
@@ -174,7 +174,7 @@ namespace HL7Lite.Test
             var MSA_1_1 = ack.GetValue("MSA.1");
             var MSA_1_2 = ack.GetValue("MSA.2");
 
-            Assert.Equal(MSA_1_1, "AA");
+            Assert.Equal("AA", MSA_1_1);
             Assert.Equal(MSH_10, MSH_10_A);
             Assert.Equal(MSH_10, MSA_1_2);
         }
@@ -235,7 +235,7 @@ namespace HL7Lite.Test
             var expectEmpty = evn.Fields(3).Value;
             Assert.Equal(string.Empty, expectEmpty);
             var expectNull = evn.Fields(4).Value;
-            Assert.Equal(null, expectNull);
+            Assert.Null(expectNull);
         }
 
         [Fact]
@@ -295,16 +295,16 @@ namespace HL7Lite.Test
         {
             var message = new Message(HL7_ADT.Value);
             message.ParseMessage();
-            Assert.Equal(message.Segments("NK1").Count, 2);
-            Assert.Equal(message.SegmentCount, 5);
+            Assert.Equal(2, message.Segments("NK1").Count);
+            Assert.Equal(5, message.SegmentCount);
 
             message.RemoveSegment("NK1", 1);
-            Assert.Equal(message.Segments("NK1").Count, 1);
-            Assert.Equal(message.SegmentCount, 4);
+            Assert.Single(message.Segments("NK1"));
+            Assert.Equal(4, message.SegmentCount);
 
             message.RemoveSegment("NK1");
-            Assert.Equal(message.Segments("NK1").Count, 0);
-            Assert.Equal(message.SegmentCount, 3);
+            Assert.Empty(message.Segments("NK1"));
+            Assert.Equal(3, message.SegmentCount);
         }
 
         [Theory]
@@ -488,7 +488,7 @@ PV1||A|00004620^00001318^1318||||000123456^Superfrau^Maria W.^|^Superarzt^Anton^
             message.AddNewSegment(orcSegment);
 
             string serializedMessage = message.SerializeMessage(false);
-            Assert.Equal(orcSegment.Fields(12).Components().Count, 5);
+            Assert.Equal(5, orcSegment.Fields(12).Components().Count);
             Assert.Equal("ORC||||||||||||should not be removed^should not be removed^should not be removed^^should not be removed\r", serializedMessage);
         }
 
@@ -513,7 +513,7 @@ PV1||A|00004620^00001318^1318||||000123456^Superfrau^Maria W.^|^Superarzt^Anton^
             message.AddNewSegment(orcSegment);
 
             string serializedMessage = message.SerializeMessage(false);
-            Assert.Equal(0, orcSegment.Fields(12).Components().Count);
+            Assert.Empty(orcSegment.Fields(12).Components());
             Assert.Equal("ORC||||||||||||\r", serializedMessage);
         }
     }
