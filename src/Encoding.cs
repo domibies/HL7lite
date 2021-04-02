@@ -59,19 +59,20 @@ namespace HL7lite
             {
                 char c = val[i];
 
+                bool continueEncoding = true;
                 if (c == '<')
                 {
+                    continueEncoding = false;
                     // special case <B>
-                    if (val.Length >= i + 3 && val[i+1] == 'B' && val[i+2] == '>')
+                    if (val.Length >= i + 3 && val[i + 1] == 'B' && val[i + 2] == '>')
                     {
                         sb.Append(this.EscapeCharacter);
                         sb.Append("H");
                         sb.Append(this.EscapeCharacter);
                         i += 2; // +1 in loop
                     }
-
                     // special case </B>
-                    if (val.Length >= i + 4 && val[i + 1] == '/' && val[i + 2] == 'B' && val[i + 3] == '>')
+                    else if (val.Length >= i + 4 && val[i + 1] == '/' && val[i + 2] == 'B' && val[i + 3] == '>')
                     {
                         sb.Append(this.EscapeCharacter);
                         sb.Append("N");
@@ -79,58 +80,64 @@ namespace HL7lite
                         i += 3; // +1 in loop
                     }
                     // special case <BR>
-                    if (val.Length >= i + 4 && val[i + 1] == 'B' && val[i + 2] == 'R' && val[i + 3] == '>')
+                    else if (val.Length >= i + 4 && val[i + 1] == 'B' && val[i + 2] == 'R' && val[i + 3] == '>')
                     {
                         sb.Append(this.EscapeCharacter);
                         sb.Append(".br");
                         sb.Append(this.EscapeCharacter);
                         i += 3; // +1 in loop
                     }
+                    else
+                        continueEncoding = true;
                 }
-                else if (c == this.ComponentDelimiter) 
+                if (continueEncoding)
                 {
-                    sb.Append(this.EscapeCharacter);
-                    sb.Append("S");
-                    sb.Append(this.EscapeCharacter);
-                } 
-                else if (c == this.EscapeCharacter) 
-                {
-                    sb.Append(this.EscapeCharacter);
-                    sb.Append("E");
-                    sb.Append(this.EscapeCharacter);
-                } 
-                else if (c == this.FieldDelimiter) 
-                {
-                    sb.Append(this.EscapeCharacter);
-                    sb.Append("F");
-                    sb.Append(this.EscapeCharacter);
-                } 
-                else if (c == this.RepeatDelimiter) 
-                {
-                    sb.Append(this.EscapeCharacter);
-                    sb.Append("R");
-                    sb.Append(this.EscapeCharacter);
-                } 
-                else if (c == this.SubComponentDelimiter) 
-                {
-                    sb.Append(this.EscapeCharacter);
-                    sb.Append("T");
-                    sb.Append(this.EscapeCharacter);
-                } 
-                else if (c == 10 || c == 13) // All other non-visible characters will be preserved
-                {
-                    string v = string.Format("{0:X2}",(int)c);
-                    
-                    if ((v.Length % 2) != 0) // make number of digits even, this test would only be needed for values > 0xFF
-                        v = "0" + v;
+                    if (c == this.ComponentDelimiter)
+                    {
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append("S");
+                        sb.Append(this.EscapeCharacter);
+                    }
+                    else if (c == this.EscapeCharacter)
+                    {
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append("E");
+                        sb.Append(this.EscapeCharacter);
+                    }
+                    else if (c == this.FieldDelimiter)
+                    {
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append("F");
+                        sb.Append(this.EscapeCharacter);
+                    }
+                    else if (c == this.RepeatDelimiter)
+                    {
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append("R");
+                        sb.Append(this.EscapeCharacter);
+                    }
+                    else if (c == this.SubComponentDelimiter)
+                    {
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append("T");
+                        sb.Append(this.EscapeCharacter);
+                    }
+                    else if (c == 10 || c == 13) // All other non-visible characters will be preserved
+                    {
+                        string v = string.Format("{0:X2}", (int)c);
 
-                    sb.Append(this.EscapeCharacter);
-                    sb.Append("X");
-                    sb.Append(v);
-                    sb.Append(this.EscapeCharacter);
-                } 
-                else {
-                    sb.Append(c);
+                        if ((v.Length % 2) != 0) // make number of digits even, this test would only be needed for values > 0xFF
+                            v = "0" + v;
+
+                        sb.Append(this.EscapeCharacter);
+                        sb.Append("X");
+                        sb.Append(v);
+                        sb.Append(this.EscapeCharacter);
+                    }
+                    else
+                    {
+                        sb.Append(c);
+                    }
                 }
             }
 
