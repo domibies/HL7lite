@@ -1,10 +1,18 @@
-# HL7-dotnetcore
+# HL7lite
 
-[![NuGet](https://img.shields.io/nuget/v/HL7-dotnetcore.svg)](https://www.nuget.org/packages/HL7-dotnetcore/)
-[![github](https://img.shields.io/github/stars/Efferent-Health/HL7-dotnetcore.svg)]()
-[![Build Status](https://efferent.visualstudio.com/open-source/_apis/build/status/Efferent-Health.HL7-dotnetcore?branchName=master)](https://efferent.visualstudio.com/open-source/_build/latest?definitionId=8&branchName=master)
 
 This is a lightweight library for building and parsing HL7 2.x messages, for .Net Standard and .Net Core. It is not tied to any particular version of HL7 nor validates against one. 
+
+The resulting assembly is strongly named.
+
+It is a seperately maintained for of
+https://github.com/Efferent-Health/HL7-dotnetcore
+Which is a fork of 
+https://github.com/j4jayant/hl7-cSharp-parser
+
+All credits for code before this for goes to the maintainters of those repositories. Thanks.
+This fork will branch into a different direction.
+ 
 
 ## Object construction
 
