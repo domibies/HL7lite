@@ -9,7 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HL7lite.Test", "HL7Lite.Tes
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7FD41B8B-CDC0-4414-AC7F-B65DF35E2D7E}"
 	ProjectSection(SolutionItems) = preProject
-		HL7lite.snk = HL7lite.snk
 		LICENSE.txt = LICENSE.txt
 		README.md = README.md
 	EndProjectSection
