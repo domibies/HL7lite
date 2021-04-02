@@ -10,6 +10,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7FD41B8B-CDC0-4414-AC7F-B65DF35E2D7E}"
 	ProjectSection(SolutionItems) = preProject
 		HL7lite.snk = HL7lite.snk
+		LICENSE.txt = LICENSE.txt
+		README.md = README.md
 	EndProjectSection
 EndProject
 Global
@@ -49,5 +51,8 @@ Global
 		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|x64.Build.0 = Release|Any CPU
 		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|x86.ActiveCfg = Release|Any CPU
 		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(MonoDevelopProperties) = preSolution
+		version = 1.0
 	EndGlobalSection
 EndGlobal

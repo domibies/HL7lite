@@ -11,6 +11,8 @@
     <RepositoryUrl>https://github.com/domibies/HL7lite</RepositoryUrl>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\HL7lite.snk</AssemblyOriginatorKeyFile>
+    <ReleaseVersion>1.0</ReleaseVersion>
+    <PackOnBuild>true</PackOnBuild>
   </PropertyGroup>
 
   <PropertyGroup>
