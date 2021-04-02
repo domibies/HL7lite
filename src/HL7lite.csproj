@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Description>Lightweight HL7 2.x library compatible with .Net Standard and .Net Core</Description>
-    <Copyright>(c) domibies</Copyright>
+    <Description>Lightweight .NET parser for HL7 2.x messages, Strong Named</Description>
+    <Copyright>(c) 2021 domibies</Copyright>
     <VersionPrefix>0.0.9</VersionPrefix>
     <TargetFrameworks>netstandard1.3;netstandard1.6;netstandard2.0</TargetFrameworks>
     <AssemblyName>HL7lite</AssemblyName>
@@ -13,6 +13,12 @@
     <AssemblyOriginatorKeyFile>..\HL7lite.snk</AssemblyOriginatorKeyFile>
     <ReleaseVersion>1.0</ReleaseVersion>
     <PackOnBuild>true</PackOnBuild>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>domibies</Authors>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/domibies/HL7lite/master/LICENSE.txt</PackageLicenseUrl>
+    <Owners>domibies</Owners>
+    <Summary>Lightweight .NET parser for HL7 2.x messages, Strong Named</Summary>
+    <Title>HL7lite</Title>
   </PropertyGroup>
 
   <PropertyGroup>
