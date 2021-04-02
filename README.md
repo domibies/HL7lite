@@ -7,10 +7,12 @@ The resulting assembly is strongly named.
 
 It is a seperately maintained for of
 https://github.com/Efferent-Health/HL7-dotnetcore
+
 Which is a fork of 
 https://github.com/j4jayant/hl7-cSharp-parser
 
-All credits for code before this for goes to the maintainters of those repositories. Thanks.
+
+All credits for code before this fork goes to the maintainters of those repositories. Thanks.
 This fork will branch into a different direction.
  
 
