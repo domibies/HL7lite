@@ -8,7 +8,8 @@ namespace HL7lite
         public const string UNSUPPORTED_MESSAGE_TYPE = "Validation Error - Message Type not supported by this implementation";
         public const string BAD_MESSAGE = "Validation Error - Bad Message";
         public const string PARSING_ERROR = "Parsing Error";
-        public const string SERIALIZATION_ERROR = "Serialization Error";        
+        public const string SERIALIZATION_ERROR = "Serialization Error";
+        public const string SEGMENT_TOO_SHORT = "Validation Error - Segment Too Short";
         
         public string ErrorCode { get; set; }
 

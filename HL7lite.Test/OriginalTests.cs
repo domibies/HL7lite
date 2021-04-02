@@ -228,8 +228,7 @@ namespace HL7lite.Test
             const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\r\nEVN|A04|20110613083617||\"\"\r\n";
 
             var message = new Message(sampleMessage);
-            var isParsed = message.ParseMessage();
-            Assert.True(isParsed);
+            message.ParseMessage();
             Assert.True(message.SegmentCount > 0);
             var evn = message.Segments("EVN")[0];
             var expectEmpty = evn.Fields(3).Value;
@@ -244,8 +243,7 @@ namespace HL7lite.Test
             const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\n\nEVN|A04|20110613083617||\r\n";
 
             var message = new Message(sampleMessage);
-            var isParsed = message.ParseMessage();
-            Assert.True(isParsed);
+            message.ParseMessage();
             Assert.True(message.SegmentCount > 0);
         }
 
@@ -255,8 +253,7 @@ namespace HL7lite.Test
             const string sampleMessage = "MSH|^~\\&|SA|SF|RA|RF|20110613083617||ADT^A04|123|P|2.7||||\n\nEVN|A04|20110613083617||\r\n";
 
             var message = new Message(sampleMessage);
-            var isParsed = message.ParseMessage();
-            Assert.True(isParsed);
+            message.ParseMessage();
             Assert.True(message.SegmentCount > 0);
         }
 
@@ -385,12 +382,13 @@ PID|1||MRN_123^^^IDX^MRN||Smith\F\\S\\R\\E\\T\^John||19600101|M";
         [Fact]
         public void SkipInvalidEscapeSequenceTest()
         {
+
             var sampleMessage =
                 @"MSH|^~\&|TEST^TEST|TEST|||11111||ADT^A08|11111|P|2.4|||AL||D||||||
 ZZ1|1|139378|20201230100000|ghg^ghgh-HA||s1^OP-Saal 1|gh^gjhg 1|ghg^ghjg-HA|BSV 4\5 re.||||||";
 
             var message = new Message(sampleMessage);
-            message.ParseMessage();
+            message.ParseMessage(false); // if we want, we can ignore bad escape sequences (by skipping the serialization check with false)
 
             string serializedMessage = message.SerializeMessage(false);
         }

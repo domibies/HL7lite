@@ -14,8 +14,7 @@ namespace HL7lite.Test
 
             var message = new Message(messageText);
 
-            var isParsed = message.ParseMessage();
-            Assert.True(isParsed);
+            message.ParseMessage();
         }
 
         [Fact]
@@ -25,8 +24,7 @@ namespace HL7lite.Test
 
             var message = new Message(messageText);
 
-            var isParsed = message.ParseMessage();
-            Assert.True(isParsed);
+            message.ParseMessage();
         }
 
         [Fact]
@@ -36,8 +34,7 @@ namespace HL7lite.Test
 
             var message = new Message(messageText);
 
-            var isParsed = message.ParseMessage();
-            Assert.True(isParsed);
+            message.ParseMessage();
         }
     }
 }

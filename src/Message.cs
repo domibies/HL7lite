@@ -56,15 +56,15 @@ namespace HL7lite
         /// <summary>
         /// Parse the HL7 message in text format, throws HL7Exception if error occurs
         /// </summary>
-        /// <returns>boolean</returns>
-        public bool ParseMessage()
+        /// <param name="serializeCheck">If true (default) the message wil be serialized back to a string and compared with the original (throws if not eq)</param>
+        /// <exception>fails with an exception wheren parsing isn't succesful</exception>
+        public void ParseMessage(bool serializeCheck = true)
         {
-            bool isValid = false;
-            bool isParsed = false;
-
+            // domibies 2 april 2021 : this method used to return a boolean, which was confusing (caller had to filter & exceptions AND check return value)
+            // now it just throws HL7Exception on any failure
             try
             {
-                isValid = this.validateMessage();
+                this.validateMessage();
             }
             catch (HL7Exception ex)
             {
@@ -75,60 +75,55 @@ namespace HL7lite
                 throw new HL7Exception("Unhandled Exception in validation - " + ex.Message, HL7Exception.BAD_MESSAGE);
             }
 
-            if (isValid)
+            try
             {
+                if (this.allSegments == null || this.allSegments.Count <= 0)
+                    this.allSegments = MessageHelper.SplitMessage(HL7Message);
+
+                short SegSeqNo = 0;
+
+                foreach (string strSegment in this.allSegments)
+                {
+                    if (string.IsNullOrWhiteSpace(strSegment))
+                        continue;
+
+                    Segment newSegment = new Segment(this.Encoding)
+                    {
+                        Name = strSegment.Substring(0, 3),
+                        Value = strSegment,
+                        SequenceNo = SegSeqNo++
+                    };
+
+                    this.AddNewSegment(newSegment);
+                }
+
+                this.SegmentCount = SegSeqNo;
+
+                string strSerializedMessage = string.Empty;
+
                 try
                 {
-                    if (this.allSegments == null || this.allSegments.Count <= 0)
-                        this.allSegments = MessageHelper.SplitMessage(HL7Message);
-
-                    short SegSeqNo = 0;
-
-                    foreach (string strSegment in this.allSegments)
-                    {
-                        if (string.IsNullOrWhiteSpace(strSegment))
-                            continue;
-
-                        Segment newSegment = new Segment(this.Encoding)
-                        {
-                            Name = strSegment.Substring(0, 3),
-                            Value = strSegment,
-                            SequenceNo = SegSeqNo++
-                        };
-
-                        this.AddNewSegment(newSegment);
-                    }
-
-                    this.SegmentCount = SegSeqNo;
-
-                    string strSerializedMessage = string.Empty;
-
-                    try
-                    {
-                        strSerializedMessage = this.SerializeMessage(false); 
-                    }
-                    catch (HL7Exception ex)
-                    {
-                        throw new HL7Exception("Failed to serialize parsed message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
-                    }
-
-                    if (!string.IsNullOrEmpty(strSerializedMessage))
-                    {
-                        if (this.Equals(strSerializedMessage))
-                            isParsed = true;
-                    }
-                    else
-                    {
-                        throw new HL7Exception("Unable to serialize to original message - ", HL7Exception.PARSING_ERROR);
-                    }
+                    strSerializedMessage = this.SerializeMessage(false);
                 }
-                catch (Exception ex)
+                catch (HL7Exception ex)
                 {
-                    throw new HL7Exception("Failed to parse the message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
+                    throw new HL7Exception("Failed to serialize parsed message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
+                }
+
+                if (!string.IsNullOrEmpty(strSerializedMessage))
+                {
+                    if (serializeCheck && !this.Equals(strSerializedMessage))
+                        throw new HL7Exception("Serialized message not equal to original message - ", HL7Exception.PARSING_ERROR);
+                }
+                else
+                {
+                    throw new HL7Exception("Unable to serialize to original message - ", HL7Exception.PARSING_ERROR);
                 }
             }
-            
-            return isParsed;
+            catch (Exception ex)
+            {
+                throw new HL7Exception("Failed to parse the message with error - " + ex.Message, HL7Exception.PARSING_ERROR);
+            }
         }
 
         /// <summary>
@@ -138,8 +133,10 @@ namespace HL7lite
         /// <returns>string with HL7 message</returns>
         public string SerializeMessage(bool validate)
         {
-            if (validate && !this.validateMessage())
-                throw new HL7Exception("Failed to validate the updated message", HL7Exception.BAD_MESSAGE);
+            if (validate)
+            {
+                validateMessage();
+            }    
 
             var strMessage = new StringBuilder();
             string currentSegName = string.Empty;
@@ -706,9 +703,10 @@ namespace HL7lite
         /// <summary>
         /// Validates the HL7 message for basic syntax
         /// </summary>
-        /// <returns>A boolean indicating whether the whole message is valid or not</returns>
-        private bool validateMessage()
+        /// <exception>Throws an HL7Exception when the message isn't valid</exception>
+        private void validateMessage()
         {
+            // domibies 2 april 2021 : this method used to return a boolean, which was allways true, that is confusing (fail = exception, success = no exception)
             try
             {
                 if (!string.IsNullOrEmpty(HL7Message))
@@ -736,6 +734,10 @@ namespace HL7lite
                     {
                         if (string.IsNullOrWhiteSpace(strSegment))
                             continue;
+
+                        if (strSegment.Length < 3)
+                            throw new HL7Exception($"Invalid segment line '{strSegment}'", HL7Exception.SEGMENT_TOO_SHORT);
+
 
                         string segmentName = strSegment.Substring(0, 3);
                         bool isValidSegmentName = System.Text.RegularExpressions.Regex.IsMatch(segmentName, segmentRegex);
@@ -835,12 +837,14 @@ namespace HL7lite
                 else
                     throw new HL7Exception("No Message Found", HL7Exception.BAD_MESSAGE);
             }
+            catch (HL7Exception)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 throw new HL7Exception("Failed to validate the message with error - " + ex.Message, HL7Exception.BAD_MESSAGE);
             }
-
-            return true;
         }
 
         /// <summary>
