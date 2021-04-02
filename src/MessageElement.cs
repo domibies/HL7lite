@@ -1,4 +1,4 @@
-namespace HL7.Dotnetcore
+﻿namespace HL7lite
 {
     public abstract class MessageElement
     {

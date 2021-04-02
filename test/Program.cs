@@ -1,9 +1,9 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace HL7.Dotnetcore.Test
+namespace HL7lite.Test
 {
     [TestClass]
     public class HL7Test

@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace HL7.Dotnetcore
+namespace HL7lite
 {
     internal class FieldCollection : List<Field>
     {

@@ -3,9 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hl7-dotnetcore", "src\HL7-dotnetcore.csproj", "{8D0228F0-7BE1-4D45-9EB4-8E170F76A17E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HL7lite", "src\HL7lite.csproj", "{8D0228F0-7BE1-4D45-9EB4-8E170F76A17E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hl7test", "test\HL7test.csproj", "{910F6F49-6AD7-45EF-8FA0-E141C77D81DA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HL7test", "test\HL7test.csproj", "{910F6F49-6AD7-45EF-8FA0-E141C77D81DA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HL7Lite.Test", "HL7Lite.Test\HL7Lite.Test.csproj", "{57679A33-159F-4DDE-9265-F8B14028A72C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,5 +46,17 @@ Global
 		{910F6F49-6AD7-45EF-8FA0-E141C77D81DA}.Release|x64.Build.0 = Release|x64
 		{910F6F49-6AD7-45EF-8FA0-E141C77D81DA}.Release|x86.ActiveCfg = Release|x86
 		{910F6F49-6AD7-45EF-8FA0-E141C77D81DA}.Release|x86.Build.0 = Release|x86
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Debug|x64.Build.0 = Debug|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Debug|x86.Build.0 = Debug|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|x64.ActiveCfg = Release|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|x64.Build.0 = Release|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|x86.ActiveCfg = Release|Any CPU
+		{57679A33-159F-4DDE-9265-F8B14028A72C}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

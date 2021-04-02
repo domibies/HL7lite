@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace HL7.Dotnetcore
+namespace HL7lite
 {
     public class HL7Encoding
     {
