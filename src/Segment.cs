@@ -80,6 +80,32 @@ namespace HL7lite
             this.AddNewField(newField, -1);
         }
 
+        public Field EnsureField(int position, int repetition = 1)
+        {
+            position--; // position is one based but FieldList[] zero based
+  
+
+            Field field = null;
+            while (position >= FieldList.Count)
+                AddEmptyField();
+            field = FieldList[position];
+
+
+            if (repetition == 0)
+            {
+                // if no repetition specified (zero explicit), and the field does have repetitions, we remove all subsequent repetitions!!
+                if (field.HasRepetitions)
+                    field.RemoveRepetitions();
+            }
+            else
+            {
+                // if repetition is '1', we will re turn the single field 'or' the first repetition
+                field = field.EnsureRepetition(repetition);
+            }
+
+            return field;
+        }
+
         public bool AddNewField(Field field, int position = -1)
         {
             try
@@ -119,6 +145,11 @@ namespace HL7lite
         public List<Field> GetAllFields()
         {
             return this.FieldList;
+        }
+
+        public override string SerializeValue()
+        {
+            throw new NotImplementedException();
         }
     }
 }

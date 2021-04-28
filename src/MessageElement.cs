@@ -18,8 +18,10 @@
             }
         }
 
-        public HL7Encoding Encoding { get; protected set; }
+        public HL7Encoding Encoding { get; internal set; }
 
         protected abstract void ProcessValue();
+
+        public abstract string SerializeValue();
     }
 }

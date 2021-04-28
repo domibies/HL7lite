@@ -204,6 +204,27 @@ namespace HL7lite
         }
 
         /// <summary>
+        /// Chekcs if a specific Field/Component/SubCpomponent exists, throws error if request format is invalid
+        /// </summary>
+        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
+        /// <returns>boolean thats indicates if the values exists (empty, null, or with value)</returns>
+        public bool ValueExists(string strValueFormat)
+        {
+            try
+            {
+                GetValue(strValueFormat);
+                return true; // no exception thrown, ok
+            }
+            catch (HL7Exception ex)
+            {
+                if (ex.ErrorCode == HL7Exception.INVALID_REQUEST)
+                    throw;
+                else
+                    return false;
+            }
+        }
+
+        /// <summary>
         /// Get the Value of specific Field/Component/SubCpomponent, throws error if field/component index is not valid
         /// </summary>
         /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
@@ -235,7 +256,7 @@ namespace HL7lite
                         try
                         {
                             var field = this.getField(segment, allComponents[1]);
-                            strValue = field.ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].Value;
+                            strValue = field.ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].SerializeValue();
                         }
                         catch (Exception ex)
                         {
@@ -249,7 +270,7 @@ namespace HL7lite
                         try
                         {
                             var field = this.getField(segment, allComponents[1]);
-                            strValue = field.ComponentList[componentIndex - 1].Value;
+                            strValue = field.ComponentList[componentIndex - 1].SerializeValue();
                         }
                         catch (Exception ex)
                         {
@@ -261,7 +282,7 @@ namespace HL7lite
                         try
                         {
                             var field = this.getField(segment, allComponents[1]);
-                            strValue = field.Value;
+                            strValue = field.SerializeValue();
                         }
                         catch (Exception ex)
                         {
@@ -287,10 +308,69 @@ namespace HL7lite
             }
             else
             {
-                throw new HL7Exception("Request format is not valid: " + strValueFormat);
+                throw new HL7Exception("Request format is not valid: " + strValueFormat, HL7Exception.INVALID_REQUEST);
             }
 
             return this.Encoding.Decode(strValue);
+        }
+
+        /// <summary>
+        /// Sets the Value of specific Field/Component/SubComponent, creates Field/Component/SubComponent if needed
+        /// throws error if field/component index is not valid
+        /// </summary>
+        /// <param name="strValueFormat">Field/Component position in format SEGMENTNAME.FieldIndex.ComponentIndex.SubComponentIndex example PID.5.2</param>
+        /// <param name="strValue">Value for the specified field/component</param>
+        /// <returns>void</returns>
+
+        public void PutValue(string strValueFormat, string strValue)
+        {
+            string segmentName = string.Empty;
+            int componentIndex = 0;
+            int subComponentIndex = 0;
+            List<string> allComponents = MessageHelper.SplitString(strValueFormat, new char[] { '.' });
+            int comCount = allComponents.Count;
+            bool isValid = validateValueFormat(allComponents);
+
+            if (isValid)
+            {
+                segmentName = allComponents[0];
+
+                if (SegmentList.ContainsKey(segmentName))
+                {
+                    var segment = SegmentList[segmentName].First();
+
+                    if (comCount >= 2)
+                    {
+                        var field = ensureField(segment, allComponents[1]);
+
+                        if (comCount >= 3)
+                        {
+                            Int32.TryParse(allComponents[2], out componentIndex);
+                            var component = field.EnsureComponent(componentIndex);
+
+                            if (comCount == 4)
+                            {
+                                Int32.TryParse(allComponents[3], out subComponentIndex);
+                                var subComponent = component.EnsureSubComponent(subComponentIndex);
+
+                                subComponent.Value = strValue;
+                            }
+                            else
+                                component.Value = strValue;
+                        }
+                        else
+                            field.Value = strValue;
+                    }
+
+                    else
+                        segment.Value = strValue;
+
+                }
+                else
+                    throw new HL7Exception("Segment name not available");
+            }
+            else
+                throw new HL7Exception("Request format is not valid", HL7Exception.INVALID_REQUEST);
         }
 
         /// <summary>
@@ -370,7 +450,7 @@ namespace HL7lite
                     throw new HL7Exception("Segment name not available");
             }
             else
-                throw new HL7Exception("Request format is not valid");
+                throw new HL7Exception("Request format is not valid", HL7Exception.INVALID_REQUEST);
 
             return isSet;
         }
@@ -672,6 +752,40 @@ namespace HL7lite
             }
         }
 
+        private Field ensureField(Segment segment, string index)
+        {
+            int repetition = 0;
+            var matches = System.Text.RegularExpressions.Regex.Matches(index, fieldRegex);
+
+            if (matches.Count < 1)
+                throw new Exception("Invalid field index");
+
+            Int32.TryParse(matches[0].Groups[1].Value, out int fieldIndex);
+            fieldIndex--;
+
+            Field field = null;
+            while (fieldIndex >= segment.FieldList.Count)
+                segment.AddEmptyField();
+            field = segment.FieldList[fieldIndex];
+
+            if (matches[0].Length > 3)
+            {
+                Int32.TryParse(matches[0].Groups[3].Value, out repetition);
+            }
+
+            if (repetition == 0)
+            {
+                // if no repetition specified, and the field had repetitions, we remove all subsequent repetitions!!
+                if (field.HasRepetitions)
+                    field.RemoveRepetitions(); 
+            }
+            else
+            {
+                field = field.EnsureRepetition(repetition);
+            }
+
+            return field;
+        }
 
         private Field getField(Segment segment, string index)
         {

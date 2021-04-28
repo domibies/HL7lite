@@ -2,6 +2,10 @@
 {
     public class SubComponent : MessageElement
     {
+        public SubComponent()
+        {
+        }
+
         public SubComponent(string val, HL7Encoding encoding)
         {
             this.Encoding = encoding;
@@ -10,6 +14,11 @@
 
         protected override void ProcessValue()
         {
+        }
+
+        public override string SerializeValue()
+        {
+            return Encoding.Encode(Value);
         }
     }
 }

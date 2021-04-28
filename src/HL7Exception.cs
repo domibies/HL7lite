@@ -10,6 +10,7 @@ namespace HL7lite
         public const string PARSING_ERROR = "Parsing Error";
         public const string SERIALIZATION_ERROR = "Serialization Error";
         public const string SEGMENT_TOO_SHORT = "Validation Error - Segment Too Short";
+        public const string INVALID_REQUEST = "Validation Error - Request Format Not Valid";
         
         public string ErrorCode { get; set; }
 
