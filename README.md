@@ -11,9 +11,9 @@ https://github.com/Efferent-Health/HL7-dotnetcore
 That library is of course excellent by itself, and well documented. But since I have the need to refactor and enhance the library (for use in a larger framework), I have created this seperately maintained fork.
 For credits for the original codebase(s) check the end of this readme.
 
-## New in 1.1.0 (2021 apr 28)
+## New in 1.1.1 (29 apr 2021)
 
-## PutValue(), ValueExists(), EnsureXXXX()
+## PutValue(), ValueExists(), EnsureXXXX(), SwapFields()
 
 Quite some refactoring, to make the new method PutValue() work for easier manipulation of values. The new method will autocreate fields/(sub)components that are needed to set values. You can also Check for existence of values.
 
@@ -27,6 +27,12 @@ You can  also autocreate fields/components/... with various 'Ensure...' methods 
 ````cSharp
 message.DefaultSegment("ZZ1").EnsureField(5).Value = "X"; // Makes sure the 5h field exists and returns it
 `````
+
+And finally, you can swap 2 fields in a segment
+````cSharp
+message.DefaultSegment("ZZ1").SwapFields(4,5);
+`````
+
 
 Manipulation now also directly affects GetValue() (it used to return the original parsed values, not the new ones)
 

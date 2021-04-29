@@ -128,6 +128,19 @@ namespace HL7lite
             }
         }
 
+        public void SwapFields(int position1, int position2)
+        {
+            if (position1 < 1 || position2 < 1 || position2 > FieldList.Count || position1 > FieldList.Count)
+                throw new HL7Exception("Invalid Position in SwapFields()");
+
+            if (position1 != position2)
+            {
+                Field saveField = FieldList[position1 - 1];
+                FieldList[position1 - 1] = FieldList[position2 - 1];
+                FieldList[position2 - 1] = saveField;
+            }
+        }
+
         public Field Fields(int position)
         {
             position = position - 1;

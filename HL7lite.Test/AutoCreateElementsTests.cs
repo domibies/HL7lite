@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using HL7lite;
 using Xunit;
@@ -12,7 +13,7 @@ namespace HL7Lite.Test
 ZZ1|1|A|2^1";
 
         [Fact]
-        public void EnsureFieldWorks()
+        public void EnsureField()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -23,7 +24,7 @@ ZZ1|1|A|2^1";
         }
 
         [Fact]
-        public void EnsureFieldWithRepetitionWorks()
+        public void EnsureFieldWithRepetition()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -36,7 +37,7 @@ ZZ1|1|A|2^1";
         }
 
         [Fact]
-        public void EnsureComponentWorks()
+        public void EnsureComponent()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -46,7 +47,7 @@ ZZ1|1|A|2^1";
             Assert.Equal("B", message.GetValue("ZZ1.2.2"));
         }
         [Fact]
-        public void EnsureSubComponentWorks()
+        public void EnsureSubComponent()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -58,7 +59,7 @@ ZZ1|1|A|2^1";
         }
 
         [Fact]
-        public void PutValueFieldWorks()
+        public void PutValueField()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -69,7 +70,7 @@ ZZ1|1|A|2^1";
         }
 
         [Fact]
-        public void PutValueFieldComponentWorks()
+        public void PutValueFieldComponent()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -81,7 +82,7 @@ ZZ1|1|A|2^1";
         }
 
         [Fact]
-        public void PutValueFieldAndComponentWorks()
+        public void PutValueFieldAndComponent()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -94,7 +95,7 @@ ZZ1|1|A|2^1";
         }
 
         [Fact]
-        public void PutValueFieldRepetitionWorks()
+        public void PutValueFieldRepetition()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -106,7 +107,7 @@ ZZ1|1|A|2^1";
         }
 
         [Fact]
-        public void ExistsBeforeAndAfterWorks()
+        public void ExistsBeforeAndAfter()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
@@ -120,19 +121,40 @@ ZZ1|1|A|2^1";
 
         /*
         [Fact]
-        public void PutValueTest()
+        public void SomeTest()
+        {
+            var messageString = @"MSH|^~\&|SENDAPP||||||ZZZ^Z01|123|P|2.2||||||||
+ZZ1|1|ID1|abc\R\^def";
+
+            var message = new Message(messageString);
+            message.ParseMessage();
+
+            Debug.WriteLine(message.GetValue("ZZ1.3"));
+            Debug.WriteLine(message.GetValue("ZZ1.3.1"));
+
+            message.SetValue("ZZ1.3", @"def\R\^abc");
+
+            Debug.WriteLine(message.GetValue("ZZ1.3"));
+            Debug.WriteLine(message.GetValue("ZZ1.3.1"));
+            Debug.WriteLine(message.DefaultSegment("ZZ1").Fields(3).Components(1).Value);
+
+            Debug.WriteLine(message.SerializeMessage(false));
+            int breakHere = 1;
+        }
+        */
+
+        [Fact]
+        public void SwapFields()
         {
             Message message = new Message(msg1);
             message.ParseMessage();
 
-            message.PutValue("ZZ1.10.1", "HUP\r");
-            message.PutValue("ZZ1.10.2", "SAKEE|");
+            message.DefaultSegment("ZZ1").SwapFields(2, 3);
 
-            var fieldValue = message.GetValue("ZZ1.10");
+            Assert.Equal("A", message.GetValue("ZZ1.3"));
+            Assert.Equal("1", message.GetValue("ZZ1.2.2"));
 
-            Assert.True(true);
         }
-        */
     }
 }
 
