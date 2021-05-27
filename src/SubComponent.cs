@@ -20,5 +20,10 @@
         {
             return Encoding.Encode(Value);
         }
+
+        public override void RemoveTrailingDelimiters(RemoveDelimitersOptions options)
+        {
+        }
+
     }
 }

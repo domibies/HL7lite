@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using static HL7lite.MessageElement;
 
 namespace HL7lite
 {
@@ -149,41 +150,7 @@ namespace HL7lite
                     foreach (Segment seg in _segListOrdered)
                     {
                         currentSegName = seg.Name;
-
-                        strMessage.Append(seg.Name);
-                        
-                        if (seg.FieldList.Count > 0)
-                            strMessage.Append(Encoding.FieldDelimiter);
-
-                        int startField = currentSegName == "MSH" ? 1 : 0;
-
-                        for (int i = startField; i<seg.FieldList.Count; i++)
-                        {
-                            if (i > startField)
-                                strMessage.Append(Encoding.FieldDelimiter);
-
-                            var field = seg.FieldList[i];
-
-                            if (field.IsDelimiters)
-                            {
-                                strMessage.Append(field.Value);
-                                continue;
-                            }
-
-                            if (field.HasRepetitions)
-                            {
-                                for (int j = 0; j < field.RepetitionList.Count; j++)
-                                {
-                                    if (j > 0)
-                                        strMessage.Append(Encoding.RepeatDelimiter);
-
-                                    serializeField(field.RepetitionList[j], strMessage);
-                                }
-                            }
-                            else
-                                serializeField(field, strMessage);
-                        }
-                        
+                        strMessage.Append(seg.SerializeValue());                        
                         strMessage.Append(Encoding.SegmentDelimiter);
                     }
                 }
@@ -961,33 +928,6 @@ namespace HL7lite
             }
         }
 
-        /// <summary>
-        /// Serializes a field into a string with proper encoding
-        /// </summary>
-        /// <returns>A serialized string</returns>
-        private void serializeField(Field field, StringBuilder strMessage)
-        {
-            if (field.ComponentList.Count > 0)
-            {
-                int indexCom = 0;
-
-                foreach (Component com in field.ComponentList)
-                {
-                    indexCom++;
-                    if (com.SubComponentList.Count > 0)
-                        strMessage.Append(string.Join(Encoding.SubComponentDelimiter.ToString(), com.SubComponentList.Select(sc => Encoding.Encode(sc.Value))));
-                    else
-                        strMessage.Append(Encoding.Encode(com.Value));
-
-                    if (indexCom < field.ComponentList.Count)
-                        strMessage.Append(Encoding.ComponentDelimiter);
-                }
-            }
-            else
-                strMessage.Append(Encoding.Encode(field.Value));
-
-        }
-
         /// <summary> 
         /// Get all segments in order as they appear in original message. This the usual order: IN1|1 IN2|1 IN1|2 IN2|2
         /// </summary>
@@ -1036,6 +976,12 @@ namespace HL7lite
             }
 
             return isValid;
+        }
+
+        public void RemoveTrailingDelimiters(RemoveDelimitersOptions options)
+        {
+            foreach (var seg in Segments())
+                seg.RemoveTrailingDelimiters(options);
         }
     }
 }

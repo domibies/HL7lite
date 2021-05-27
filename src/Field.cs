@@ -124,6 +124,8 @@ namespace HL7lite
             if (HasRepetitions)
             {
                 this.ComponentList = RepetitionList[0].ComponentList;
+                this.IsDelimiters = RepetitionList[0].IsDelimiters;
+                this.IsComponentized = RepetitionList[0].IsComponentized;
                 RepetitionList = new List<Field>();
                 HasRepetitions = false;
             }
@@ -222,6 +224,40 @@ namespace HL7lite
                 throw new HL7Exception("Error removing trailing components - " + ex.Message);
             }
         }
+
+        public override void RemoveTrailingDelimiters(RemoveDelimitersOptions options)
+        {
+            if (IsDelimiters)
+                return;
+
+            if (HasRepetitions)
+            {
+                foreach (var field in RepetitionList)
+                    field.RemoveTrailingDelimiters(options);
+
+                while (RepetitionList.Count > 1 && RepetitionList[RepetitionList.Count - 1].SerializeValue() == string.Empty)
+                    RepetitionList.RemoveAt(RepetitionList.Count - 1);
+
+                if (RepetitionList.Count == 1)
+                {
+                    RemoveRepetitions();
+                }
+            }
+            else
+            {
+                foreach (var component in ComponentList)
+                    component.RemoveTrailingDelimiters(options);
+
+                if (IsComponentized && options.Components)
+                {
+                    while (ComponentList.Count > 1 && ComponentList[ComponentList.Count - 1].SerializeValue() == string.Empty)
+                    {
+                        ComponentList.RemoveAt(ComponentList.Count - 1);
+                    }
+                }
+            }
+        }
+
 
         public override string SerializeValue()
         {

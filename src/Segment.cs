@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 
 namespace HL7lite
 {
@@ -162,7 +164,87 @@ namespace HL7lite
 
         public override string SerializeValue()
         {
-            throw new NotImplementedException();
+            var strMessage = new StringBuilder();
+            strMessage.Append(Name);
+
+            if (FieldList.Count > 0)
+                strMessage.Append(Encoding.FieldDelimiter);
+
+            int startField = Name == "MSH" ? 1 : 0;
+
+            for (int i = startField; i < FieldList.Count; i++)
+            {
+                if (i > startField)
+                    strMessage.Append(Encoding.FieldDelimiter);
+
+                var field = FieldList[i];
+
+                if (field.IsDelimiters)
+                {
+                    strMessage.Append(field.Value);
+                    continue;
+                }
+
+                if (field.HasRepetitions)
+                {
+                    for (int j = 0; j < field.RepetitionList.Count; j++)
+                    {
+                        if (j > 0)
+                            strMessage.Append(Encoding.RepeatDelimiter);
+
+                        serializeField(field.RepetitionList[j], strMessage);
+                    }
+                }
+                else
+                    serializeField(field, strMessage);
+            }
+
+            return strMessage.ToString();
+        }
+
+        /// <summary>
+        /// Serializes a field into a string with proper encoding
+        /// </summary>
+        /// <returns>A serialized string</returns>
+        private void serializeField(Field field, StringBuilder strMessage)
+        {
+            if (field.ComponentList.Count > 0)
+            {
+                int indexCom = 0;
+
+                foreach (Component com in field.ComponentList)
+                {
+                    indexCom++;
+                    if (com.SubComponentList.Count > 0)
+                        strMessage.Append(string.Join(Encoding.SubComponentDelimiter.ToString(), com.SubComponentList.Select(sc => Encoding.Encode(sc.Value))));
+                    else
+                        strMessage.Append(Encoding.Encode(com.Value));
+
+                    if (indexCom < field.ComponentList.Count)
+                        strMessage.Append(Encoding.ComponentDelimiter);
+                }
+            }
+            else
+                strMessage.Append(Encoding.Encode(field.Value));
+
+        }
+
+
+
+        public override void RemoveTrailingDelimiters(RemoveDelimitersOptions options)
+        {
+            foreach(var field in FieldList)
+            {
+                field.RemoveTrailingDelimiters(options);
+            }
+
+            if (options.Fields)
+            {
+                while (FieldList.Count > 1 && FieldList[FieldList.Count - 1].SerializeValue() == string.Empty)
+                {
+                    FieldList.RemoveAt(FieldList.Count - 1);
+                }
+            }
         }
     }
 }

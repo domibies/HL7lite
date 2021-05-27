@@ -11,6 +11,19 @@ https://github.com/Efferent-Health/HL7-dotnetcore
 That library is of course excellent by itself, and well documented. But since I have the need to refactor and enhance the library (for use in a larger framework), I have created this seperately maintained fork.
 For credits for the original codebase(s) check the end of this readme.
 
+## New in 1.1.2 (27 may 2021)
+
+## RemoveTrailingDelimiters()
+
+You can now remove all trailing delimiters at once in a parsed message, as well as on each message element serperately....
+
+````cSharp
+var message = new Message(clutteredMessage);
+message.ParseMessage();
+message.RemoveTrailingDelimiters(RemoveDelimitersOptions.All);
+`````
+
+
 ## New in 1.1.1 (29 apr 2021)
 
 ## PutValue(), ValueExists(), EnsureXXXX(), SwapFields()

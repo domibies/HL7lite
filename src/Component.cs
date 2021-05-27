@@ -105,5 +105,21 @@ namespace HL7lite
             serialized.Append(string.Join(Encoding.SubComponentDelimiter.ToString(), SubComponentList.Select( sc => sc.SerializeValue())));
             return serialized.ToString();
         }
+
+        public override void RemoveTrailingDelimiters(RemoveDelimitersOptions options)
+        {
+            foreach (var subComponent in SubComponentList)
+                subComponent.RemoveTrailingDelimiters(options);
+
+            if (options.SubComponent)
+            {
+                while (SubComponentList.Count > 1 && SubComponentList[SubComponentList.Count - 1].SerializeValue() == string.Empty)
+                {
+                    SubComponentList.RemoveAt(SubComponentList.Count - 1);
+                }
+                if (SubComponentList.Count == 1)
+                    IsSubComponentized = false;
+            }
+        }
     }
 }
