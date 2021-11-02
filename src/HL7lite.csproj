@@ -4,7 +4,7 @@
 https://github.com/domibies/HL7lite
 </Description>
     <Copyright>(c) 2021 domibies</Copyright>
-    <VersionPrefix>1.1.1</VersionPrefix>
+    <VersionPrefix>1.1.3</VersionPrefix>
     <TargetFrameworks>netstandard1.3;netstandard1.6;netstandard2.0</TargetFrameworks>
     <AssemblyName>HL7lite</AssemblyName>
     <PackageId>HL7lite</PackageId>
@@ -13,10 +13,10 @@ https://github.com/domibies/HL7lite
     <RepositoryUrl>https://github.com/domibies/HL7lite</RepositoryUrl>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\HL7lite.snk</AssemblyOriginatorKeyFile>
-    <ReleaseVersion>1.1.2</ReleaseVersion>
+    <ReleaseVersion>1.1.3</ReleaseVersion>
     <PackOnBuild>true</PackOnBuild>
     <SynchReleaseVersion>false</SynchReleaseVersion>
-    <PackageVersion>1.1.2</PackageVersion>
+    <PackageVersion>1.1.3</PackageVersion>
     <Authors>domibies</Authors>
     <Owners>domibies</Owners>
     <Summary>Lightweight HL7 2.x library compatible with .Net Standard and .Net Core, strong named</Summary>

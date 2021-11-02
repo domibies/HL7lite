@@ -193,16 +193,25 @@ namespace HL7lite
             {
                 return RepetitionList;
             }
-            return null;
+            else
+                return new List<Field> { this }; // like this we van loop over repetitions, even if there are none
         }
 
         public Field Repetitions(int repetitionNumber)
         {
-            if (this.HasRepetitions)
+            if (repetitionNumber < 1)
+                throw new HL7Exception($"Invalid repetition index ({repetitionNumber} < 1)");
+
+            repetitionNumber = repetitionNumber - 1;
+
+            try
             {
-                return RepetitionList[repetitionNumber - 1];
+                return Repetitions()[repetitionNumber];
             }
-            return null;
+            catch (Exception ex)
+            {
+                throw new HL7Exception($"Repetitions({repetitionNumber+1}) not available Error-" + ex.Message);
+            }
         }
 
         public bool RemoveEmptyTrailingComponents()

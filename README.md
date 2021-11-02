@@ -11,6 +11,10 @@ https://github.com/Efferent-Health/HL7-dotnetcore
 That library is of course excellent by itself, and well documented. But since I have the need to refactor and enhance the library (for use in a larger framework), I have created this seperately maintained fork.
 For credits for the original codebase(s) check the end of this readme.
 
+## New in 1.1.3 (2 nov 2021)
+
+Minor bugfix. Method message.HasRepetitions() works now as expected.
+
 ## New in 1.1.2 (27 may 2021)
 
 ## RemoveTrailingDelimiters()

@@ -16,7 +16,7 @@ ZZB|2
 
         private static string clutteredMessage = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||Z99^Z01|12345|P|2.3||
 ZZA|1||^^&~^^&~~||~~~^&&|||&&|^^
-ZZB|2||^||~~~^&&||123^|^^&X~^^&~~|^Y^^|^||~~~^&&|||
+ZZB|2||^^^^^^^||~~~^&&||123^|^^&X~^^&~~|^Y^^|^||~~~^&&|||
 ";
 
         [Fact]

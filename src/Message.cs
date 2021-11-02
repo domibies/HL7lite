@@ -484,7 +484,7 @@ namespace HL7lite
                     try
                     {
                         var segment = SegmentList[segmentName].First();
-                        var field = this.getField(segment, allComponents[1]);
+                        var field = this.getField(segment, allComponents[1], false);
 
                         hasRepetitions = field.HasRepetitions;
                     }
@@ -754,9 +754,16 @@ namespace HL7lite
             return field;
         }
 
-        private Field getField(Segment segment, string index)
+        private Field getField(Segment segment, string index, bool firstRepetition = true) 
         {
-            int repetition = 0;
+            /*
+             * If we don't specifiy a repetition index, and there are repetitions in a field
+             * getField() returns the first repetition if (firstRepetition==true) (default)
+             * 
+             * If (firstRepetition==false) we will return the 'base field' in that case
+             */
+
+            int repetition = firstRepetition?0:-1;
             var matches = System.Text.RegularExpressions.Regex.Matches(index, fieldRegex);
 
             if (matches.Count < 1)
@@ -767,15 +774,15 @@ namespace HL7lite
 
             if (matches[0].Length > 3)
             {
-                Int32.TryParse(matches[0].Groups[3].Value, out repetition);
-                repetition--;
+                if (Int32.TryParse(matches[0].Groups[3].Value, out repetition))
+                    repetition--;
             }
 
             var field = segment.FieldList[fieldIndex];
 
-            if (field.HasRepetitions)
+            if (field.HasRepetitions &&  repetition >= 0)
                 return field.RepetitionList[repetition];
-            else if (repetition == 0)
+            else if (repetition <= 0)
                 return field;
             else
                 return null;
