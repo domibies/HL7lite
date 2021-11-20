@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.26124.0
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HL7lite", "src\HL7lite.csproj", "{8D0228F0-7BE1-4D45-9EB4-8E170F76A17E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HL7Lite.Test", "HL7Lite.Test\HL7Lite.Test.csproj", "{57679A33-159F-4DDE-9265-F8B14028A72C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HL7Lite.Test", "HL7Lite.Test\HL7lite.Test.csproj", "{57679A33-159F-4DDE-9265-F8B14028A72C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7FD41B8B-CDC0-4414-AC7F-B65DF35E2D7E}"
 	ProjectSection(SolutionItems) = preProject
