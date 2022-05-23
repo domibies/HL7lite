@@ -14,10 +14,10 @@
 		<RepositoryUrl>https://github.com/domibies/HL7lite</RepositoryUrl>
 		<SignAssembly>true</SignAssembly>
 		<AssemblyOriginatorKeyFile>..\HL7lite.snk</AssemblyOriginatorKeyFile>
-		<ReleaseVersion>1.1.4</ReleaseVersion>
+		<ReleaseVersion>1.1.5</ReleaseVersion>
 		<PackOnBuild>true</PackOnBuild>
 		<SynchReleaseVersion>false</SynchReleaseVersion>
-		<PackageVersion>1.1.4</PackageVersion>
+		<PackageVersion>1.1.5</PackageVersion>
 		<Authors>domibies</Authors>
 		<Owners>domibies</Owners>
 		<Summary>Lightweight HL7 2.x library compatible with .Net Standard and .Net Core, strong named</Summary>
