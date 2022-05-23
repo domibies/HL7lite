@@ -5,7 +5,7 @@
 			https://github.com/domibies/HL7lite
 		</Description>
 		<Copyright>(c) 2021 domibies</Copyright>
-		<Version>1.1.4</Version>
+		<Version>1.1.5</Version>
 		<TargetFrameworks>netstandard1.3;netstandard1.6;netstandard2.0</TargetFrameworks>
 		<AssemblyName>HL7lite</AssemblyName>
 		<PackageId>HL7lite</PackageId>

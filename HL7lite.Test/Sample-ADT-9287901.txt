@@ -2,3 +2,4 @@
 EVN|A37|20210330110056|||CHIPSOFT|20210330110056|CS^A37^<PAT
 PID|1||5000001414||Testpatientsiu^Sanne Indri Ursela||19291024|F||| ^^^^^BEL||^PRN^PH^^^^^^~0611112222^PRN^CP^^^^^^~^NET^Internet^^^^^^||||||29102400254|||||""|||||""|N
 PID|1||5000001384||Testpatientadt^Adriaan Diederik Theodore||19201201|M||| ^^^^^BEL||^PRN^PH^^^^^^~0612345678^PRN^CP^^^^^^~^NET^Internet^^^^^^||||||20120100185|||||""|||||""|N
+ZZ0|1|A custom segment with a '0'

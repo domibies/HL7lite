@@ -9,6 +9,10 @@ https://github.com/Efferent-Health/HL7-dotnetcore
 That library is of course excellent by itself, and well documented. But since I have the need to refactor and enhance the library (for use in a larger framework), I have created this seperately maintained fork.
 For credits for the original codebase(s) check the end of this readme.
 
+## New in 1.1.5 (20 nov 2021)
+
+Minor change to allow (custom) segment names that end with a '0' e.g. 'ZZ0'. The previous version only allowed a letter or '1-9' for the third character.
+
 ## New in 1.1.4 (20 nov 2021)
 
 Github action for build & auto deploy nuget (no real changes)

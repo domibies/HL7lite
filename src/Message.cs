@@ -20,7 +20,7 @@ namespace HL7lite
         public short SegmentCount { get; set; }
         public HL7Encoding Encoding { get; set; } = new HL7Encoding();
 
-        private const string segmentRegex = "^[A-Z][A-Z][A-Z1-9]$";
+        private const string segmentRegex = "^[A-Z][A-Z][A-Z0-9]$";
         private const string fieldRegex = @"^([0-9]+)([\(\[]([0-9]+)[\)\]]){0,1}$";
         private const string otherRegEx = @"^[1-9]([0-9]{1,2})?$";
 
