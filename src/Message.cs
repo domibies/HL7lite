@@ -211,7 +211,7 @@ namespace HL7lite
             {
                 segmentName = allComponents[0];
 
-                if (SegmentList.ContainsKey(segmentName))
+                if (SegmentList.ContainsKey(segmentName) && SegmentList[segmentName]?.Count > 0) // 22-07-01 also check for empty SegmentList
                 {
                     var segment = SegmentList[segmentName].First();
 
@@ -606,13 +606,17 @@ namespace HL7lite
                     return false;
 
                 list.RemoveAt(index);
+
+                if (list.Count == 0)
+                    SegmentList.Remove(segmentName); // 22-07-01 clean up empty list from dictionary
+
                 SegmentCount--;
 
                 return true;
             }
             catch (Exception ex)
             {
-                throw new HL7Exception("Unable to add remove segment. Error - " + ex.Message);
+                throw new HL7Exception("Unable to remove segment. Error - " + ex.Message);
             }
         }
 
