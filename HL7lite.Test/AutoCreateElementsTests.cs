@@ -18,7 +18,7 @@ ZZ1|1|A|2^1";
             Message message = new Message(msg1);
             message.ParseMessage();
 
-            message.DefaultSegment("ZZ1").EnsureField(5).Value = "X";            
+            message.DefaultSegment("ZZ1").EnsureField(5).Value = "X";
 
             Assert.Equal("X", message.GetValue("ZZ1.5"));
         }
@@ -154,6 +154,24 @@ ZZ1|1|ID1|abc\R\^def";
             Assert.Equal("A", message.GetValue("ZZ1.3"));
             Assert.Equal("1", message.GetValue("ZZ1.2.2"));
 
+        }
+
+        /// <summary>
+        /// NOTE: These tests would pass without the checking around max field, seg, etc
+        ///   but they would throw NullReferenceExceptions (via debug output) instead
+        ///   of the expected HL7Exceptions
+        /// </summary>
+        [Fact]
+        public void ValueExistsWorksForBadFieldIndex()
+        {   //NOTE: you will not see NullReferenceExceptions that were thrown internally and "eaten" by a catch(Exception)
+            Message message = new Message(msg1);
+            message.ParseMessage();
+
+            Assert.False(message.ValueExists("MSH.99"));
+            Assert.False(message.ValueExists("MSH.1.99"));
+            Assert.False(message.ValueExists("MSH.1.1.99"));
+
+            Assert.False(message.ValueExists("XYZ.1"));
         }
     }
 }
