@@ -155,6 +155,21 @@ ZZ1|1|ID1|abc\R\^def";
             Assert.Equal("1", message.GetValue("ZZ1.2.2"));
 
         }
+
+        [Fact]
+        public void CreateNewMessageHasGoodDefaultDelimitersTest()
+        {
+            string msh_6 = "Receiving Facility";
+            Message message = new Message();
+            message.AddSegmentMSH();
+
+            message.PutValue("MSH.6", msh_6);
+
+            var output = message.SerializeMessage(false);
+            
+            Assert.Contains(msh_6, output);
+            Assert.DoesNotContain("|||||", output);
+            Assert.Contains("|^~\\&|", output);
+        }
     }
 }
-
