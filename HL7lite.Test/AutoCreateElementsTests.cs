@@ -18,7 +18,7 @@ ZZ1|1|A|2^1";
             Message message = new Message(msg1);
             message.ParseMessage();
 
-            message.DefaultSegment("ZZ1").EnsureField(5).Value = "X";            
+            message.DefaultSegment("ZZ1").EnsureField(5).Value = "X";
 
             Assert.Equal("X", message.GetValue("ZZ1.5"));
         }
@@ -154,6 +154,23 @@ ZZ1|1|ID1|abc\R\^def";
             Assert.Equal("A", message.GetValue("ZZ1.3"));
             Assert.Equal("1", message.GetValue("ZZ1.2.2"));
 
+        }
+
+        /// <summary>These are invalid HL7 messages due to missing fields, but examples
+        /// of allowing the "ParseMessage" to be less opinionated and allow some sloppy
+        /// HL7 text</summary>
+        [Theory]
+        [InlineData("MSH|^~\\&|")]
+        [InlineData("MSH")]
+        [InlineData("EVN")]
+        public void LessOpinionatedParserWorks(string exampleBadHl7)
+        {
+            Message message = new Message(exampleBadHl7);
+            message.ParseMessage(false, false);
+
+            var output = message.SerializeMessage(false);
+
+            Assert.StartsWith(exampleBadHl7, output);
         }
     }
 }
