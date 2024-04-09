@@ -18,7 +18,7 @@ ZZ1|1|A|2^1";
             Message message = new Message(msg1);
             message.ParseMessage();
 
-            message.DefaultSegment("ZZ1").EnsureField(5).Value = "X";            
+            message.DefaultSegment("ZZ1").EnsureField(5).Value = "X";
 
             Assert.Equal("X", message.GetValue("ZZ1.5"));
         }
@@ -170,6 +170,41 @@ ZZ1|1|ID1|abc\R\^def";
             Assert.Contains(msh_6, output);
             Assert.DoesNotContain("|||||", output);
             Assert.Contains("|^~\\&|", output);
+        }
+
+        /// <summary>
+        /// NOTE: These tests would pass without the checking around max field, seg, etc
+        ///   but they would throw NullReferenceExceptions (via debug output) instead
+        ///   of the expected HL7Exceptions
+        /// </summary>
+        [Fact]
+        public void ValueExistsWorksForBadFieldIndex()
+        {   //NOTE: you will not see NullReferenceExceptions that were thrown internally and "eaten" by a catch(Exception)
+            Message message = new Message(msg1);
+            message.ParseMessage();
+
+            Assert.False(message.ValueExists("MSH.99"));
+            Assert.False(message.ValueExists("MSH.1.99"));
+            Assert.False(message.ValueExists("MSH.1.1.99"));
+
+            Assert.False(message.ValueExists("XYZ.1"))
+        }
+
+        /// <summary>These are invalid HL7 messages due to missing fields, but examples
+        /// of allowing the "ParseMessage" to be less opinionated and allow some sloppy
+        /// HL7 text</summary>
+        [Theory]
+        [InlineData("MSH|^~\\&|")]
+        [InlineData("MSH")]
+        [InlineData("EVN")]
+        public void LessOpinionatedParserWorks(string exampleBadHl7)
+        {
+            Message message = new Message(exampleBadHl7);
+            message.ParseMessage(false, false);
+
+            var output = message.SerializeMessage(false);
+
+            Assert.StartsWith(exampleBadHl7, output);
         }
     }
 }
