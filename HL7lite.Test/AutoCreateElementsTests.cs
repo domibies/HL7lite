@@ -187,7 +187,7 @@ ZZ1|1|ID1|abc\R\^def";
             Assert.False(message.ValueExists("MSH.1.99"));
             Assert.False(message.ValueExists("MSH.1.1.99"));
 
-            Assert.False(message.ValueExists("XYZ.1"))
+            Assert.False(message.ValueExists("XYZ.1"));
         }
 
         /// <summary>These are invalid HL7 messages due to missing fields, but examples
