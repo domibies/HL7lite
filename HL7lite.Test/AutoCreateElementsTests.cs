@@ -171,7 +171,24 @@ ZZ1|1|ID1|abc\R\^def";
             Assert.False(message.ValueExists("MSH.1.99"));
             Assert.False(message.ValueExists("MSH.1.1.99"));
 
-            Assert.False(message.ValueExists("XYZ.1"));
+            Assert.False(message.ValueExists("XYZ.1"))
+        }
+
+        /// <summary>These are invalid HL7 messages due to missing fields, but examples
+        /// of allowing the "ParseMessage" to be less opinionated and allow some sloppy
+        /// HL7 text</summary>
+        [Theory]
+        [InlineData("MSH|^~\\&|")]
+        [InlineData("MSH")]
+        [InlineData("EVN")]
+        public void LessOpinionatedParserWorks(string exampleBadHl7)
+        {
+            Message message = new Message(exampleBadHl7);
+            message.ParseMessage(false, false);
+
+            var output = message.SerializeMessage(false);
+
+            Assert.StartsWith(exampleBadHl7, output);
         }
     }
 }

@@ -57,15 +57,17 @@ namespace HL7lite
         /// <summary>
         /// Parse the HL7 message in text format, throws HL7Exception if error occurs
         /// </summary>
-        /// <param name="serializeCheck">If true (default) the message wil be serialized back to a string and compared with the original (throws if not eq)</param>
-        /// <exception>fails with an exception wheren parsing isn't succesful</exception>
-        public void ParseMessage(bool serializeCheck = true)
+        /// <param name="serializeCheck">If true (default) the message will be serialized back to a string and compared with the original (throws if not eq)</param>
+        /// <param name="validate">If true (default) the message will be validated for required HL7 entries</param>
+        /// <exception>fails with an exception where parsing isn't successful</exception>
+        public void ParseMessage(bool serializeCheck = true, bool validate = true)
         {
             // domibies 2 april 2021 : this method used to return a boolean, which was confusing (caller had to filter & exceptions AND check return value)
             // now it just throws HL7Exception on any failure
             try
             {
-                this.validateMessage();
+                if(validate)
+                    this.validateMessage();
             }
             catch (HL7Exception ex)
             {
