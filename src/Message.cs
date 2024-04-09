@@ -677,6 +677,23 @@ namespace HL7lite
         }
 
         /// <summary>
+        /// Adds an empty header segment to a new message
+        /// </summary>
+        public void AddSegmentMSH()
+        {
+            var seg = new Segment("MSH", Encoding);
+            var delimiter1 = new Field(Encoding);
+            delimiter1.IsDelimiters = true;
+            delimiter1.Value = $"{Encoding.FieldDelimiter}";
+            seg.AddNewField(delimiter1, 1);
+            var delimiters = new Field(Encoding);
+            delimiters.IsDelimiters = true;
+            delimiters.Value = $"{Encoding.ComponentDelimiter}{Encoding.RepeatDelimiter}{Encoding.EscapeCharacter}{Encoding.SubComponentDelimiter}";
+            seg.AddNewField(delimiters, 2);
+            AddNewSegment(seg);
+        }
+
+        /// <summary>
         /// Serialize to MLLP escaped byte array
         /// </summary>
         /// <param name="validate">Optional. Validate the message before serializing</param>

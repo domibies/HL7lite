@@ -156,6 +156,22 @@ ZZ1|1|ID1|abc\R\^def";
 
         }
 
+        [Fact]
+        public void CreateNewMessageHasGoodDefaultDelimitersTest()
+        {
+            string msh_6 = "Receiving Facility";
+            Message message = new Message();
+            message.AddSegmentMSH();
+
+            message.PutValue("MSH.6", msh_6);
+
+            var output = message.SerializeMessage(false);
+            
+            Assert.Contains(msh_6, output);
+            Assert.DoesNotContain("|||||", output);
+            Assert.Contains("|^~\\&|", output);
+        }
+
         /// <summary>
         /// NOTE: These tests would pass without the checking around max field, seg, etc
         ///   but they would throw NullReferenceExceptions (via debug output) instead
@@ -192,4 +208,3 @@ ZZ1|1|ID1|abc\R\^def";
         }
     }
 }
-
