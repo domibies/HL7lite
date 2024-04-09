@@ -156,6 +156,24 @@ ZZ1|1|ID1|abc\R\^def";
 
         }
 
+        /// <summary>
+        /// NOTE: These tests would pass without the checking around max field, seg, etc
+        ///   but they would throw NullReferenceExceptions (via debug output) instead
+        ///   of the expected HL7Exceptions
+        /// </summary>
+        [Fact]
+        public void ValueExistsWorksForBadFieldIndex()
+        {   //NOTE: you will not see NullReferenceExceptions that were thrown internally and "eaten" by a catch(Exception)
+            Message message = new Message(msg1);
+            message.ParseMessage();
+
+            Assert.False(message.ValueExists("MSH.99"));
+            Assert.False(message.ValueExists("MSH.1.99"));
+            Assert.False(message.ValueExists("MSH.1.1.99"));
+
+            Assert.False(message.ValueExists("XYZ.1"))
+        }
+
         /// <summary>These are invalid HL7 messages due to missing fields, but examples
         /// of allowing the "ParseMessage" to be less opinionated and allow some sloppy
         /// HL7 text</summary>

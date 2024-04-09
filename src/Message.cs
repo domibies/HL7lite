@@ -225,6 +225,9 @@ namespace HL7lite
                         try
                         {
                             var field = this.getField(segment, allComponents[1]);
+                            int maxComponent = field.Components().Count();
+                            if (componentIndex > maxComponent)//throw an HL7Exception instead of a NullReferenceException
+                                throw new HL7Exception($"Component {componentIndex} is beyond max {maxComponent}");
                             strValue = field.ComponentList[componentIndex - 1].SubComponentList[subComponentIndex - 1].SerializeValue();
                         }
                         catch (Exception ex)
@@ -239,6 +242,9 @@ namespace HL7lite
                         try
                         {
                             var field = this.getField(segment, allComponents[1]);
+                            int maxComponent = field.Components().Count();
+                            if (componentIndex > maxComponent)//throw an HL7Exception instead of a NullReferenceException
+                                throw new HL7Exception($"Component {componentIndex} is beyond max {maxComponent}");
                             strValue = field.ComponentList[componentIndex - 1].SerializeValue();
                         }
                         catch (Exception ex)
@@ -330,10 +336,8 @@ namespace HL7lite
                         else
                             field.Value = strValue;
                     }
-
                     else
                         segment.Value = strValue;
-
                 }
                 else
                     throw new HL7Exception("Segment name not available");
@@ -763,7 +767,7 @@ namespace HL7lite
         private Field getField(Segment segment, string index, bool firstRepetition = true) 
         {
             /*
-             * If we don't specifiy a repetition index, and there are repetitions in a field
+             * If we don't specify a repetition index, and there are repetitions in a field
              * getField() returns the first repetition if (firstRepetition==true) (default)
              * 
              * If (firstRepetition==false) we will return the 'base field' in that case
@@ -783,6 +787,10 @@ namespace HL7lite
                 if (Int32.TryParse(matches[0].Groups[3].Value, out repetition))
                     repetition--;
             }
+
+            int maxFields = segment.GetAllFields().Count();
+            if (fieldIndex > maxFields) //throw an HL7Exception instead of a NullReferenceException
+                throw new HL7Exception($"Field {fieldIndex} is beyond max {maxFields}");
 
             var field = segment.FieldList[fieldIndex];
 
