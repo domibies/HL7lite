@@ -39,11 +39,4 @@
 	<ItemGroup>
 		<None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
 	</ItemGroup>
-
-	<ItemGroup>
-		<PackageReference Include="System.Runtime" Version="4.3.0" />
-		<PackageReference Include="System.Runtime.Extensions" Version="4.3.0" />
-		<PackageReference Include="System.Linq" Version="4.3.0" />
-		<PackageReference Include="System.Text.RegularExpressions" Version="4.3.0" />
-	</ItemGroup>
 </Project>
