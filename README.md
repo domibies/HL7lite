@@ -1,4 +1,4 @@
-![Build status](https://dev.azure.com/dmdevcode/HL7lite/_apis/build/status/HL7lite-ASP.NET%20Core-CI)
+![.NET](https://github.com/domibies/HL7lite/actions/workflows/dotnet.yml/badge.svg)
 # HL7lite
 
 This is a lightweight HL7 2.X parsing library. It's main purpose is being able to swiftly parse & manipulate HL7 2.x messages without the overhead of a fully bloated schema centric parser, while adhering to the HL7 standard.
@@ -8,6 +8,17 @@ https://github.com/Efferent-Health/HL7-dotnetcore
 
 That library is of course excellent by itself, and well documented. But since I have the need to refactor and enhance the library (for use in a larger framework), I have created this seperately maintained fork.
 For credits for the original codebase(s) check the end of this readme.
+
+## New in 1.2.0 (20 july 2024)
+
+(all thanks to @jeoffman)
+
+- Unit tests brought to the latest LTS version of dotnet
+- Removed some unnecessary package references that make Visual Studio give a spooky warning
+- Added an optional boolean to ParseMessage which skips the "this.validateMessage()" if you want to allow HL7 with some missing fields.
+- Added a few checks around internal HL7 path parsing, and throw proper HL7Exceptions
+- Added a method "AddSegmentMSH()" that does not require any parameters so you can create a "minimal" HL7 segment and then add stuff as you go.
+
 
 ## New in 1.1.6 (1 july 2022)
 
