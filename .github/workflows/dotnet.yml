@@ -46,7 +46,7 @@ jobs:
           7.0.x
           8.0.x
     - name: Publish HL7lite
-      uses: brandedoutcast/publish-nuget@v2.5.5
+      uses: alirezanet/publish-nuget@v3.1.0
       with:
         PROJECT_FILE_PATH: src/HL7lite.csproj
         NUGET_KEY: ${{secrets.NUGET_API_KEY}}
