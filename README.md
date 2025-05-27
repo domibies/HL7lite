@@ -1,4 +1,4 @@
-![.NET](https://github.com/domibies/HL7lite/actions/workflows/dotnet.yml/badge.svg)
+[![.NET](https://github.com/domibies/HL7lite/actions/workflows/dotnet.yml/badge.svg?branch=master)](https://github.com/domibies/HL7lite/actions/workflows/dotnet.yml)
 [![codecov](https://codecov.io/gh/domibies/HL7lite/graph/badge.svg)](https://codecov.io/gh/domibies/HL7lite)
 # HL7lite
 
