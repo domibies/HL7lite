@@ -1,4 +1,5 @@
 ![.NET](https://github.com/domibies/HL7lite/actions/workflows/dotnet.yml/badge.svg)
+[![codecov](https://codecov.io/gh/domibies/HL7lite/graph/badge.svg)](https://codecov.io/gh/domibies/HL7lite)
 # HL7lite
 
 This is a lightweight HL7 2.X parsing library. It's main purpose is being able to swiftly parse & manipulate HL7 2.x messages without the overhead of a fully bloated schema centric parser, while adhering to the HL7 standard.
