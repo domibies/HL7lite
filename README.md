@@ -78,11 +78,10 @@ var dateOfBirth = message.GetValue("PID.7");
 message.SetValue("PID.5.1", "SMITH");
 message.SetValue("PID.5.2", "JOHN");
 
-// Create new segments
-message.AddSegmentMSH("SendingApp", "SendingFacility", 
-                      "ReceivingApp", "ReceivingFacility",
-                      "security", "ADT^A01", 
-                      "123456", "P", "2.5");
+// Create a new segment
+var newSegment = new Segment("ZIC", message.Encoding);
+newSegment.AddNewField(new Field("1.556", message.Encoding), 3);
+message.AddNewSegment(newSegment);
 
 // Generate ACK
 var ack = message.GetACK();
@@ -96,10 +95,10 @@ var ack = message.GetACK();
 ### Create a new message
 ```csharp
 var message = new Message();
-message.AddSegmentMSH("SendingApp", "SendingFacility", 
-                      "ReceivingApp", "ReceivingFacility",
-                      "security", "ADT^A01", 
-                      "123456", "P", "2.5");
+message.AddSegmentMSH("LAB400", "LAB", 
+                      "EPD", "NEUROLOGY",
+                      "", "ADT^A01", 
+                      "84768948", "P", "2.3");
 ```
 
 ### Parse existing message
@@ -133,8 +132,8 @@ foreach (var strMsg in messages)
 ```csharp
 // Multiple ways to access the same field
 string sendingFacility = message.GetValue("MSH.4");
-string sendingFacility = message.DefaultSegment("MSH").Fields(4).Value;
-string sendingFacility = message.Segments("MSH")[0].Fields(4).Value;
+sendingFacility = message.DefaultSegment("MSH").Fields(4).Value;
+sendingFacility = message.Segments("MSH")[0].Fields(4).Value;
 ```
 
 ### Work with repeating fields
@@ -182,13 +181,11 @@ if (message.ValueExists("ZZ1.2"))
 ### Add new segments
 ```csharp
 // Create a custom segment
-var segment = new Segment("ZIB");
-segment.AddNewField(new Field("ZIB1"));
-segment.AddNewField(new Field("ZIB5"), 5);
+var newSegment = new Segment("ZIM", message.Encoding);
+newSegment.AddNewField("1.57884", 3);
 
 // Add component to field
-var component = new Component("ZIB.5.2");
-segment.Fields(5).AddNewComponent(component, 2);
+newSegment.Fields(3).AddNewComponent(new Component("MM", message.Encoding), 2);
 
 // Add to message
 message.AddNewSegment(segment);
