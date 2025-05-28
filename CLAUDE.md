@@ -73,6 +73,46 @@ All collections inherit from `ElementCollection<T>` providing consistent behavio
 - **Coverage**: Coverlet for code coverage, reports uploaded to Codecov
 - **CI/CD**: GitHub Actions runs tests on multiple .NET versions (6.0, 7.0, 8.0)
 
+### Test Organization and Naming Conventions
+
+1. **Test File Structure**:
+   - One test file per production class: `{ClassName}Tests.cs`
+   - Group related tests in the same test class
+   - Place test files in `HL7lite.Test/` directory
+
+2. **Test Naming Conventions**:
+   - Test methods: `MethodName_StateUnderTest_ExpectedBehavior()`
+   - Example: `Constructor_WithMessageAndCode_ShouldSetBothProperties()`
+   - Use descriptive names that explain what is being tested
+
+3. **Test Structure (AAA Pattern)**:
+   ```csharp
+   [Fact]
+   public void MethodName_StateUnderTest_ExpectedBehavior()
+   {
+       // Arrange - Set up test data and dependencies
+       const string expected = "value";
+       
+       // Act - Execute the method being tested
+       var result = target.Method();
+       
+       // Assert - Verify the expected outcome
+       Assert.Equal(expected, result);
+   }
+   ```
+
+4. **Test Categories**:
+   - Use `[Fact]` for single test cases
+   - Use `[Theory]` with `[InlineData]` for parameterized tests
+   - Group related tests within the same test class
+
+5. **Best Practices**:
+   - Keep tests independent and isolated
+   - Test one thing per test method
+   - Use meaningful constant names for test data
+   - Include edge cases and error scenarios
+   - Aim for high code coverage but focus on meaningful tests
+
 ## Important Patterns
 
 1. **Message Manipulation**:
