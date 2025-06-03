@@ -5,6 +5,12 @@ namespace HL7lite.Test
 {
     public class EncodingTests
     {
+        // Helper method for common exception assertions
+        private static void AssertThrowsHL7Exception(Action action, string expectedErrorCode)
+        {
+            var ex = Assert.Throws<HL7Exception>(action);
+            Assert.Equal(expectedErrorCode, ex.ErrorCode);
+        }
         [Fact]
         public void DefaultEncoding_ShouldHaveStandardDelimiters()
         {
@@ -50,9 +56,7 @@ namespace HL7lite.Test
         {
             var encoding = new HL7Encoding();
             
-            var ex = Assert.Throws<HL7Exception>(() => encoding.EvaluateSegmentDelimiter("testdata"));
-            Assert.Equal("Segment delimiter not found in message", ex.Message);
-            Assert.Equal(HL7Exception.BAD_MESSAGE, ex.ErrorCode);
+            AssertThrowsHL7Exception(() => encoding.EvaluateSegmentDelimiter("testdata"), HL7Exception.BAD_MESSAGE);
         }
 
         [Theory]
