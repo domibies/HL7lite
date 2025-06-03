@@ -113,6 +113,63 @@ All collections inherit from `ElementCollection<T>` providing consistent behavio
    - Include edge cases and error scenarios
    - Aim for high code coverage but focus on meaningful tests
 
+### Exception Testing Guidelines
+
+1. **Test Error Codes, Not Messages**:
+   ```csharp
+   // Preferred - Test error codes (stable interface)
+   private static void AssertThrowsHL7Exception(Action action, string expectedErrorCode)
+   {
+       var ex = Assert.Throws<HL7Exception>(action);
+       Assert.Equal(expectedErrorCode, ex.ErrorCode);
+   }
+   
+   // Avoid - Testing exact exception messages (brittle)
+   Assert.Equal("Exact error message", ex.Message); // Don't do this
+   ```
+
+2. **Exception Test Rationale**:
+   - Error codes are part of the public API contract
+   - Exception messages may change during development/localization
+   - Error codes provide stable integration points for error handling
+   - Testing exact messages creates maintenance burden
+
+3. **When to Test Exact Values**:
+   - **Functional tests**: When verifying encoding/decoding behavior, test exact outputs
+   - **Round-trip tests**: Verify data preservation through parse/serialize cycles
+   - **Data integrity**: Test that specific field values are correctly processed
+
+4. **Helper Methods**:
+   ```csharp
+   // Create reusable assertion helpers to reduce duplication
+   private static void AssertThrowsHL7Exception(Action action, string expectedErrorCode)
+   {
+       var ex = Assert.Throws<HL7Exception>(action);
+       Assert.Equal(expectedErrorCode, ex.ErrorCode);
+   }
+   
+   private static void AssertThrowsHL7Exception(Action action)
+   {
+       Assert.Throws<HL7Exception>(action);
+   }
+   ```
+
+### Round-Trip Testing
+
+For encoding functionality, always include round-trip tests:
+```csharp
+[Fact]
+public void Message_FullRoundTrip_StandardToCustomToStandard_PreservesContent()
+{
+    // 1. Parse with standard encoding
+    // 2. Change to custom encoding and serialize
+    // 3. Parse custom encoded message
+    // 4. Change back to standard encoding and serialize
+    // 5. Compare original and final messages
+    Assert.Equal(originalMessage.TrimEnd('\r', '\n'), finalMessage.TrimEnd('\r', '\n'));
+}
+```
+
 ## Important Patterns
 
 1. **Message Manipulation**:
