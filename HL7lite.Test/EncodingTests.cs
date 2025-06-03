@@ -366,6 +366,30 @@ namespace HL7lite.Test
         }
 
         [Fact]
+        public void MSH_FieldDelimiter_AutomaticallyUpdatesFromEncoding()
+        {
+            // Parse a standard message
+            var message = new Message("MSH|^~\\&|App|Fac|App2|Fac2|20230101||ADT^A01|123|P|2.5\r");
+            message.ParseMessage();
+            
+            // Verify MSH.1 contains the field delimiter
+            Assert.Equal("|", message.GetValue("MSH.1"));
+            
+            // Change encoding field delimiter
+            message.Encoding.FieldDelimiter = '#';
+            
+            // MSH.1 still returns the original value when accessed
+            Assert.Equal("|", message.GetValue("MSH.1"));
+            
+            // But when serialized, it uses the new delimiter automatically
+            var serialized = message.SerializeMessage(false);
+            Assert.StartsWith("MSH#", serialized);
+            
+            // And the rest of the message uses the new delimiter
+            Assert.Contains("#App#Fac#App2#Fac2#", serialized);
+        }
+
+        [Fact]
         public void Message_FullRoundTrip_StandardToCustomToStandard_PreservesContent()
         {
             // Start with a standard encoded HL7 message with various features
