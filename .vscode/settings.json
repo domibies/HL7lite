@@ -10,7 +10,6 @@
         "**/obj": true,
     },
     "git.confirmSync": false,
-    "workbench.colorTheme": "Monokai",
     "editor.renderWhitespace": "all",
     "git.autofetch": true
 }

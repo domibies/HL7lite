@@ -7,20 +7,20 @@ namespace HL7lite
 {
     public class Segment : MessageElement
     {
-        internal FieldCollection FieldList { get; set; }
+        internal ElementCollection<Field> FieldList { get; set; }
         internal short SequenceNo { get; set; }
                 
         public string Name { get; set; }
 
         public Segment(HL7Encoding encoding)
         {
-            this.FieldList = new FieldCollection();
+            this.FieldList = new ElementCollection<Field>();
             this.Encoding = encoding;
         }
 
         public Segment(string name, HL7Encoding encoding)
         {
-            this.FieldList = new FieldCollection();
+            this.FieldList = new ElementCollection<Field>();
             this.Name = name;
             this.Encoding = encoding;
         }
@@ -118,7 +118,6 @@ namespace HL7lite
                 }
                 else 
                 {
-                    position = position - 1;
                     this.FieldList.Add(field, position);
                 }
                 

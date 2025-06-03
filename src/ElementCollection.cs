@@ -42,6 +42,9 @@ namespace HL7lite
         /// <param name="position">Position</param>
         internal void Add(T element, int position)
         {
+            if (position < 1)
+                throw new HL7Exception("Element position must be greater than or equal to 1");
+
             int listCount = base.Count;
             position = position - 1;
 

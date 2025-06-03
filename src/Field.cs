@@ -75,6 +75,11 @@ namespace HL7lite
             }
         }
 
+        public Field()
+        {
+            this.ComponentList = new ElementCollection<Component>();
+        }
+
         public Field(HL7Encoding encoding)
         {
             this.ComponentList = new ElementCollection<Component>();
