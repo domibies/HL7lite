@@ -170,6 +170,46 @@ public void Message_FullRoundTrip_StandardToCustomToStandard_PreservesContent()
 }
 ```
 
+### Code Coverage Requirements
+
+**ALWAYS use actual code coverage metrics instead of estimates:**
+
+1. **Generate Real Coverage Data**:
+   ```bash
+   # Run tests with coverage collection
+   dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
+   
+   # Generate readable report (if reportgenerator is available)
+   reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:"Cobertura;HtmlSummary;Badges"
+   ```
+
+2. **Extract Coverage Metrics**:
+   - **Line Coverage**: percentage of code lines executed by tests
+   - **Branch Coverage**: percentage of decision branches tested
+   - Parse the `coverage.cobertura.xml` file for exact percentages
+   - Look for `line-rate` and `branch-rate` attributes in the XML
+
+3. **Report Coverage Accurately**:
+   - Use actual percentages from coverage tools, not estimates
+   - Report both line and branch coverage when available
+   - Identify specific classes/modules with low coverage
+   - **Target**: Maintain >85% line coverage, >80% branch coverage
+
+4. **Coverage Analysis**:
+   ```bash
+   # Search for specific class coverage in XML
+   grep "class name.*YourClassName" coverage/**/coverage.cobertura.xml
+   
+   # Find overall project coverage
+   grep "line-rate=" coverage/**/coverage.cobertura.xml | head -1
+   ```
+
+**Example Coverage Reporting**:
+```
+- **Overall Project**: 88.56% line coverage, 86.67% branch coverage
+- **New Feature Specific**: ComponentAccessor 87.9%, FieldAccessor 100%
+```
+
 ## Important Patterns
 
 1. **Message Manipulation**:

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace HL7lite.Fluent.Accessors
 {
@@ -13,6 +14,7 @@ namespace HL7lite.Fluent.Accessors
         private readonly string _fieldPath;
         private readonly string _rawValue;
         private readonly bool _exists;
+        private readonly Dictionary<int, ComponentAccessor> _componentCache = new Dictionary<int, ComponentAccessor>();
 
         internal FieldAccessor(Message message, string segmentName, int fieldIndex)
         {
@@ -77,5 +79,33 @@ namespace HL7lite.Fluent.Accessors
         /// Gets whether the field exists and has a non-null, non-empty value
         /// </summary>
         public bool HasValue => _exists && !string.IsNullOrEmpty(_rawValue) && !IsNull;
+
+        /// <summary>
+        /// Gets a component accessor by index (1-based).
+        /// </summary>
+        /// <param name="componentIndex">The 1-based component index.</param>
+        /// <returns>A ComponentAccessor for the specified component.</returns>
+        public ComponentAccessor this[int componentIndex]
+        {
+            get
+            {
+                if (!_componentCache.ContainsKey(componentIndex))
+                {
+                    _componentCache[componentIndex] = new ComponentAccessor(
+                        _message, _segmentName, _fieldIndex, componentIndex);
+                }
+                return _componentCache[componentIndex];
+            }
+        }
+
+        /// <summary>
+        /// Gets a component accessor by index (1-based).
+        /// </summary>
+        /// <param name="componentIndex">The 1-based component index.</param>
+        /// <returns>A ComponentAccessor for the specified component.</returns>
+        public ComponentAccessor Component(int componentIndex)
+        {
+            return this[componentIndex];
+        }
     }
 }

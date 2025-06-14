@@ -330,5 +330,111 @@ namespace HL7lite.Test.Fluent.Accessors
                 var ___ = accessor.SafeValue;
             }
         }
+
+        [Fact]
+        public void ComponentIndexer_ShouldReturnComponentAccessor()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||123456||Smith^John^M")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act
+            var component = fluentMessage.PID[5][1];
+            
+            // Assert
+            Assert.NotNull(component);
+            Assert.IsType<ComponentAccessor>(component);
+        }
+
+        [Fact]
+        public void ComponentMethod_ShouldReturnComponentAccessor()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||123456||Smith^John^M")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act
+            var component = fluentMessage.PID[5].Component(2);
+            
+            // Assert
+            Assert.NotNull(component);
+            Assert.IsType<ComponentAccessor>(component);
+        }
+
+        [Fact]
+        public void ComponentAccess_ShouldReturnCorrectValues()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||123456||Smith^John^M^Jr^Dr")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act & Assert
+            Assert.Equal("Smith", fluentMessage.PID[5][1].Value);
+            Assert.Equal("John", fluentMessage.PID[5][2].Value);
+            Assert.Equal("M", fluentMessage.PID[5][3].Value);
+            Assert.Equal("Jr", fluentMessage.PID[5][4].Value);
+            Assert.Equal("Dr", fluentMessage.PID[5][5].Value);
+        }
+
+        [Fact]
+        public void ComponentAccess_NonExistentComponent_ShouldReturnEmptyString()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||123456||Smith^John")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act
+            var value = fluentMessage.PID[5][99].Value;
+            
+            // Assert
+            Assert.Equal("", value);
+        }
+
+        [Fact]
+        public void ComponentAccess_ShouldCacheAccessors()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||123456||Smith^John")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act
+            var component1 = fluentMessage.PID[5][1];
+            var component2 = fluentMessage.PID[5][1];
+            
+            // Assert
+            Assert.Same(component1, component2);
+        }
+
+        [Fact]
+        public void ComponentAccess_ThroughSubComponent_ShouldWork()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||123456||||||||||||Home&123&Main St^Work&456&Office Blvd")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act
+            var subValue = fluentMessage.PID[13][1][2].Value;
+            
+            // Assert
+            Assert.Equal("123", subValue);
+        }
     }
 }
