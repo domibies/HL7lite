@@ -13,6 +13,7 @@ namespace HL7lite.Fluent.Accessors
         private readonly int _fieldIndex;
         private readonly int _componentIndex;
         private readonly int _subComponentIndex;
+        private readonly int _repetitionIndex;
 
         /// <summary>
         /// Initializes a new instance of the SubComponentAccessor class.
@@ -23,12 +24,18 @@ namespace HL7lite.Fluent.Accessors
         /// <param name="componentIndex">The 1-based component index.</param>
         /// <param name="subComponentIndex">The 1-based subcomponent index.</param>
         public SubComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int subComponentIndex)
+            : this(message, segmentName, fieldIndex, componentIndex, subComponentIndex, 1)
+        {
+        }
+
+        public SubComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int subComponentIndex, int repetitionIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             _segmentName = segmentName ?? throw new ArgumentNullException(nameof(segmentName));
             _fieldIndex = fieldIndex;
             _componentIndex = componentIndex;
             _subComponentIndex = subComponentIndex;
+            _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
         }
 
         /// <summary>
@@ -43,7 +50,9 @@ namespace HL7lite.Fluent.Accessors
 
                 try
                 {
-                    var path = $"{_segmentName}.{_fieldIndex}.{_componentIndex}.{_subComponentIndex}";
+                    var path = _repetitionIndex > 1
+                        ? $"{_segmentName}.{_fieldIndex}({_repetitionIndex}).{_componentIndex}.{_subComponentIndex}"
+                        : $"{_segmentName}.{_fieldIndex}.{_componentIndex}.{_subComponentIndex}";
                     var value = _message.GetValue(path);
                     
                     // HL7 null is represented as "" in the message but should return null
@@ -73,7 +82,6 @@ namespace HL7lite.Fluent.Accessors
 
                 try
                 {
-                    var path = $"{_segmentName}.{_fieldIndex}.{_componentIndex}.{_subComponentIndex}";
                     var segment = _message.DefaultSegment(_segmentName);
                     if (segment == null)
                         return false;
@@ -82,10 +90,18 @@ namespace HL7lite.Fluent.Accessors
                     if (field == null)
                         return false;
 
-                    if (_componentIndex > field.ComponentList.Count)
+                    Field targetField = field;
+                    if (_repetitionIndex > 1 && field.HasRepetitions)
+                    {
+                        if (_repetitionIndex > field.Repetitions().Count)
+                            return false;
+                        targetField = field.Repetitions()[_repetitionIndex - 1];
+                    }
+
+                    if (_componentIndex > targetField.ComponentList.Count)
                         return false;
 
-                    var component = field.Components(_componentIndex);
+                    var component = targetField.Components(_componentIndex);
                     if (component == null)
                         return false;
 

@@ -13,6 +13,7 @@ namespace HL7lite.Fluent.Accessors
         private readonly string _segmentName;
         private readonly int _fieldIndex;
         private readonly int _componentIndex;
+        private readonly int _repetitionIndex;
         private readonly Dictionary<int, SubComponentAccessor> _subComponentCache = new Dictionary<int, SubComponentAccessor>();
 
         /// <summary>
@@ -23,11 +24,17 @@ namespace HL7lite.Fluent.Accessors
         /// <param name="fieldIndex">The 1-based field index.</param>
         /// <param name="componentIndex">The 1-based component index.</param>
         public ComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex)
+            : this(message, segmentName, fieldIndex, componentIndex, 1)
+        {
+        }
+
+        public ComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int repetitionIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             _segmentName = segmentName ?? throw new ArgumentNullException(nameof(segmentName));
             _fieldIndex = fieldIndex;
             _componentIndex = componentIndex;
+            _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
         }
 
         /// <summary>
@@ -42,7 +49,9 @@ namespace HL7lite.Fluent.Accessors
 
                 try
                 {
-                    var path = $"{_segmentName}.{_fieldIndex}.{_componentIndex}";
+                    var path = _repetitionIndex > 1 
+                        ? $"{_segmentName}.{_fieldIndex}({_repetitionIndex}).{_componentIndex}"
+                        : $"{_segmentName}.{_fieldIndex}.{_componentIndex}";
                     var value = _message.GetValue(path);
                     
                     // HL7 null is represented as "" in the message but should return null
@@ -72,7 +81,6 @@ namespace HL7lite.Fluent.Accessors
 
                 try
                 {
-                    var path = $"{_segmentName}.{_fieldIndex}.{_componentIndex}";
                     var segment = _message.DefaultSegment(_segmentName);
                     if (segment == null)
                         return false;
@@ -81,7 +89,15 @@ namespace HL7lite.Fluent.Accessors
                     if (field == null)
                         return false;
 
-                    return field.ComponentList.Count >= _componentIndex;
+                    Field targetField = field;
+                    if (_repetitionIndex > 1 && field.HasRepetitions)
+                    {
+                        if (_repetitionIndex > field.Repetitions().Count)
+                            return false;
+                        targetField = field.Repetitions()[_repetitionIndex - 1];
+                    }
+
+                    return targetField.ComponentList.Count >= _componentIndex;
                 }
                 catch
                 {
@@ -133,7 +149,7 @@ namespace HL7lite.Fluent.Accessors
                 if (!_subComponentCache.ContainsKey(subComponentIndex))
                 {
                     _subComponentCache[subComponentIndex] = new SubComponentAccessor(
-                        _message, _segmentName, _fieldIndex, _componentIndex, subComponentIndex);
+                        _message, _segmentName, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex);
                 }
                 return _subComponentCache[subComponentIndex];
             }

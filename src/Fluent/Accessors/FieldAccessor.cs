@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using HL7lite.Fluent.Collections;
 
 namespace HL7lite.Fluent.Accessors
 {
@@ -11,17 +12,25 @@ namespace HL7lite.Fluent.Accessors
         private readonly Message _message;
         private readonly string _segmentName;
         private readonly int _fieldIndex;
+        private readonly int _repetitionIndex;
         private readonly string _fieldPath;
         private readonly string _rawValue;
         private readonly bool _exists;
         private readonly Dictionary<int, ComponentAccessor> _componentCache = new Dictionary<int, ComponentAccessor>();
+        private FieldRepetitionCollection _repetitions;
 
         internal FieldAccessor(Message message, string segmentName, int fieldIndex)
+            : this(message, segmentName, fieldIndex, 1)
+        {
+        }
+
+        internal FieldAccessor(Message message, string segmentName, int fieldIndex, int repetitionIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             _segmentName = segmentName ?? throw new ArgumentNullException(nameof(segmentName));
             _fieldIndex = fieldIndex;
-            _fieldPath = $"{_segmentName}.{_fieldIndex}";
+            _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
+            _fieldPath = $"{_segmentName}.{_fieldIndex}({_repetitionIndex})";
 
             // Use the existing API to check if field exists and get its value
             try
@@ -92,7 +101,7 @@ namespace HL7lite.Fluent.Accessors
                 if (!_componentCache.ContainsKey(componentIndex))
                 {
                     _componentCache[componentIndex] = new ComponentAccessor(
-                        _message, _segmentName, _fieldIndex, componentIndex);
+                        _message, _segmentName, _fieldIndex, componentIndex, _repetitionIndex);
                 }
                 return _componentCache[componentIndex];
             }
@@ -106,6 +115,58 @@ namespace HL7lite.Fluent.Accessors
         public ComponentAccessor Component(int componentIndex)
         {
             return this[componentIndex];
+        }
+
+        /// <summary>
+        /// Gets whether this field has multiple repetitions.
+        /// </summary>
+        public bool HasRepetitions => RepetitionCount > 1;
+
+        /// <summary>
+        /// Gets the number of repetitions for this field.
+        /// </summary>
+        public int RepetitionCount
+        {
+            get
+            {
+                var segment = _message.DefaultSegment(_segmentName);
+                if (segment == null)
+                    return 0;
+
+                var field = segment.Fields(_fieldIndex);
+                if (field == null)
+                    return 0;
+
+                return field.Repetitions().Count;
+            }
+        }
+
+        /// <summary>
+        /// Gets a specific repetition of this field.
+        /// </summary>
+        /// <param name="repetitionIndex">The 1-based repetition index.</param>
+        /// <returns>A FieldAccessor for the specified repetition.</returns>
+        public FieldAccessor Repetition(int repetitionIndex)
+        {
+            if (repetitionIndex <= 0)
+                throw new ArgumentOutOfRangeException(nameof(repetitionIndex), "Repetition index must be greater than 0.");
+
+            return new FieldAccessor(_message, _segmentName, _fieldIndex, repetitionIndex);
+        }
+
+        /// <summary>
+        /// Gets a collection of all repetitions for this field.
+        /// </summary>
+        public FieldRepetitionCollection Repetitions
+        {
+            get
+            {
+                if (_repetitions == null)
+                {
+                    _repetitions = new FieldRepetitionCollection(_message, _segmentName, _fieldIndex);
+                }
+                return _repetitions;
+            }
         }
     }
 }

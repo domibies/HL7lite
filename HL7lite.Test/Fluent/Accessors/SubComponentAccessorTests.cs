@@ -175,7 +175,7 @@ namespace HL7lite.Test.Fluent.Accessors
                 .WithMSH()
                 .WithSegment("PID|||\"\"&Sub1")
                 .Build();
-            var subComponent = new SubComponentAccessor(builder, "PID", 13, 1, 1);
+            var subComponent = new SubComponentAccessor(builder, "PID", 3, 1, 1);
             
             // Act
             var isNull = subComponent.IsNull;
@@ -206,7 +206,7 @@ namespace HL7lite.Test.Fluent.Accessors
                 .WithMSH()
                 .WithSegment("PID|||&Sub1")
                 .Build();
-            var subComponent = new SubComponentAccessor(builder, "PID", 13, 1, 1);
+            var subComponent = new SubComponentAccessor(builder, "PID", 3, 1, 1);
             
             // Act
             var isEmpty = subComponent.IsEmpty;

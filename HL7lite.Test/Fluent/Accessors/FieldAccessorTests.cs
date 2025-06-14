@@ -426,7 +426,7 @@ namespace HL7lite.Test.Fluent.Accessors
             // Arrange
             var message = HL7MessageBuilder.Create()
                 .WithMSH()
-                .WithSegment("PID|||123456||||||||||||Home&123&Main St^Work&456&Office Blvd")
+                .WithSegment("PID|||||||||||||Home&123&Main St^Work&456&Office Blvd")
                 .Build();
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
             
@@ -436,5 +436,233 @@ namespace HL7lite.Test.Fluent.Accessors
             // Assert
             Assert.Equal("123", subValue);
         }
+
+        #region Field Repetition Tests
+
+        [Fact]
+        public void HasRepetitions_WithSingleValue_ShouldReturnFalse()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var hasRepetitions = accessor.HasRepetitions;
+            
+            // Assert
+            Assert.False(hasRepetitions);
+        }
+
+        [Fact]
+        public void HasRepetitions_WithMultipleValues_ShouldReturnTrue()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001~ID002~ID003")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var hasRepetitions = accessor.HasRepetitions;
+            
+            // Assert
+            Assert.True(hasRepetitions);
+        }
+
+        [Fact]
+        public void RepetitionCount_WithSingleValue_ShouldReturn1()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var count = accessor.RepetitionCount;
+            
+            // Assert
+            Assert.Equal(1, count);
+        }
+
+        [Fact]
+        public void RepetitionCount_WithMultipleValues_ShouldReturnCorrectCount()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001~ID002~ID003")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var count = accessor.RepetitionCount;
+            
+            // Assert
+            Assert.Equal(3, count);
+        }
+
+        [Fact]
+        public void RepetitionCount_WithNonExistentField_ShouldReturn0()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[99];
+            
+            // Act
+            var count = accessor.RepetitionCount;
+            
+            // Assert
+            Assert.Equal(0, count);
+        }
+
+        [Fact]
+        public void Repetition_WithValidIndex_ShouldReturnCorrectValue()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001~ID002~ID003")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var rep1 = accessor.Repetition(1);
+            var rep2 = accessor.Repetition(2);
+            var rep3 = accessor.Repetition(3);
+            
+            // Assert
+            Assert.Equal("ID001", rep1.Value);
+            Assert.Equal("ID002", rep2.Value);
+            Assert.Equal("ID003", rep3.Value);
+        }
+
+        [Fact]
+        public void Repetition_WithInvalidIndex_ShouldThrowArgumentOutOfRangeException()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act & Assert
+            Assert.Throws<ArgumentOutOfRangeException>(() => accessor.Repetition(0));
+            Assert.Throws<ArgumentOutOfRangeException>(() => accessor.Repetition(-1));
+        }
+
+        [Fact]
+        public void Repetition_WithOutOfRangeIndex_ShouldReturnEmptyValue()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var rep = accessor.Repetition(5);
+            
+            // Assert
+            Assert.Equal("", rep.Value);
+            Assert.False(rep.Exists);
+        }
+
+        [Fact]
+        public void Repetitions_ShouldReturnFieldRepetitionCollection()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001~ID002")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var repetitions = accessor.Repetitions;
+            
+            // Assert
+            Assert.NotNull(repetitions);
+            Assert.IsType<HL7lite.Fluent.Collections.FieldRepetitionCollection>(repetitions);
+            Assert.Equal(2, repetitions.Count);
+        }
+
+        [Fact]
+        public void Repetitions_WithComponentAccess_ShouldWork()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001^Type1~ID002^Type2")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var type1 = accessor.Repetition(1)[2].Value;
+            var type2 = accessor.Repetition(2)[2].Value;
+            
+            // Assert
+            Assert.Equal("Type1", type1);
+            Assert.Equal("Type2", type2);
+        }
+
+        [Fact]
+        public void DefaultAccessor_WithRepetitions_ShouldAccessFirstRepetition()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001~ID002~ID003")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var defaultValue = accessor.Value;
+            
+            // Assert
+            Assert.Equal("ID001", defaultValue); // Should get first repetition
+        }
+
+        [Fact]
+        public void Repetitions_ShouldBeCached()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001~ID002")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var repetitions1 = accessor.Repetitions;
+            var repetitions2 = accessor.Repetitions;
+            
+            // Assert
+            Assert.Same(repetitions1, repetitions2);
+        }
+
+        #endregion
     }
 }
