@@ -664,5 +664,46 @@ namespace HL7lite.Test.Fluent.Accessors
         }
 
         #endregion
+
+        #region Set() Method Tests
+
+        [Fact]
+        public void Set_ShouldReturnFieldMutator()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            var mutator = accessor.Set();
+            
+            // Assert
+            Assert.NotNull(mutator);
+            Assert.IsType<HL7lite.Fluent.Mutators.FieldMutator>(mutator);
+        }
+
+        [Fact]
+        public void Set_ShouldAllowMutationThroughMutator()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var accessor = fluent.PID[3];
+            
+            // Act
+            accessor.Set().Value("ID002");
+            
+            // Assert
+            Assert.Equal("ID002", accessor.Value);
+        }
+
+        #endregion
     }
 }

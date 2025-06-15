@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using HL7lite.Fluent.Mutators;
 
 namespace HL7lite.Fluent.Accessors
 {
@@ -163,6 +164,15 @@ namespace HL7lite.Fluent.Accessors
         public SubComponentAccessor SubComponent(int subComponentIndex)
         {
             return this[subComponentIndex];
+        }
+
+        /// <summary>
+        /// Gets a mutator for modifying this component's value.
+        /// </summary>
+        /// <returns>A ComponentMutator for this component.</returns>
+        public ComponentMutator Set()
+        {
+            return new ComponentMutator(_message, _segmentName, _fieldIndex, _componentIndex, _repetitionIndex);
         }
     }
 }

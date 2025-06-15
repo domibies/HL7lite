@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using HL7lite.Fluent.Collections;
+using HL7lite.Fluent.Mutators;
 
 namespace HL7lite.Fluent.Accessors
 {
@@ -14,8 +15,6 @@ namespace HL7lite.Fluent.Accessors
         private readonly int _fieldIndex;
         private readonly int _repetitionIndex;
         private readonly string _fieldPath;
-        private readonly string _rawValue;
-        private readonly bool _exists;
         private readonly Dictionary<int, ComponentAccessor> _componentCache = new Dictionary<int, ComponentAccessor>();
         private FieldRepetitionCollection _repetitions;
 
@@ -31,25 +30,26 @@ namespace HL7lite.Fluent.Accessors
             _fieldIndex = fieldIndex;
             _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
             _fieldPath = $"{_segmentName}.{_fieldIndex}({_repetitionIndex})";
-
-            // Use the existing API to check if field exists and get its value
-            try
-            {
-                _rawValue = _message.GetValue(_fieldPath);
-                _exists = true;
-            }
-            catch (HL7Exception)
-            {
-                // Field doesn't exist
-                _rawValue = "";
-                _exists = false;
-            }
         }
 
         /// <summary>
         /// Gets whether this field exists in the segment
         /// </summary>
-        public bool Exists => _exists;
+        public bool Exists
+        {
+            get
+            {
+                try
+                {
+                    _message.GetValue(_fieldPath);
+                    return true;
+                }
+                catch (HL7Exception)
+                {
+                    return false;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets the field value. Returns empty string for non-existent fields, null for explicit HL7 nulls.
@@ -58,14 +58,18 @@ namespace HL7lite.Fluent.Accessors
         {
             get
             {
-                if (!_exists)
+                try
+                {
+                    var rawValue = _message.GetValue(_fieldPath);
+                    // Handle HL7 null representation (two double quotes)
+                    if (rawValue == "\"\"")
+                        return null;
+                    return rawValue ?? "";
+                }
+                catch (HL7Exception)
+                {
                     return "";
-                
-                // Handle HL7 null representation (two double quotes)
-                if (_rawValue == "\"\"")
-                    return null;
-                    
-                return _rawValue ?? "";
+                }
             }
         }
 
@@ -77,17 +81,59 @@ namespace HL7lite.Fluent.Accessors
         /// <summary>
         /// Gets whether the field is explicitly null in HL7 format ("")
         /// </summary>
-        public bool IsNull => _exists && _rawValue == "\"\"";
+        public bool IsNull
+        {
+            get
+            {
+                try
+                {
+                    var rawValue = _message.GetValue(_fieldPath);
+                    return rawValue == "\"\"";
+                }
+                catch (HL7Exception)
+                {
+                    return false;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets whether the field exists but is empty
         /// </summary>
-        public bool IsEmpty => _exists && string.IsNullOrEmpty(_rawValue) && !IsNull;
+        public bool IsEmpty
+        {
+            get
+            {
+                try
+                {
+                    var rawValue = _message.GetValue(_fieldPath);
+                    return string.IsNullOrEmpty(rawValue) && rawValue != "\"\"";
+                }
+                catch (HL7Exception)
+                {
+                    return false;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets whether the field exists and has a non-null, non-empty value
         /// </summary>
-        public bool HasValue => _exists && !string.IsNullOrEmpty(_rawValue) && !IsNull;
+        public bool HasValue
+        {
+            get
+            {
+                try
+                {
+                    var rawValue = _message.GetValue(_fieldPath);
+                    return !string.IsNullOrEmpty(rawValue) && rawValue != "\"\"";
+                }
+                catch (HL7Exception)
+                {
+                    return false;
+                }
+            }
+        }
 
         /// <summary>
         /// Gets a component accessor by index (1-based).
@@ -167,6 +213,16 @@ namespace HL7lite.Fluent.Accessors
                 }
                 return _repetitions;
             }
+        }
+
+        /// <summary>
+        /// Gets a mutator for modifying this field's value.
+        /// </summary>
+        /// <returns>A FieldMutator for this field.</returns>
+        public FieldMutator Set()
+        {
+            // TODO: FieldMutator needs to support repetition index
+            return new FieldMutator(_message, _segmentName, _fieldIndex);
         }
     }
 }

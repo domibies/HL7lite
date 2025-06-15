@@ -368,5 +368,34 @@ namespace HL7lite.Test.Fluent.Accessors
             Assert.Equal("MD", new ComponentAccessor(message, "PID", 5, 6).Value);
             Assert.Equal("L", new ComponentAccessor(message, "PID", 5, 7).Value);
         }
+
+        [Fact]
+        public void Set_ShouldReturnComponentMutator()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var accessor = new ComponentAccessor(message, "PID", 5, 2);
+            
+            // Act
+            var mutator = accessor.Set();
+            
+            // Assert
+            Assert.NotNull(mutator);
+            Assert.IsType<HL7lite.Fluent.Mutators.ComponentMutator>(mutator);
+        }
+
+        [Fact]
+        public void Set_ShouldAllowMutationThroughMutator()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var accessor = new ComponentAccessor(message, "PID", 5, 2);
+            
+            // Act
+            accessor.Set().Value("Jane");
+            
+            // Assert
+            Assert.Equal("Jane", accessor.Value);
+        }
     }
 }
