@@ -57,7 +57,7 @@ namespace HL7lite.Fluent.Collections
         }
 
         /// <summary>
-        /// Gets the field repetition at the specified index.
+        /// Gets the field repetition at the specified zero-based index (C# convention).
         /// </summary>
         /// <param name="index">The 0-based index of the repetition.</param>
         /// <returns>A FieldAccessor for the specified repetition.</returns>
@@ -77,6 +77,19 @@ namespace HL7lite.Fluent.Collections
                 _cache[index] = accessor;
                 return accessor;
             }
+        }
+
+        /// <summary>
+        /// Gets the field repetition at the specified one-based repetition number (HL7 convention).
+        /// </summary>
+        /// <param name="repetitionNumber">The 1-based repetition number.</param>
+        /// <returns>A FieldAccessor for the specified repetition.</returns>
+        public FieldAccessor Repetition(int repetitionNumber)
+        {
+            if (repetitionNumber <= 0)
+                throw new ArgumentOutOfRangeException(nameof(repetitionNumber), "Repetition number must be greater than 0 (1-based)");
+            
+            return this[repetitionNumber - 1];
         }
 
         /// <summary>

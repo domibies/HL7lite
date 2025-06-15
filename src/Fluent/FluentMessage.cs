@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using HL7lite.Fluent.Accessors;
+using HL7lite.Fluent.Collections;
 
 namespace HL7lite.Fluent
 {
@@ -84,5 +85,19 @@ namespace HL7lite.Fluent
         /// Gets accessor for IN1 (Insurance) segment
         /// </summary>
         public SegmentAccessor IN1 => this["IN1"];
+
+        /// <summary>
+        /// Gets a collection of segments of the specified type with LINQ support.
+        /// Provides 0-based indexer access and 1-based Segment() method access.
+        /// </summary>
+        /// <param name="segmentName">The segment name (e.g., "DG1", "OBX", "IN1")</param>
+        /// <returns>A SegmentCollection for accessing multiple segments of the same type</returns>
+        public SegmentCollection Segments(string segmentName)
+        {
+            if (segmentName == null)
+                throw new ArgumentNullException(nameof(segmentName));
+
+            return new SegmentCollection(_message, segmentName);
+        }
     }
 }

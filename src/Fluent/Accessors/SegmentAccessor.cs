@@ -8,8 +8,8 @@ namespace HL7lite.Fluent.Accessors
     /// </summary>
     public class SegmentAccessor
     {
-        private readonly Message _message;
-        private readonly string _segmentName;
+        protected readonly Message _message;
+        protected readonly string _segmentName;
         private readonly Segment _segment;
         private readonly Dictionary<int, FieldAccessor> _fieldCache = new Dictionary<int, FieldAccessor>();
 
@@ -49,7 +49,7 @@ namespace HL7lite.Fluent.Accessors
         /// </summary>
         /// <param name="fieldNumber">The field number (1-based)</param>
         /// <returns>A field accessor that handles non-existent fields gracefully</returns>
-        public FieldAccessor this[int fieldNumber]
+        public virtual FieldAccessor this[int fieldNumber]
         {
             get
             {
@@ -72,7 +72,7 @@ namespace HL7lite.Fluent.Accessors
         /// </summary>
         /// <param name="fieldNumber">The field number (1-based)</param>
         /// <returns>A field accessor that handles non-existent fields gracefully</returns>
-        public FieldAccessor Field(int fieldNumber) => this[fieldNumber];
+        public virtual FieldAccessor Field(int fieldNumber) => this[fieldNumber];
 
         /// <summary>
         /// Gets a specific instance of this segment type (for multiple segments)
@@ -104,6 +104,7 @@ namespace HL7lite.Fluent.Accessors
     {
         private readonly int _instanceIndex;
         private readonly Segment _specificSegment;
+        private readonly Dictionary<int, FieldAccessor> _specificFieldCache = new Dictionary<int, FieldAccessor>();
 
         public SpecificInstanceSegmentAccessor(Message message, string segmentName, int instanceIndex) 
             : base(message, segmentName)
@@ -134,5 +135,33 @@ namespace HL7lite.Fluent.Accessors
         /// Gets whether this specific instance is the only one (same as Exists for specific instances)
         /// </summary>
         public new bool IsSingle => _specificSegment != null;
+
+        /// <summary>
+        /// Gets a field accessor by 1-based field number for this specific segment instance
+        /// </summary>
+        /// <param name="fieldNumber">The field number (1-based)</param>
+        /// <returns>A field accessor that handles this specific segment instance</returns>
+        public override FieldAccessor this[int fieldNumber]
+        {
+            get
+            {
+                if (fieldNumber < 1)
+                    throw new ArgumentOutOfRangeException(nameof(fieldNumber), "Field numbers must be 1-based (greater than 0)");
+
+                if (_specificFieldCache.TryGetValue(fieldNumber, out var cached))
+                    return cached;
+
+                var accessor = new FieldAccessor(_message, _segmentName, fieldNumber, 1, _instanceIndex);
+                _specificFieldCache[fieldNumber] = accessor;
+                return accessor;
+            }
+        }
+
+        /// <summary>
+        /// Gets a field accessor by 1-based field number (same as indexer) for this specific segment instance
+        /// </summary>
+        /// <param name="fieldNumber">The field number (1-based)</param>
+        /// <returns>A field accessor that handles this specific segment instance</returns>
+        public override FieldAccessor Field(int fieldNumber) => this[fieldNumber];
     }
 }

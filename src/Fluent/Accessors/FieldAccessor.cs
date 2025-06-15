@@ -14,21 +14,28 @@ namespace HL7lite.Fluent.Accessors
         private readonly string _segmentName;
         private readonly int _fieldIndex;
         private readonly int _repetitionIndex;
+        private readonly int _segmentInstanceIndex;
         private readonly string _fieldPath;
         private readonly Dictionary<int, ComponentAccessor> _componentCache = new Dictionary<int, ComponentAccessor>();
         private FieldRepetitionCollection _repetitions;
 
         internal FieldAccessor(Message message, string segmentName, int fieldIndex)
-            : this(message, segmentName, fieldIndex, 1)
+            : this(message, segmentName, fieldIndex, 1, 0)
         {
         }
 
         internal FieldAccessor(Message message, string segmentName, int fieldIndex, int repetitionIndex)
+            : this(message, segmentName, fieldIndex, repetitionIndex, 0)
+        {
+        }
+
+        internal FieldAccessor(Message message, string segmentName, int fieldIndex, int repetitionIndex, int segmentInstanceIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             _segmentName = segmentName ?? throw new ArgumentNullException(nameof(segmentName));
             _fieldIndex = fieldIndex;
             _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
+            _segmentInstanceIndex = segmentInstanceIndex;
             _fieldPath = $"{_segmentName}.{_fieldIndex}({_repetitionIndex})";
         }
 
@@ -41,10 +48,24 @@ namespace HL7lite.Fluent.Accessors
             {
                 try
                 {
-                    _message.GetValue(_fieldPath);
+                    var segment = GetSegmentInstance();
+                    if (segment == null)
+                        return false;
+                    
+                    var field = segment.Fields(_fieldIndex);
+                    if (field == null)
+                        return false;
+                    
+                    // Handle field repetitions
+                    if (field.HasRepetitions && _repetitionIndex > 1)
+                    {
+                        var repetitions = field.Repetitions();
+                        return _repetitionIndex <= repetitions.Count;
+                    }
+                    
                     return true;
                 }
-                catch (HL7Exception)
+                catch
                 {
                     return false;
                 }
@@ -60,17 +81,46 @@ namespace HL7lite.Fluent.Accessors
             {
                 try
                 {
-                    var rawValue = _message.GetValue(_fieldPath);
+                    var segment = GetSegmentInstance();
+                    if (segment == null)
+                        return "";
+                    
+                    var field = segment.Fields(_fieldIndex);
+                    if (field == null)
+                        return "";
+                    
+                    // Handle field repetitions
+                    if (field.HasRepetitions && _repetitionIndex > 1)
+                    {
+                        var repetitions = field.Repetitions();
+                        if (_repetitionIndex > repetitions.Count)
+                            return "";
+                        field = repetitions[_repetitionIndex - 1];
+                    }
+                    
+                    var rawValue = field.Value;
                     // Handle HL7 null representation (two double quotes)
                     if (rawValue == "\"\"")
                         return null;
                     return rawValue ?? "";
                 }
-                catch (HL7Exception)
+                catch
                 {
                     return "";
                 }
             }
+        }
+
+        private Segment GetSegmentInstance()
+        {
+            if (!_message.SegmentList.ContainsKey(_segmentName))
+                return null;
+            
+            var segments = _message.SegmentList[_segmentName];
+            if (_segmentInstanceIndex >= segments.Count)
+                return null;
+            
+            return segments[_segmentInstanceIndex];
         }
 
         /// <summary>
@@ -85,15 +135,9 @@ namespace HL7lite.Fluent.Accessors
         {
             get
             {
-                try
-                {
-                    var rawValue = _message.GetValue(_fieldPath);
-                    return rawValue == "\"\"";
-                }
-                catch (HL7Exception)
-                {
+                if (!Exists)
                     return false;
-                }
+                return Value == null;
             }
         }
 
@@ -104,15 +148,10 @@ namespace HL7lite.Fluent.Accessors
         {
             get
             {
-                try
-                {
-                    var rawValue = _message.GetValue(_fieldPath);
-                    return string.IsNullOrEmpty(rawValue) && rawValue != "\"\"";
-                }
-                catch (HL7Exception)
-                {
+                if (!Exists)
                     return false;
-                }
+                var val = Value;
+                return val != null && val == "";
             }
         }
 
@@ -123,15 +162,10 @@ namespace HL7lite.Fluent.Accessors
         {
             get
             {
-                try
-                {
-                    var rawValue = _message.GetValue(_fieldPath);
-                    return !string.IsNullOrEmpty(rawValue) && rawValue != "\"\"";
-                }
-                catch (HL7Exception)
-                {
+                if (!Exists)
                     return false;
-                }
+                var val = Value;
+                return val != null && val != "";
             }
         }
 
@@ -147,7 +181,7 @@ namespace HL7lite.Fluent.Accessors
                 if (!_componentCache.ContainsKey(componentIndex))
                 {
                     _componentCache[componentIndex] = new ComponentAccessor(
-                        _message, _segmentName, _fieldIndex, componentIndex, _repetitionIndex);
+                        _message, _segmentName, _fieldIndex, componentIndex, _repetitionIndex, _segmentInstanceIndex);
                 }
                 return _componentCache[componentIndex];
             }

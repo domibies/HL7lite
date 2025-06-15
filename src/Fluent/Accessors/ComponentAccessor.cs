@@ -15,6 +15,7 @@ namespace HL7lite.Fluent.Accessors
         private readonly int _fieldIndex;
         private readonly int _componentIndex;
         private readonly int _repetitionIndex;
+        private readonly int _segmentInstanceIndex;
         private readonly Dictionary<int, SubComponentAccessor> _subComponentCache = new Dictionary<int, SubComponentAccessor>();
 
         /// <summary>
@@ -25,17 +26,23 @@ namespace HL7lite.Fluent.Accessors
         /// <param name="fieldIndex">The 1-based field index.</param>
         /// <param name="componentIndex">The 1-based component index.</param>
         public ComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex)
-            : this(message, segmentName, fieldIndex, componentIndex, 1)
+            : this(message, segmentName, fieldIndex, componentIndex, 1, 0)
         {
         }
 
         public ComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int repetitionIndex)
+            : this(message, segmentName, fieldIndex, componentIndex, repetitionIndex, 0)
+        {
+        }
+
+        public ComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int repetitionIndex, int segmentInstanceIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             _segmentName = segmentName ?? throw new ArgumentNullException(nameof(segmentName));
             _fieldIndex = fieldIndex;
             _componentIndex = componentIndex;
             _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
+            _segmentInstanceIndex = segmentInstanceIndex;
         }
 
         /// <summary>
@@ -50,19 +57,50 @@ namespace HL7lite.Fluent.Accessors
 
                 try
                 {
-                    var path = _repetitionIndex > 1 
-                        ? $"{_segmentName}.{_fieldIndex}({_repetitionIndex}).{_componentIndex}"
-                        : $"{_segmentName}.{_fieldIndex}.{_componentIndex}";
-                    var value = _message.GetValue(path);
+                    var segment = GetSegmentInstance();
+                    if (segment == null)
+                        return "";
+                    
+                    var field = segment.Fields(_fieldIndex);
+                    if (field == null)
+                        return "";
+                    
+                    // Handle field repetitions
+                    if (field.HasRepetitions && _repetitionIndex > 1)
+                    {
+                        var repetitions = field.Repetitions();
+                        if (_repetitionIndex > repetitions.Count)
+                            return "";
+                        field = repetitions[_repetitionIndex - 1];
+                    }
+                    
+                    // Get the component
+                    if (_componentIndex > field.ComponentList.Count)
+                        return "";
+                    
+                    var component = field.ComponentList[_componentIndex - 1];
+                    var rawValue = component.Value;
                     
                     // HL7 null is represented as "" in the message but should return null
-                    return value == "\"\"" ? null : value;
+                    return rawValue == "\"\"" ? null : rawValue;
                 }
                 catch
                 {
                     return "";
                 }
             }
+        }
+
+        private Segment GetSegmentInstance()
+        {
+            if (!_message.SegmentList.ContainsKey(_segmentName))
+                return null;
+            
+            var segments = _message.SegmentList[_segmentName];
+            if (_segmentInstanceIndex >= segments.Count)
+                return null;
+            
+            return segments[_segmentInstanceIndex];
         }
 
         /// <summary>
@@ -82,7 +120,7 @@ namespace HL7lite.Fluent.Accessors
 
                 try
                 {
-                    var segment = _message.DefaultSegment(_segmentName);
+                    var segment = GetSegmentInstance();
                     if (segment == null)
                         return false;
 
