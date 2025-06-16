@@ -57,10 +57,15 @@ namespace HL7lite.Fluent.Accessors
                         return false;
                     
                     // Handle field repetitions
-                    if (field.HasRepetitions && _repetitionIndex > 1)
+                    if (field.HasRepetitions)
                     {
                         var repetitions = field.Repetitions();
                         return _repetitionIndex <= repetitions.Count;
+                    }
+                    else if (_repetitionIndex > 1)
+                    {
+                        // Field doesn't have repetitions but we're asking for repetition > 1
+                        return false;
                     }
                     
                     return true;
@@ -90,19 +95,24 @@ namespace HL7lite.Fluent.Accessors
                         return "";
                     
                     // Handle field repetitions
-                    if (field.HasRepetitions && _repetitionIndex > 1)
+                    if (field.HasRepetitions)
                     {
                         var repetitions = field.Repetitions();
                         if (_repetitionIndex > repetitions.Count)
                             return "";
                         field = repetitions[_repetitionIndex - 1];
                     }
+                    else if (_repetitionIndex > 1)
+                    {
+                        // Field doesn't have repetitions but we're asking for repetition > 1
+                        return "";
+                    }
+                    // For repetition index 1 on non-repeating fields, use the original field
                     
                     var rawValue = field.Value;
-                    // Handle HL7 null representation (two double quotes)
-                    if (rawValue == "\"\"")
-                        return null;
-                    return rawValue ?? "";
+                    // HL7 null handling is done by the core Field implementation
+                    // Don't convert explicit HL7 nulls to empty string
+                    return rawValue;
                 }
                 catch
                 {
@@ -209,7 +219,7 @@ namespace HL7lite.Fluent.Accessors
         {
             get
             {
-                var segment = _message.DefaultSegment(_segmentName);
+                var segment = GetSegmentInstance();
                 if (segment == null)
                     return 0;
 
@@ -231,7 +241,7 @@ namespace HL7lite.Fluent.Accessors
             if (repetitionIndex <= 0)
                 throw new ArgumentOutOfRangeException(nameof(repetitionIndex), "Repetition index must be greater than 0.");
 
-            return new FieldAccessor(_message, _segmentName, _fieldIndex, repetitionIndex);
+            return new FieldAccessor(_message, _segmentName, _fieldIndex, repetitionIndex, _segmentInstanceIndex);
         }
 
         /// <summary>
@@ -243,7 +253,7 @@ namespace HL7lite.Fluent.Accessors
             {
                 if (_repetitions == null)
                 {
-                    _repetitions = new FieldRepetitionCollection(_message, _segmentName, _fieldIndex);
+                    _repetitions = new FieldRepetitionCollection(_message, _segmentName, _fieldIndex, _segmentInstanceIndex);
                 }
                 return _repetitions;
             }

@@ -66,12 +66,17 @@ namespace HL7lite.Fluent.Accessors
                         return "";
                     
                     // Handle field repetitions
-                    if (field.HasRepetitions && _repetitionIndex > 1)
+                    if (field.HasRepetitions)
                     {
                         var repetitions = field.Repetitions();
                         if (_repetitionIndex > repetitions.Count)
                             return "";
                         field = repetitions[_repetitionIndex - 1];
+                    }
+                    else if (_repetitionIndex > 1)
+                    {
+                        // Field doesn't have repetitions but we're asking for repetition > 1
+                        return "";
                     }
                     
                     // Get the component
@@ -81,8 +86,8 @@ namespace HL7lite.Fluent.Accessors
                     var component = field.ComponentList[_componentIndex - 1];
                     var rawValue = component.Value;
                     
-                    // HL7 null is represented as "" in the message but should return null
-                    return rawValue == "\"\"" ? null : rawValue;
+                    // HL7 null handling is done by the core Component implementation
+                    return rawValue;
                 }
                 catch
                 {
@@ -129,11 +134,16 @@ namespace HL7lite.Fluent.Accessors
                         return false;
 
                     Field targetField = field;
-                    if (_repetitionIndex > 1 && field.HasRepetitions)
+                    if (field.HasRepetitions)
                     {
                         if (_repetitionIndex > field.Repetitions().Count)
                             return false;
                         targetField = field.Repetitions()[_repetitionIndex - 1];
+                    }
+                    else if (_repetitionIndex > 1)
+                    {
+                        // Field doesn't have repetitions but we're asking for repetition > 1
+                        return false;
                     }
 
                     return targetField.ComponentList.Count >= _componentIndex;

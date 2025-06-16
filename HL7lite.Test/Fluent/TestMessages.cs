@@ -22,7 +22,7 @@ namespace HL7lite.Test.Fluent
                                              "PID|||ID001~ID002~ID003||Johnson^Robert^L||19851010|M";
 
         public const string NullValues = "MSH|^~\\&|TestApp|TestFacility|ReceivingApp|ReceivingFacility|20230101120000||ADT^A01|MSG003|P|2.5\r" +
-                                        "PID|||123456||Brown^Mary^|||\"\"|F";
+                                        "PID|||123456||Brown^Mary^||\"\"||F";
 
         public const string EmptyMessage = "MSH|^~\\&|TestApp|TestFacility|ReceivingApp|ReceivingFacility|20230101120000||ADT^A01|MSG004|P|2.5";
     }

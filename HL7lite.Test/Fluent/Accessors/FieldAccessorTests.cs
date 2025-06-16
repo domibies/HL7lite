@@ -132,7 +132,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
 
             // Act
-            var value = fluentMessage["PID"][8].Value; // Date of birth (explicitly null)
+            var value = fluentMessage["PID"][7].Value; // Date of birth (explicitly null)
 
             // Assert
             Assert.Null(value);
@@ -199,7 +199,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
 
             // Act
-            var isNull = fluentMessage["PID"][8].IsNull; // Date of birth (explicitly null)
+            var isNull = fluentMessage["PID"][7].IsNull; // Date of birth (explicitly null)
 
             // Assert
             Assert.True(isNull);

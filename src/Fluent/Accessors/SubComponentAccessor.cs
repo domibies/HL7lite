@@ -14,6 +14,7 @@ namespace HL7lite.Fluent.Accessors
         private readonly int _componentIndex;
         private readonly int _subComponentIndex;
         private readonly int _repetitionIndex;
+        private readonly int _segmentInstanceIndex;
 
         /// <summary>
         /// Initializes a new instance of the SubComponentAccessor class.
@@ -24,11 +25,16 @@ namespace HL7lite.Fluent.Accessors
         /// <param name="componentIndex">The 1-based component index.</param>
         /// <param name="subComponentIndex">The 1-based subcomponent index.</param>
         public SubComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int subComponentIndex)
-            : this(message, segmentName, fieldIndex, componentIndex, subComponentIndex, 1)
+            : this(message, segmentName, fieldIndex, componentIndex, subComponentIndex, 1, 0)
         {
         }
 
         public SubComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int subComponentIndex, int repetitionIndex)
+            : this(message, segmentName, fieldIndex, componentIndex, subComponentIndex, repetitionIndex, 0)
+        {
+        }
+
+        public SubComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int subComponentIndex, int repetitionIndex, int segmentInstanceIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             _segmentName = segmentName ?? throw new ArgumentNullException(nameof(segmentName));
@@ -36,6 +42,7 @@ namespace HL7lite.Fluent.Accessors
             _componentIndex = componentIndex;
             _subComponentIndex = subComponentIndex;
             _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
+            _segmentInstanceIndex = segmentInstanceIndex;
         }
 
         /// <summary>
@@ -50,13 +57,43 @@ namespace HL7lite.Fluent.Accessors
 
                 try
                 {
-                    var path = _repetitionIndex > 1
-                        ? $"{_segmentName}.{_fieldIndex}({_repetitionIndex}).{_componentIndex}.{_subComponentIndex}"
-                        : $"{_segmentName}.{_fieldIndex}.{_componentIndex}.{_subComponentIndex}";
-                    var value = _message.GetValue(path);
+                    var segment = GetSegmentInstance();
+                    if (segment == null)
+                        return "";
                     
-                    // HL7 null is represented as "" in the message but should return null
-                    return value == "\"\"" ? null : value;
+                    var field = segment.Fields(_fieldIndex);
+                    if (field == null)
+                        return "";
+                    
+                    // Handle field repetitions
+                    if (field.HasRepetitions)
+                    {
+                        var repetitions = field.Repetitions();
+                        if (_repetitionIndex > repetitions.Count)
+                            return "";
+                        field = repetitions[_repetitionIndex - 1];
+                    }
+                    else if (_repetitionIndex > 1)
+                    {
+                        // Field doesn't have repetitions but we're asking for repetition > 1
+                        return "";
+                    }
+                    
+                    // Get the component
+                    if (_componentIndex > field.ComponentList.Count)
+                        return "";
+                    
+                    var component = field.ComponentList[_componentIndex - 1];
+                    
+                    // Get the subcomponent
+                    if (_subComponentIndex > component.SubComponentList.Count)
+                        return "";
+                    
+                    var subComponent = component.SubComponentList[_subComponentIndex - 1];
+                    var rawValue = subComponent.Value;
+                    
+                    // HL7 null handling is done by the core SubComponent implementation
+                    return rawValue;
                 }
                 catch
                 {
@@ -82,7 +119,7 @@ namespace HL7lite.Fluent.Accessors
 
                 try
                 {
-                    var segment = _message.DefaultSegment(_segmentName);
+                    var segment = GetSegmentInstance();
                     if (segment == null)
                         return false;
 
@@ -91,11 +128,16 @@ namespace HL7lite.Fluent.Accessors
                         return false;
 
                     Field targetField = field;
-                    if (_repetitionIndex > 1 && field.HasRepetitions)
+                    if (field.HasRepetitions)
                     {
                         if (_repetitionIndex > field.Repetitions().Count)
                             return false;
                         targetField = field.Repetitions()[_repetitionIndex - 1];
+                    }
+                    else if (_repetitionIndex > 1)
+                    {
+                        // Field doesn't have repetitions but we're asking for repetition > 1
+                        return false;
                     }
 
                     if (_componentIndex > targetField.ComponentList.Count)
@@ -143,6 +185,18 @@ namespace HL7lite.Fluent.Accessors
                 var val = Value;
                 return val != null && val != "";
             }
+        }
+
+        private Segment GetSegmentInstance()
+        {
+            if (!_message.SegmentList.ContainsKey(_segmentName))
+                return null;
+            
+            var segments = _message.SegmentList[_segmentName];
+            if (_segmentInstanceIndex >= segments.Count)
+                return null;
+            
+            return segments[_segmentInstanceIndex];
         }
     }
 }

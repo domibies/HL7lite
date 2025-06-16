@@ -14,6 +14,7 @@ namespace HL7lite.Fluent.Collections
         private readonly Message _message;
         private readonly string _segmentName;
         private readonly int _fieldIndex;
+        private readonly int _segmentInstanceIndex;
         private readonly Dictionary<int, FieldAccessor> _cache = new Dictionary<int, FieldAccessor>();
 
         /// <summary>
@@ -23,10 +24,23 @@ namespace HL7lite.Fluent.Collections
         /// <param name="segmentName">The name of the segment containing the field.</param>
         /// <param name="fieldIndex">The 1-based field index.</param>
         public FieldRepetitionCollection(Message message, string segmentName, int fieldIndex)
+            : this(message, segmentName, fieldIndex, 0)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the FieldRepetitionCollection class with segment instance index.
+        /// </summary>
+        /// <param name="message">The HL7 message containing the field.</param>
+        /// <param name="segmentName">The name of the segment containing the field.</param>
+        /// <param name="fieldIndex">The 1-based field index.</param>
+        /// <param name="segmentInstanceIndex">The 0-based segment instance index.</param>
+        public FieldRepetitionCollection(Message message, string segmentName, int fieldIndex, int segmentInstanceIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             _segmentName = segmentName ?? throw new ArgumentNullException(nameof(segmentName));
             _fieldIndex = fieldIndex;
+            _segmentInstanceIndex = segmentInstanceIndex;
         }
 
         /// <summary>
@@ -38,7 +52,7 @@ namespace HL7lite.Fluent.Collections
             {
                 try
                 {
-                    var segment = _message.DefaultSegment(_segmentName);
+                    var segment = GetSegmentInstance();
                     if (segment == null)
                         return 0;
 
@@ -54,6 +68,18 @@ namespace HL7lite.Fluent.Collections
                     return 0;
                 }
             }
+        }
+
+        private Segment GetSegmentInstance()
+        {
+            if (!_message.SegmentList.ContainsKey(_segmentName))
+                return null;
+            
+            var segments = _message.SegmentList[_segmentName];
+            if (_segmentInstanceIndex >= segments.Count)
+                return null;
+            
+            return segments[_segmentInstanceIndex];
         }
 
         /// <summary>
@@ -73,7 +99,7 @@ namespace HL7lite.Fluent.Collections
 
                 // Create a new FieldAccessor for this specific repetition
                 // repetitionIndex is 1-based in FieldAccessor constructor
-                var accessor = new FieldAccessor(_message, _segmentName, _fieldIndex, index + 1);
+                var accessor = new FieldAccessor(_message, _segmentName, _fieldIndex, index + 1, _segmentInstanceIndex);
                 _cache[index] = accessor;
                 return accessor;
             }
