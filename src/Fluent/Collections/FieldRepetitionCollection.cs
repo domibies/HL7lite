@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using HL7lite.Fluent.Accessors;
 
 namespace HL7lite.Fluent.Collections
@@ -60,7 +61,16 @@ namespace HL7lite.Fluent.Collections
                     if (field == null)
                         return 0;
 
-                    return field.Repetitions().Count;
+                    // If field has repetitions, return the repetition count
+                    if (field.HasRepetitions)
+                        return field.Repetitions().Count;
+                    
+                    // For single fields, check if the field is actually empty
+                    // An empty field should return count 0, not 1
+                    if (string.IsNullOrEmpty(field.Value) && field.ComponentList.Count == 0)
+                        return 0;
+                    
+                    return 1;
                 }
                 catch
                 {
@@ -136,5 +146,73 @@ namespace HL7lite.Fluent.Collections
         {
             return GetEnumerator();
         }
+
+        #region Essential Removal Methods
+
+        /// <summary>
+        /// Removes all repetitions from the field.
+        /// </summary>
+        public void Clear()
+        {
+            var segment = GetSegmentInstance();
+            if (segment == null)
+                return;
+
+            var field = segment.Fields(_fieldIndex);
+            if (field == null)
+                return;
+
+            // Clear all repetitions and field content
+            if (field.HasRepetitions)
+            {
+                field.RemoveRepetitions();
+            }
+            field.Value = "";
+            field.ComponentList.Clear();
+            
+            _cache.Clear();
+        }
+
+        /// <summary>
+        /// Removes a repetition at the specified zero-based index.
+        /// </summary>
+        /// <param name="index">The 0-based index of the repetition to remove.</param>
+        public void RemoveAt(int index)
+        {
+            if (index < 0 || index >= Count)
+                throw new ArgumentOutOfRangeException(nameof(index), $"Index {index} is out of range. Valid range is 0 to {Count - 1}.");
+
+            var segment = GetSegmentInstance();
+            var field = segment.Fields(_fieldIndex);
+            
+            // Convert 0-based index to 1-based repetition number and use Field's method
+            int repetitionNumber = index + 1;
+            field.RemoveRepetition(repetitionNumber);
+            
+            _cache.Clear();
+        }
+
+        /// <summary>
+        /// Removes a repetition at the specified one-based repetition number.
+        /// </summary>
+        /// <param name="repetitionNumber">The 1-based repetition number to remove.</param>
+        public void RemoveRepetition(int repetitionNumber)
+        {
+            if (repetitionNumber <= 0)
+                throw new ArgumentOutOfRangeException(nameof(repetitionNumber), "Repetition number must be greater than 0 (1-based)");
+            
+            if (repetitionNumber > Count)
+                throw new ArgumentOutOfRangeException(nameof(repetitionNumber), $"Repetition number {repetitionNumber} is out of range. Valid range is 1 to {Count}.");
+
+            var segment = GetSegmentInstance();
+            var field = segment.Fields(_fieldIndex);
+            
+            // Use Field's method directly (it expects 1-based)
+            field.RemoveRepetition(repetitionNumber);
+            
+            _cache.Clear();
+        }
+
+        #endregion
     }
 }

@@ -210,6 +210,14 @@ public void Message_FullRoundTrip_StandardToCustomToStandard_PreservesContent()
 - **New Feature Specific**: ComponentAccessor 87.9%, FieldAccessor 100%
 ```
 
+## Testing and Debugging
+
+### Debugging Approach
+- **NEVER create standalone .cs files for debugging** - they fail due to missing framework specification
+- **Always add temporary debug tests to existing test files** when debugging issues
+- Use existing test patterns and remove debug tests after fixing issues
+- For quick verification, add `[Fact]` methods to existing test classes
+
 ## Important Patterns
 
 1. **Message Manipulation**:
