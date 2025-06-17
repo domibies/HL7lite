@@ -339,37 +339,8 @@ PV1|1|I";
 
         #region Remove Tests
 
-        [Fact]
-        public void RemoveAt_WithValidIndex_RemovesSegment()
-        {
-            var message = CreateTestMessage();
-            var collection = new SegmentCollection(message, "DG1");
-            var initialCount = collection.Count;
 
-            collection.RemoveAt(1);
 
-            Assert.Equal(initialCount - 1, collection.Count);
-            Assert.Equal("250.00", collection[0][3][1].Value);
-            Assert.Equal("493.90", collection[1][3][1].Value);
-        }
-
-        [Fact]
-        public void RemoveAt_WithNegativeIndex_ThrowsArgumentOutOfRangeException()
-        {
-            var message = CreateTestMessage();
-            var collection = new SegmentCollection(message, "DG1");
-
-            Assert.Throws<ArgumentOutOfRangeException>(() => collection.RemoveAt(-1));
-        }
-
-        [Fact]
-        public void RemoveAt_WithIndexBeyondCount_ThrowsArgumentOutOfRangeException()
-        {
-            var message = CreateTestMessage();
-            var collection = new SegmentCollection(message, "DG1");
-
-            Assert.Throws<ArgumentOutOfRangeException>(() => collection.RemoveAt(3));
-        }
 
         [Fact]
         public void RemoveSegment_WithValidNumber_RemovesSegment()

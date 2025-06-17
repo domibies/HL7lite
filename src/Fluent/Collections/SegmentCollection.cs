@@ -92,14 +92,19 @@ namespace HL7lite.Fluent.Collections
             return this[newIndex];
         }
 
+
         /// <summary>
-        /// Removes a segment at the specified zero-based index
+        /// Removes a segment at the specified one-based segment number
         /// </summary>
-        /// <param name="index">The 0-based index of the segment to remove</param>
-        public void RemoveAt(int index)
+        /// <param name="segmentNumber">The 1-based segment number to remove</param>
+        public void RemoveSegment(int segmentNumber)
         {
-            if (index < 0 || index >= Count)
-                throw new ArgumentOutOfRangeException(nameof(index), $"Index {index} is out of range. Count is {Count}");
+            if (segmentNumber <= 0)
+                throw new ArgumentOutOfRangeException(nameof(segmentNumber), "Segment number must be greater than 0 (1-based)");
+            
+            int index = segmentNumber - 1;
+            if (index >= Count)
+                throw new ArgumentOutOfRangeException(nameof(segmentNumber), $"Segment number {segmentNumber} is out of range. Count is {Count}");
 
             _message.RemoveSegment(_segmentName, index);
             
@@ -112,25 +117,13 @@ namespace HL7lite.Fluent.Collections
         }
 
         /// <summary>
-        /// Removes a segment at the specified one-based segment number
-        /// </summary>
-        /// <param name="segmentNumber">The 1-based segment number to remove</param>
-        public void RemoveSegment(int segmentNumber)
-        {
-            if (segmentNumber <= 0)
-                throw new ArgumentOutOfRangeException(nameof(segmentNumber), "Segment number must be greater than 0 (1-based)");
-            
-            RemoveAt(segmentNumber - 1);
-        }
-
-        /// <summary>
         /// Removes all segments of this type from the message
         /// </summary>
         public void Clear()
         {
             while (Count > 0)
             {
-                RemoveAt(0);
+                _message.RemoveSegment(_segmentName, 0);
             }
             _cache.Clear();
         }

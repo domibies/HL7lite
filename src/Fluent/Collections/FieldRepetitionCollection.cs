@@ -173,24 +173,6 @@ namespace HL7lite.Fluent.Collections
             _cache.Clear();
         }
 
-        /// <summary>
-        /// Removes a repetition at the specified zero-based index.
-        /// </summary>
-        /// <param name="index">The 0-based index of the repetition to remove.</param>
-        public void RemoveAt(int index)
-        {
-            if (index < 0 || index >= Count)
-                throw new ArgumentOutOfRangeException(nameof(index), $"Index {index} is out of range. Valid range is 0 to {Count - 1}.");
-
-            var segment = GetSegmentInstance();
-            var field = segment.Fields(_fieldIndex);
-            
-            // Convert 0-based index to 1-based repetition number and use Field's method
-            int repetitionNumber = index + 1;
-            field.RemoveRepetition(repetitionNumber);
-            
-            _cache.Clear();
-        }
 
         /// <summary>
         /// Removes a repetition at the specified one-based repetition number.

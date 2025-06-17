@@ -25,6 +25,7 @@ A lightweight, high-performance HL7 2.x parser for .NET with modern Fluent API s
 - [Key Features](#key-features)
 - [Installation](#installation)
 - [Fluent API](#fluent-api)
+- [Indexing Principles](#indexing-principles)
 - [Migration Guide](#migration-guide)
 - [Legacy API](#legacy-api)
 - [What's New](#whats-new)
@@ -179,15 +180,14 @@ fluent.PID[5].Set()
 fluent.PID[3].Set().AddRepetition("ALT123456");
 
 // Remove repetitions
-fluent.PID[3].Repetitions.RemoveAt(0); // 0-based index
-fluent.PID[3].Repetitions.RemoveRepetition(2); // 1-based number
+fluent.PID[3].Repetitions.RemoveRepetition(1); // Remove first repetition
+fluent.PID[3].Repetitions.RemoveRepetition(2); // Remove second repetition
 fluent.PID[3].Repetitions.Clear(); // Remove all
 
 // Segment operations
 var diagnosisSegments = fluent.Segments("DG1");
 diagnosisSegments.Add(); // Add new DG1 segment
-diagnosisSegments.RemoveAt(0); // Remove first segment
-diagnosisSegments.RemoveSegment(1); // Remove by 1-based number
+diagnosisSegments.RemoveSegment(1); // Remove first segment (1-based)
 ```
 
 ### Advanced Features
@@ -233,6 +233,41 @@ var validPatientIds = fluent.PID[3].Repetitions
     .Select(id => id.Value)
     .ToList();
 ```
+
+## Indexing Principles
+
+HL7lite follows consistent indexing conventions throughout the API:
+
+### 1-Based Indexing (HL7 Standard)
+All HL7 element access and manipulation methods use 1-based indexing to align with HL7 standards:
+
+- **Fields**: `PID[3]` accesses the third field
+- **Components**: `PID[5][1]` accesses the first component  
+- **Repetitions**: `.Repetition(1)` accesses the first repetition
+- **Segments**: `.Instance(1)` accesses the first segment occurrence
+- **Path Notation**: `"PID.5.1"` uses 1-based indices throughout
+
+### Collection Access (0-Based for LINQ)
+Collections themselves use 0-based indexing to maintain compatibility with LINQ and standard .NET conventions:
+
+```csharp
+// Direct collection access is 0-based (for LINQ compatibility)
+var segments = fluent.Segments("DG1");
+var firstSegment = segments[0];                  // 0-based indexer
+var filtered = segments.Where((s, i) => i > 0); // 0-based LINQ
+
+// But all methods use 1-based numbering
+segments.RemoveSegment(1);                       // Removes first segment
+fluent.PID[3].Repetitions.RemoveRepetition(1);  // Removes first repetition
+```
+
+### Key Points
+- **Methods are 1-based**: `RemoveSegment(1)`, `RemoveRepetition(1)`, `Instance(1)`, `Repetition(1)`
+- **Collection indexers are 0-based**: `collection[0]` for LINQ compatibility
+- **No 0-based methods**: We don't provide `RemoveAt(0)` to avoid confusion
+- **Path strings are 1-based**: `"PID.3"` refers to the third field
+
+This design ensures HL7 standard compliance while maintaining natural LINQ integration.
 
 ## Migration Guide
 
