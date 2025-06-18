@@ -283,5 +283,123 @@ PV1|1|I";
             Assert.Equal("NewName^Test", fluent.PID[5].Value);
             Assert.Equal("NewName^Test", message.GetValue("PID.5"));
         }
+
+        #region Field() Method Tests
+
+        [Fact]
+        public void Field_ShouldSetSpecificFieldOnSegment()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 1); // Start with field 1 mutator
+            
+            // Act
+            mutator.Field(5, "Smith^John");
+            
+            // Assert
+            Assert.Equal("Smith^John", message.GetValue("PID.5"));
+        }
+
+        [Fact]
+        public void Field_ShouldReturnSelfForChaining()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 1);
+            
+            // Act
+            var result = mutator.Field(5, "Test");
+            
+            // Assert
+            Assert.Same(mutator, result);
+        }
+
+        [Fact]
+        public void Field_ShouldAllowMultipleFieldsInChain()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 1);
+            
+            // Act
+            mutator
+                .Field(5, "Smith^John")
+                .Field(7, "19850315")
+                .Field(8, "M");
+            
+            // Assert
+            Assert.Equal("Smith^John", message.GetValue("PID.5"));
+            Assert.Equal("19850315", message.GetValue("PID.7"));
+            Assert.Equal("M", message.GetValue("PID.8"));
+        }
+
+        [Fact]
+        public void Field_CanBeChainedWithOtherMethods()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 1);
+            
+            // Act
+            mutator
+                .Field(5, "Smith^John")
+                .Clear()
+                .Components("Johnson", "Robert")
+                .Field(7, "19900101");
+            
+            // Assert  
+            Assert.Equal("Johnson^Robert", message.GetValue("PID.1")); // Clear and Components worked on original field
+            Assert.Equal("19900101", message.GetValue("PID.7")); // Field method set field 7
+        }
+
+        [Fact]
+        public void Field_WithInvalidFieldIndex_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 1);
+            
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => mutator.Field(0, "Test"));
+            Assert.Throws<ArgumentException>(() => mutator.Field(-1, "Test"));
+        }
+
+        [Fact]
+        public void Field_WithNullValue_ShouldSetEmptyString()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 1);
+            
+            // Act
+            mutator.Field(5, null);
+            
+            // Assert
+            Assert.Equal("", message.GetValue("PID.5"));
+        }
+
+        [Fact]
+        public void Field_IntegrationWithFluentAPI()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var fluent = new FluentMessage(message);
+            
+            // Act - Test the typical use case with segment addition
+            var seg = fluent.Segments("OBX").Add();
+            seg[1].Set()
+                .Value("1")
+                .Field(2, "NM")
+                .Field(3, "GLUCOSE")
+                .Field(5, "120");
+            
+            // Assert
+            Assert.Equal("1", fluent.Segments("OBX")[0][1].Value);
+            Assert.Equal("NM", fluent.Segments("OBX")[0][2].Value);
+            Assert.Equal("GLUCOSE", fluent.Segments("OBX")[0][3].Value);
+            Assert.Equal("120", fluent.Segments("OBX")[0][5].Value);
+        }
+
+        #endregion
     }
 }

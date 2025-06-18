@@ -172,6 +172,13 @@ fluent.PID[5].Set()
     .Clear()
     .Components("Brown", "Alice")
     .ValueIf("Default^Name", someCondition);
+
+// Multi-field setting in one chain
+fluent.PID[1].Set()
+    .Value("1")
+    .Field(5, "Smith^John^M")
+    .Field(7, "19850315")
+    .Field(8, "M");
 ```
 
 #### Collection Mutations
@@ -188,6 +195,21 @@ fluent.PID[3].Repetitions.Clear(); // Remove all
 var diagnosisSegments = fluent.Segments("DG1");
 diagnosisSegments.Add(); // Add new DG1 segment
 diagnosisSegments.RemoveSegment(1); // Remove first segment (1-based)
+
+// Add multiple segments with field values
+var obs1 = fluent.Segments("OBX").Add();
+obs1[1].Set()
+    .Value("1")
+    .Field(2, "NM")
+    .Field(3, "GLUCOSE")
+    .Field(5, "120");
+
+var obs2 = fluent.Segments("OBX").Add();
+obs2[1].Set()
+    .Value("2")
+    .Field(2, "ST")
+    .Field(3, "COMMENTS")
+    .Field(5, "Normal range");
 ```
 
 ### Advanced Features

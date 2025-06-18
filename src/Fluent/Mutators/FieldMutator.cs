@@ -204,5 +204,23 @@ namespace HL7lite.Fluent.Mutators
 
             return this;
         }
+
+        /// <summary>
+        /// Sets a value on a specific field of the segment (allows setting different fields in a chain).
+        /// </summary>
+        /// <param name="fieldIndex">The 1-based field index to set.</param>
+        /// <param name="value">The value to set.</param>
+        /// <returns>This FieldMutator for chaining.</returns>
+        public FieldMutator Field(int fieldIndex, string value)
+        {
+            if (fieldIndex <= 0)
+                throw new ArgumentException("Field index must be greater than 0", nameof(fieldIndex));
+
+            // Create a new mutator for the target field and set its value
+            var targetFieldMutator = new FieldMutator(_message, _segmentCode, fieldIndex, null, _segmentInstanceIndex);
+            targetFieldMutator.Value(value ?? string.Empty);
+            
+            return this; // Return self for chaining
+        }
     }
 }
