@@ -705,5 +705,86 @@ namespace HL7lite.Test.Fluent.Accessors
         }
 
         #endregion
+
+        [Fact]
+        public void Set_SpecificComponentInSpecificRepetition_ShouldWork()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Create initial repetitions with components
+            fluent.PID[3].Set().Value("ID001^System1");
+            fluent.PID[3].Set().AddRepetition("ID002^System2");
+            fluent.PID[3].Set().AddRepetition("ID003^System3");
+            
+            // Act - Set component 2 of repetition 2
+            fluent.PID[3].Repetition(2)[2].Set().Value("UpdatedSystem2");
+            
+            // Assert
+            Assert.Equal("ID001", fluent.PID[3].Repetition(1)[1].Value);
+            Assert.Equal("System1", fluent.PID[3].Repetition(1)[2].Value);
+            Assert.Equal("ID002", fluent.PID[3].Repetition(2)[1].Value);
+            Assert.Equal("UpdatedSystem2", fluent.PID[3].Repetition(2)[2].Value);
+            Assert.Equal("ID003", fluent.PID[3].Repetition(3)[1].Value);
+            Assert.Equal("System3", fluent.PID[3].Repetition(3)[2].Value);
+        }
+
+        [Fact]
+        public void Set_ComponentInRepetitionUsingCollection_ShouldWork()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001^System1~ID002^System2")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act - Use Repetitions collection (0-based) to access component
+            fluent.PID[3].Repetitions[1][2].Set().Value("NewSystem");
+            
+            // Assert
+            Assert.Equal("System1", fluent.PID[3].Repetitions[0][2].Value);
+            Assert.Equal("NewSystem", fluent.PID[3].Repetitions[1][2].Value);
+        }
+
+        [Fact]
+        public void Set_SpecificRepetition_ShouldNotReplaceEntireField()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001~ID002~ID003")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act - Set value on specific repetition
+            fluent.PID[3].Repetition(2).Set().Value("UPDATED");
+            
+            // Assert - All repetitions should still exist
+            Assert.Equal(3, fluent.PID[3].RepetitionCount);
+            Assert.Equal("ID001", fluent.PID[3].Repetition(1).Value);
+            Assert.Equal("UPDATED", fluent.PID[3].Repetition(2).Value);
+            Assert.Equal("ID003", fluent.PID[3].Repetition(3).Value);
+        }
+
+        [Fact]
+        public void Set_AddRepetitionOnSpecificRepetition_ShouldThrow()
+        {
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001~ID002")
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Act & Assert - Adding repetition on repetition 2 should throw
+            var ex = Assert.Throws<InvalidOperationException>(() => 
+                fluent.PID[3].Repetition(2).Set().AddRepetition("NEW"));
+            Assert.Contains("Cannot add a repetition when operating on a specific repetition", ex.Message);
+        }
     }
 }

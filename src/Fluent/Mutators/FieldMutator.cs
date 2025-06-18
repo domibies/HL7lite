@@ -8,9 +8,10 @@ namespace HL7lite.Fluent.Mutators
         private readonly Message _message;
         private readonly string _segmentCode;
         private readonly int _fieldIndex;
+        private readonly int? _repetitionIndex;
         private readonly string _path;
 
-        public FieldMutator(Message message, string segmentCode, int fieldIndex)
+        public FieldMutator(Message message, string segmentCode, int fieldIndex, int? repetitionIndex = null)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             if (segmentCode == null)
@@ -19,7 +20,12 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("Segment code cannot be empty", nameof(segmentCode));
             _segmentCode = segmentCode;
             _fieldIndex = fieldIndex > 0 ? fieldIndex : throw new ArgumentException("Field index must be greater than 0", nameof(fieldIndex));
-            _path = $"{_segmentCode}.{_fieldIndex}";
+            _repetitionIndex = repetitionIndex;
+            
+            // Build path with optional repetition index
+            _path = repetitionIndex.HasValue && repetitionIndex.Value > 0
+                ? $"{_segmentCode}.{_fieldIndex}[{repetitionIndex.Value}]"
+                : $"{_segmentCode}.{_fieldIndex}";
         }
 
         public FieldMutator Value(string value)
@@ -81,6 +87,12 @@ namespace HL7lite.Fluent.Mutators
 
         public FieldMutator AddRepetition(string value)
         {
+            // AddRepetition doesn't make sense on a specific repetition (other than the first)
+            if (_repetitionIndex.HasValue && _repetitionIndex.Value > 1)
+            {
+                throw new InvalidOperationException("Cannot add a repetition when operating on a specific repetition. Use the field-level accessor instead.");
+            }
+
             Segment segment;
             try
             {
@@ -108,15 +120,15 @@ namespace HL7lite.Fluent.Mutators
             if (field.HasRepetitions)
             {
                 var repetitionCount = field.Repetitions().Count;
-                var repetitionPath = $"{_path}({repetitionCount + 1})";
+                var repetitionPath = $"{_segmentCode}.{_fieldIndex}({repetitionCount + 1})";
                 _message.PutValue(repetitionPath, value ?? string.Empty);
             }
             else
             {
                 // Convert single field to repetition
                 var existingValue = field.Value;
-                _message.PutValue($"{_path}(1)", existingValue);
-                _message.PutValue($"{_path}(2)", value ?? string.Empty);
+                _message.PutValue($"{_segmentCode}.{_fieldIndex}(1)", existingValue);
+                _message.PutValue($"{_segmentCode}.{_fieldIndex}(2)", value ?? string.Empty);
             }
 
             return this;
