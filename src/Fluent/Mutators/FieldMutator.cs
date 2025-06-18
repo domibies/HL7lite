@@ -9,9 +9,10 @@ namespace HL7lite.Fluent.Mutators
         private readonly string _segmentCode;
         private readonly int _fieldIndex;
         private readonly int? _repetitionIndex;
+        private readonly int _segmentInstanceIndex;
         private readonly string _path;
 
-        public FieldMutator(Message message, string segmentCode, int fieldIndex, int? repetitionIndex = null)
+        public FieldMutator(Message message, string segmentCode, int fieldIndex, int? repetitionIndex = null, int segmentInstanceIndex = 0)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             if (segmentCode == null)
@@ -21,6 +22,7 @@ namespace HL7lite.Fluent.Mutators
             _segmentCode = segmentCode;
             _fieldIndex = fieldIndex > 0 ? fieldIndex : throw new ArgumentException("Field index must be greater than 0", nameof(fieldIndex));
             _repetitionIndex = repetitionIndex;
+            _segmentInstanceIndex = segmentInstanceIndex;
             
             // Build path with optional repetition index
             _path = repetitionIndex.HasValue && repetitionIndex.Value > 0
@@ -30,36 +32,91 @@ namespace HL7lite.Fluent.Mutators
 
         public FieldMutator Value(string value)
         {
-            // Ensure segment exists
-            try
+            // Get the specific segment instance
+            Segment targetSegment = null;
+            
+            if (_message.SegmentList.ContainsKey(_segmentCode))
             {
-                _message.DefaultSegment(_segmentCode);
-            }
-            catch (InvalidOperationException)
-            {
-                // Segment doesn't exist, create it
-                var newSegment = new Segment(_message.Encoding)
+                var segments = _message.SegmentList[_segmentCode];
+                if (_segmentInstanceIndex < segments.Count)
                 {
-                    Name = _segmentCode,
-                    Value = _segmentCode
-                };
-                _message.AddNewSegment(newSegment);
+                    targetSegment = segments[_segmentInstanceIndex];
+                }
             }
             
-            _message.PutValue(_path, value ?? string.Empty);
+            if (targetSegment == null)
+            {
+                // Segment instance doesn't exist, create it if it's the first instance
+                if (_segmentInstanceIndex == 0)
+                {
+                    var newSegment = new Segment(_message.Encoding)
+                    {
+                        Name = _segmentCode,
+                        Value = _segmentCode
+                    };
+                    _message.AddNewSegment(newSegment);
+                    targetSegment = newSegment;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Cannot set field on segment instance {_segmentInstanceIndex} that doesn't exist.");
+                }
+            }
+            
+            // Set the field value directly on the target segment
+            if (_repetitionIndex.HasValue && _repetitionIndex.Value > 1)
+            {
+                // Handle repetition-specific field setting
+                var field = targetSegment.Fields(_fieldIndex);
+                if (field == null)
+                {
+                    targetSegment.AddNewField(value ?? string.Empty, _fieldIndex);
+                    field = targetSegment.Fields(_fieldIndex);
+                }
+                
+                // Set specific repetition
+                if (field.HasRepetitions)
+                {
+                    var repetitions = field.Repetitions();
+                    if (_repetitionIndex.Value <= repetitions.Count)
+                    {
+                        repetitions[_repetitionIndex.Value - 1].Value = value ?? string.Empty;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Repetition {_repetitionIndex.Value} does not exist.");
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Field does not have repetitions.");
+                }
+            }
+            else
+            {
+                // Set the field value (handles first repetition or non-repeated field)
+                var field = targetSegment.Fields(_fieldIndex);
+                if (field == null)
+                {
+                    targetSegment.AddNewField(value ?? string.Empty, _fieldIndex);
+                }
+                else
+                {
+                    field.Value = value ?? string.Empty;
+                }
+            }
+            
             return this;
         }
 
         public FieldMutator Null()
         {
-            _message.PutValue(_path, "\"\"");
-            return this;
+            return Value("\"\"");
         }
 
         public FieldMutator Clear()
         {
-            _message.PutValue(_path, string.Empty);
-            return this;
+            return Value(string.Empty);
         }
 
         public FieldMutator Components(params string[] components)
@@ -93,21 +150,35 @@ namespace HL7lite.Fluent.Mutators
                 throw new InvalidOperationException("Cannot add a repetition when operating on a specific repetition. Use the field-level accessor instead.");
             }
 
-            Segment segment;
-            try
+            // Get the specific segment instance
+            Segment segment = null;
+            
+            if (_message.SegmentList.ContainsKey(_segmentCode))
             {
-                segment = _message.DefaultSegment(_segmentCode);
-            }
-            catch (InvalidOperationException)
-            {
-                // Create a new segment if it doesn't exist
-                var newSegment = new Segment(_message.Encoding)
+                var segments = _message.SegmentList[_segmentCode];
+                if (_segmentInstanceIndex < segments.Count)
                 {
-                    Name = _segmentCode,
-                    Value = _segmentCode
-                };
-                _message.AddNewSegment(newSegment);
-                segment = _message.DefaultSegment(_segmentCode);
+                    segment = segments[_segmentInstanceIndex];
+                }
+            }
+            
+            if (segment == null)
+            {
+                // Segment instance doesn't exist, create it if it's the first instance
+                if (_segmentInstanceIndex == 0)
+                {
+                    var newSegment = new Segment(_message.Encoding)
+                    {
+                        Name = _segmentCode,
+                        Value = _segmentCode
+                    };
+                    _message.AddNewSegment(newSegment);
+                    segment = newSegment;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Cannot add repetition to segment instance {_segmentInstanceIndex} that doesn't exist.");
+                }
             }
 
             var field = segment.Fields(_fieldIndex);

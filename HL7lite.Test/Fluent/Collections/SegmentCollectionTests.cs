@@ -271,6 +271,149 @@ PV1|1|I";
             Assert.Equal("250.00", collection[0][3].Value);
         }
 
+        [Fact]
+        public void Add_NewSegmentAndSetFieldValue_ShouldWork()
+        {
+            // Arrange
+            var message = CreateEmptyMessage();
+            var fluent = new FluentMessage(message);
+            
+            // Act - Add new DG1 segment and set field values
+            var newDG1 = fluent.Segments("DG1").Add();
+            newDG1[1].Set().Value("1");
+            newDG1[3].Set().Value("250.00^Diabetes^I9");
+            newDG1[6].Set().Value("F");
+            
+            // Assert
+            Assert.Equal(1, fluent.Segments("DG1").Count);
+            Assert.Equal("1", fluent.DG1[1].Value);
+            Assert.Equal("250.00^Diabetes^I9", fluent.DG1[3].Value);
+            Assert.Equal("F", fluent.DG1[6].Value);
+            
+            // Verify via direct segment access
+            Assert.Equal("250.00", fluent.DG1[3][1].Value);
+            Assert.Equal("Diabetes", fluent.DG1[3][2].Value);
+            Assert.Equal("I9", fluent.DG1[3][3].Value);
+        }
+
+        [Fact] 
+        public void Add_MultipleNewSegmentsWithChaining_ShouldWork()
+        {
+            // Arrange
+            var message = CreateEmptyMessage();
+            var fluent = new FluentMessage(message);
+            
+            // Act - Add multiple segments with different patterns
+            // Pattern 1: Store reference and set values
+            var dg1_1 = fluent.Segments("DG1").Add();
+            dg1_1[1].Set().Value("1");
+            dg1_1[3].Set().Components("250.00", "Diabetes", "I9");
+            
+            // Pattern 2: Add second segment
+            var dg1_2 = fluent.Segments("DG1").Add();
+            dg1_2[1].Set().Value("2");
+            dg1_2[3].Set().Value("401.9^Hypertension^I9");
+            
+            // Pattern 3: Add custom segment
+            var zin = fluent.Segments("ZIN").Add();
+            zin[1].Set().Value("CustomField1");
+            zin[2].Set().Value("CustomField2");
+            
+            // Assert
+            Assert.Equal(2, fluent.Segments("DG1").Count);
+            Assert.Equal(1, fluent.Segments("ZIN").Count);
+            
+            // Verify first DG1
+            Assert.Equal("1", fluent.Segments("DG1")[0][1].Value);
+            Assert.Equal("250.00", fluent.Segments("DG1")[0][3][1].Value);
+            Assert.Equal("Diabetes", fluent.Segments("DG1")[0][3][2].Value);
+            
+            // Verify second DG1
+            Assert.Equal("2", fluent.Segments("DG1")[1][1].Value);
+            Assert.Equal("401.9", fluent.Segments("DG1")[1][3][1].Value);
+            Assert.Equal("Hypertension", fluent.Segments("DG1")[1][3][2].Value);
+            
+            // Verify custom segment
+            Assert.Equal("CustomField1", fluent["ZIN"][1].Value);
+            Assert.Equal("CustomField2", fluent["ZIN"][2].Value);
+        }
+
+        [Fact]
+        public void Add_SegmentWithSpecificInstance_ShouldWork()
+        {
+            // Arrange
+            var message = CreateTestMessage(); // Has 3 DG1 segments
+            var fluent = new FluentMessage(message);
+            
+            // Act - Add a 4th DG1 segment
+            var newDG1 = fluent.Segments("DG1").Add();
+            newDG1[1].Set().Value("4");
+            newDG1[3].Set().Value("V58.69^Long-term medication^I9");
+            
+            // Assert
+            Assert.Equal(4, fluent.Segments("DG1").Count);
+            
+            // Verify we can access it via Instance (Instance uses 0-based index)
+            Assert.Equal("4", fluent.DG1.Instance(3)[1].Value);
+            Assert.Equal("V58.69^Long-term medication^I9", fluent.DG1.Instance(3)[3].Value);
+        }
+
+        [Fact]
+        public void Add_MultipleSegmentsAndSetFields_OriginalUserIssue()
+        {
+            // This test reproduces and verifies the fix for the original user issue:
+            // "adding a segment via the fluent api and then setting a field value seems to fail"
+            
+            // Arrange
+            var message = CreateEmptyMessage();
+            var fluent = new FluentMessage(message);
+            
+            // Act - Add multiple segments and set different field values
+            var obs1 = fluent.Segments("OBX").Add();
+            obs1[1].Set().Value("1");
+            obs1[2].Set().Value("NM");
+            obs1[3].Set().Value("GLUCOSE");
+            obs1[5].Set().Value("120");
+            
+            var obs2 = fluent.Segments("OBX").Add();
+            obs2[1].Set().Value("2");
+            obs2[2].Set().Value("ST");
+            obs2[3].Set().Value("COMMENTS");
+            obs2[5].Set().Value("Normal range");
+            
+            var obs3 = fluent.Segments("OBX").Add();
+            obs3[1].Set().Value("3");
+            obs3[2].Set().Value("NM");
+            obs3[3].Set().Value("CHOLESTEROL");
+            obs3[5].Set().Value("180");
+            
+            // Assert - Verify each segment has the correct field values
+            Assert.Equal(3, fluent.Segments("OBX").Count);
+            
+            // First OBX segment
+            Assert.Equal("1", fluent.Segments("OBX")[0][1].Value);
+            Assert.Equal("NM", fluent.Segments("OBX")[0][2].Value);
+            Assert.Equal("GLUCOSE", fluent.Segments("OBX")[0][3].Value);
+            Assert.Equal("120", fluent.Segments("OBX")[0][5].Value);
+            
+            // Second OBX segment
+            Assert.Equal("2", fluent.Segments("OBX")[1][1].Value);
+            Assert.Equal("ST", fluent.Segments("OBX")[1][2].Value);
+            Assert.Equal("COMMENTS", fluent.Segments("OBX")[1][3].Value);
+            Assert.Equal("Normal range", fluent.Segments("OBX")[1][5].Value);
+            
+            // Third OBX segment
+            Assert.Equal("3", fluent.Segments("OBX")[2][1].Value);
+            Assert.Equal("NM", fluent.Segments("OBX")[2][2].Value);
+            Assert.Equal("CHOLESTEROL", fluent.Segments("OBX")[2][3].Value);
+            Assert.Equal("180", fluent.Segments("OBX")[2][5].Value);
+            
+            // Verify via named segment access as well
+            Assert.Equal("1", fluent.OBX.Instance(0)[1].Value);
+            Assert.Equal("2", fluent.OBX.Instance(1)[1].Value);
+            Assert.Equal("3", fluent.OBX.Instance(2)[1].Value);
+        }
+
         #endregion
 
         #region 1-Based Access Tests

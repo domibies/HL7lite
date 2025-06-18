@@ -265,7 +265,7 @@ namespace HL7lite.Fluent.Accessors
         /// <returns>A FieldMutator for this field.</returns>
         public FieldMutator Set()
         {
-            return new FieldMutator(_message, _segmentName, _fieldIndex, _repetitionIndex);
+            return new FieldMutator(_message, _segmentName, _fieldIndex, _repetitionIndex, _segmentInstanceIndex);
         }
     }
 }
