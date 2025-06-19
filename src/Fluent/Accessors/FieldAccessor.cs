@@ -260,6 +260,48 @@ namespace HL7lite.Fluent.Accessors
         }
 
         /// <summary>
+        /// Parses the field value as an HL7 datetime and returns a DateTime object.
+        /// Supports various HL7 datetime formats from year-only to full precision with timezones.
+        /// </summary>
+        /// <param name="throwOnError">If true, throws an exception when parsing fails. If false, returns null.</param>
+        /// <returns>The parsed DateTime, or null if parsing fails and throwOnError is false</returns>
+        public DateTime? AsDateTime(bool throwOnError = false)
+        {
+            if (!HasValue)
+                return null;
+
+            return MessageHelper.ParseDateTime(Value, throwOnError);
+        }
+
+        /// <summary>
+        /// Parses the field value as an HL7 datetime and returns both the DateTime and timezone offset.
+        /// Supports various HL7 datetime formats from year-only to full precision with timezones.
+        /// </summary>
+        /// <param name="offset">Outputs the timezone offset if present in the datetime string</param>
+        /// <param name="throwOnError">If true, throws an exception when parsing fails. If false, returns null.</param>
+        /// <returns>The parsed DateTime, or null if parsing fails and throwOnError is false</returns>
+        public DateTime? AsDateTime(out TimeSpan offset, bool throwOnError = false)
+        {
+            offset = TimeSpan.Zero;
+            if (!HasValue)
+                return null;
+
+            return MessageHelper.ParseDateTime(Value, out offset, throwOnError);
+        }
+
+        /// <summary>
+        /// Parses the field value as an HL7 date (ignoring any time portion) and returns a DateTime object.
+        /// The returned DateTime will have the time set to midnight (00:00:00).
+        /// </summary>
+        /// <param name="throwOnError">If true, throws an exception when parsing fails. If false, returns null.</param>
+        /// <returns>The parsed DateTime with time set to midnight, or null if parsing fails and throwOnError is false</returns>
+        public DateTime? AsDate(bool throwOnError = false)
+        {
+            var dateTime = AsDateTime(throwOnError);
+            return dateTime?.Date; // Returns date portion only (time set to 00:00:00)
+        }
+
+        /// <summary>
         /// Gets a mutator for modifying this field's value.
         /// </summary>
         /// <returns>A FieldMutator for this field.</returns>

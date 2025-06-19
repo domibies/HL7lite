@@ -133,6 +133,50 @@ namespace HL7lite.Fluent.Mutators
             return Value(value);
         }
 
+        /// <summary>
+        /// Sets the field value to an HL7-formatted datetime string.
+        /// Uses the full precision format: yyyyMMddHHmmss.FFFF
+        /// </summary>
+        /// <param name="dateTime">The DateTime to set</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        public FieldMutator DateTime(DateTime dateTime)
+        {
+            var hl7DateTime = MessageHelper.LongDateWithFractionOfSecond(dateTime);
+            return Value(hl7DateTime);
+        }
+
+        /// <summary>
+        /// Sets the field value to an HL7-formatted datetime string for the current date and time.
+        /// Uses the full precision format: yyyyMMddHHmmss.FFFF
+        /// </summary>
+        /// <returns>The FieldMutator for method chaining</returns>
+        public FieldMutator DateTimeNow()
+        {
+            return DateTime(System.DateTime.Now);
+        }
+
+        /// <summary>
+        /// Sets the field value to an HL7-formatted date string (date only, no time).
+        /// Uses the format: yyyyMMdd
+        /// </summary>
+        /// <param name="date">The DateTime to extract date from</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        public FieldMutator Date(DateTime date)
+        {
+            var hl7Date = date.ToString("yyyyMMdd");
+            return Value(hl7Date);
+        }
+
+        /// <summary>
+        /// Sets the field value to an HL7-formatted date string for today's date.
+        /// Uses the format: yyyyMMdd
+        /// </summary>
+        /// <returns>The FieldMutator for method chaining</returns>
+        public FieldMutator DateToday()
+        {
+            return Date(System.DateTime.Today);
+        }
+
         public FieldMutator ValueIf(string value, bool condition)
         {
             if (condition)

@@ -113,6 +113,11 @@ namespace HL7lite
                     // move componentList to first repetition
                     firstField.ComponentList = this.ComponentList;
                     this.ComponentList = new ElementCollection<Component>();
+                    
+                    // Copy the original field's value and properties to first repetition
+                    firstField._value = this._value;
+                    firstField.IsComponentized = this.IsComponentized;
+                    firstField.IsDelimiters = this.IsDelimiters;
 
                     this.RepetitionList.Clear();
                     this.RepetitionList.Add(firstField);

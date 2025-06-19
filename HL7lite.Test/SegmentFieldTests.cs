@@ -149,5 +149,6 @@ namespace HL7lite.Test
             Assert.Equal(string.Empty, segment.Fields(4).Value); // Gap field
             Assert.Equal("Fifth", segment.Fields(5).Value);
         }
+
     }
 }

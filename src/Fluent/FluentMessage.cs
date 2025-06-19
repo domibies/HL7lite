@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using HL7lite.Fluent.Accessors;
+using HL7lite.Fluent.Builders;
 using HL7lite.Fluent.Collections;
+using HL7lite.Fluent.Querying;
 
 namespace HL7lite.Fluent
 {
@@ -55,6 +57,23 @@ namespace HL7lite.Fluent
         /// Gets accessor for MSH (Message Header) segment
         /// </summary>
         public SegmentAccessor MSH => this["MSH"];
+
+        /// <summary>
+        /// Gets a fluent builder for creating MSH (Message Header) segments with intelligent defaults.
+        /// Provides grouped parameter setting and auto-generation features to prevent common errors.
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// fluent.CreateMSH
+        ///     .Sender("MyApp", "MyFacility")
+        ///     .Receiver("TheirApp", "TheirFacility")
+        ///     .MessageType("ADT^A01")
+        ///     .AutoControlId()
+        ///     .Production()
+        ///     .Build();
+        /// </code>
+        /// </example>
+        public MSHBuilder CreateMSH => new MSHBuilder(_message);
 
         /// <summary>
         /// Gets accessor for PID (Patient Identification) segment
@@ -248,6 +267,106 @@ namespace HL7lite.Fluent
                 throw new ArgumentNullException(nameof(segmentName));
 
             return new SegmentCollection(_message, segmentName);
+        }
+
+        /// <summary>
+        /// Removes trailing empty delimiters from the message to create cleaner output.
+        /// This method removes empty fields, components, and subcomponents from the end of segments.
+        /// </summary>
+        /// <param name="options">Options specifying which types of trailing delimiters to remove</param>
+        public void RemoveTrailingDelimiters(MessageElement.RemoveDelimitersOptions options)
+        {
+            _message.RemoveTrailingDelimiters(options);
+        }
+
+        /// <summary>
+        /// Removes all types of trailing empty delimiters from the message.
+        /// This is equivalent to calling RemoveTrailingDelimiters(MessageElement.RemoveDelimitersOptions.All).
+        /// </summary>
+        public void RemoveTrailingDelimiters()
+        {
+            _message.RemoveTrailingDelimiters(MessageElement.RemoveDelimitersOptions.All);
+        }
+
+        /// <summary>
+        /// Builds an acknowledgment (ACK) message for the current message.
+        /// The ACK message swaps sender/receiver information and includes an MSA segment
+        /// with acknowledgment code "AA" (Application Accept).
+        /// </summary>
+        /// <returns>A FluentMessage wrapping the ACK message, or null if the current message is already an ACK</returns>
+        public FluentMessage GetAck()
+        {
+            var ackMessage = _message.GetACK();
+            return ackMessage != null ? new FluentMessage(ackMessage) : null;
+        }
+
+        /// <summary>
+        /// Builds a negative acknowledgment (NACK) message for the current message.
+        /// The NACK message swaps sender/receiver information and includes an MSA segment
+        /// with the specified acknowledgment code and error message.
+        /// </summary>
+        /// <param name="code">Acknowledgment code (e.g., "AR" for Application Reject, "AE" for Application Error)</param>
+        /// <param name="errorMessage">Error message to include in MSA.3</param>
+        /// <returns>A FluentMessage wrapping the NACK message, or null if the current message is already an ACK</returns>
+        public FluentMessage GetNack(string code, string errorMessage)
+        {
+            var nackMessage = _message.GetNACK(code, errorMessage);
+            return nackMessage != null ? new FluentMessage(nackMessage) : null;
+        }
+
+        /// <summary>
+        /// Provides path-based access to HL7 message elements using the legacy path syntax.
+        /// Supports field access ("PID.5.1"), repetitions ("PV1.7[2].1"), and component navigation.
+        /// </summary>
+        /// <param name="path">The HL7 path in format: SEGMENT.Field[.Component[.SubComponent]][repetition]</param>
+        /// <returns>A PathAccessor for reading and writing values at the specified path</returns>
+        /// <example>
+        /// <code>
+        /// // Read operations
+        /// string name = fluent.Path("PID.5.1").Value;
+        /// bool exists = fluent.Path("PID.5.1").Exists;
+        /// 
+        /// // Write operations
+        /// fluent.Path("PID.5.1").Set("Smith")
+        ///       .Path("PID.5.2").Set("John")
+        ///       .Path("PID.7").Put("19850315");
+        /// </code>
+        /// </example>
+        public PathAccessor Path(string path)
+        {
+            return new PathAccessor(_message, path, this);
+        }
+
+        /// <summary>
+        /// Creates a deep copy of the current message, returning a completely independent FluentMessage.
+        /// The copy includes all segments, fields, components, and repetitions in their current state.
+        /// Changes to the copy will not affect the original message and vice versa.
+        /// </summary>
+        /// <returns>A new FluentMessage containing a deep copy of all message data</returns>
+        /// <example>
+        /// <code>
+        /// var copy = original.Copy();
+        /// copy.PID[5].Set().Value("NewName"); // Original remains unchanged
+        /// </code>
+        /// </example>
+        public FluentMessage Copy()
+        {
+            // Handle empty message case
+            var segments = _message.Segments();
+            if (segments == null || segments.Count == 0)
+            {
+                return new FluentMessage(new Message());
+            }
+
+            // Use serialization-based copying to ensure all data is captured correctly
+            // This approach works for both parsed and programmatically built messages
+            var serializedMessage = _message.SerializeMessage(validate: false);
+            
+            // Create new message from serialized string
+            var copiedMessage = new Message(serializedMessage);
+            copiedMessage.ParseMessage(serializeCheck: false, validate: false);
+            
+            return new FluentMessage(copiedMessage);
         }
     }
 }

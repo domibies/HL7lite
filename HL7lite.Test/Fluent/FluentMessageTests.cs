@@ -1,4 +1,5 @@
 using System;
+using HL7lite.Fluent;
 using Xunit;
 
 namespace HL7lite.Test.Fluent
@@ -313,6 +314,180 @@ namespace HL7lite.Test.Fluent
             Assert.True(fluentMessage.MSH.Exists);
             Assert.True(fluentMessage.PID.Exists);
             Assert.False(fluentMessage.EVN.Exists);
+        }
+
+        [Fact]
+        public void RemoveTrailingDelimiters_WithOptions_ShouldCallUnderlyingMessage()
+        {
+            // Arrange
+            var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||Z99^Z01|12345|P|2.3||
+PID|1||12345|||DOE^JOHN^M||||||||||||||||||||||||";
+            
+            var message = new Message(hl7String);
+            message.ParseMessage();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+            var originalLength = message.SerializeMessage(false).Length;
+            
+            // Act
+            fluentMessage.RemoveTrailingDelimiters(new MessageElement.RemoveDelimitersOptions { Fields = true });
+            
+            // Assert - Check that trailing delimiters were removed (message should be shorter)
+            var newLength = message.SerializeMessage(false).Length;
+            Assert.True(newLength < originalLength, "Message should be shorter after removing trailing delimiters");
+        }
+
+        [Fact]
+        public void RemoveTrailingDelimiters_WithoutOptions_ShouldCallUnderlyingMessageWithAllOptions()
+        {
+            // Arrange
+            var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||Z99^Z01|12345|P|2.3||
+PID|1||12345|||DOE^JOHN^M||||||||||||||||||||||||";
+            
+            var message = new Message(hl7String);
+            message.ParseMessage();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+            var originalLength = message.SerializeMessage(false).Length;
+            
+            // Act
+            fluentMessage.RemoveTrailingDelimiters();
+            
+            // Assert - Check that trailing delimiters were removed (message should be shorter)
+            var newLength = message.SerializeMessage(false).Length;
+            Assert.True(newLength < originalLength, "Message should be shorter after removing trailing delimiters");
+            
+            // Should not contain trailing pipes
+            var serialized = message.SerializeMessage(false);
+            Assert.DoesNotContain("||||||||||||||||||||||||", serialized);
+        }
+
+        [Fact]
+        public void GetAck_WithValidMessage_ShouldReturnAckFluentMessage()
+        {
+            // Arrange
+            const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
+PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
+            
+            var fluentMessage = hl7.ToFluentMessage();
+
+            // Act
+            var ackMessage = fluentMessage.GetAck();
+
+            // Assert
+            Assert.NotNull(ackMessage);
+            Assert.True(ackMessage.MSH.Exists);
+            Assert.True(ackMessage["MSA"].Exists);
+            
+            // Verify swapped sender/receiver
+            Assert.Equal("RECEIVER", ackMessage.MSH[3].Value); // Original receiver becomes sender
+            Assert.Equal("RFACILITY", ackMessage.MSH[4].Value);
+            Assert.Equal("SENDER", ackMessage.MSH[5].Value); // Original sender becomes receiver
+            Assert.Equal("SFACILITY", ackMessage.MSH[6].Value);
+            
+            // Verify MSA segment
+            Assert.Equal("AA", ackMessage["MSA"][1].Value); // Application Accept
+            Assert.Equal("12345", ackMessage["MSA"][2].Value); // Original message control ID
+        }
+
+        [Fact]
+        public void GetNack_WithValidMessage_ShouldReturnNackFluentMessage()
+        {
+            // Arrange
+            const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
+PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
+            
+            var fluentMessage = hl7.ToFluentMessage();
+
+            // Act
+            var nackMessage = fluentMessage.GetNack("AR", "Invalid patient ID");
+
+            // Assert
+            Assert.NotNull(nackMessage);
+            Assert.True(nackMessage.MSH.Exists);
+            Assert.True(nackMessage["MSA"].Exists);
+            
+            // Verify swapped sender/receiver
+            Assert.Equal("RECEIVER", nackMessage.MSH[3].Value);
+            Assert.Equal("RFACILITY", nackMessage.MSH[4].Value);
+            Assert.Equal("SENDER", nackMessage.MSH[5].Value);
+            Assert.Equal("SFACILITY", nackMessage.MSH[6].Value);
+            
+            // Verify MSA segment
+            Assert.Equal("AR", nackMessage["MSA"][1].Value); // Application Reject
+            Assert.Equal("12345", nackMessage["MSA"][2].Value); // Original message control ID
+            Assert.Equal("Invalid patient ID", nackMessage["MSA"][3].Value); // Error message
+        }
+
+        [Fact]
+        public void GetAck_WithExistingAckMessage_ShouldReturnNull()
+        {
+            // Arrange - Create an ACK message first
+            const string originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
+PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
+            
+            var originalMessage = originalHl7.ToFluentMessage();
+            var ackMessage = originalMessage.GetAck();
+
+            // Act - Try to get ACK from an existing ACK
+            var doubleAck = ackMessage.GetAck();
+
+            // Assert
+            Assert.Null(doubleAck);
+        }
+
+        [Fact]
+        public void GetNack_WithExistingAckMessage_ShouldReturnNull()
+        {
+            // Arrange - Create an ACK message first
+            const string originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
+PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
+            
+            var originalMessage = originalHl7.ToFluentMessage();
+            var ackMessage = originalMessage.GetAck();
+
+            // Act - Try to get NACK from an existing ACK
+            var nackFromAck = ackMessage.GetNack("AE", "Error");
+
+            // Assert
+            Assert.Null(nackFromAck);
+        }
+
+        [Fact]
+        public void GetAck_MessageType_ShouldBeACK()
+        {
+            // Arrange
+            const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
+OBR|1|ORDER123|RESULT456|CBC^COMPLETE BLOOD COUNT^L|||20210330110000|||||||||||||||||||F||
+OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||";
+            
+            var fluentMessage = hl7.ToFluentMessage();
+
+            // Act
+            var ackMessage = fluentMessage.GetAck();
+
+            // Assert
+            Assert.NotNull(ackMessage);
+            Assert.Equal("ACK", ackMessage.MSH[9].Value);
+        }
+
+        [Fact]
+        public void GetNack_WithDifferentErrorCodes_ShouldSetCorrectCode()
+        {
+            // Arrange
+            const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
+PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
+            
+            var fluentMessage = hl7.ToFluentMessage();
+
+            // Act
+            var arNack = fluentMessage.GetNack("AR", "Application Reject");
+            var aeNack = fluentMessage.GetNack("AE", "Application Error");
+
+            // Assert
+            Assert.Equal("AR", arNack["MSA"][1].Value);
+            Assert.Equal("Application Reject", arNack["MSA"][3].Value);
+            
+            Assert.Equal("AE", aeNack["MSA"][1].Value);
+            Assert.Equal("Application Error", aeNack["MSA"][3].Value);
         }
     }
 }

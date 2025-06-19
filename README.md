@@ -1,6 +1,10 @@
+<div align="center">
+
 # HL7lite
 
 A lightweight, high-performance HL7 2.x parser for .NET with modern Fluent API support.
+
+</div>
 
 <p align="center">
   <a href="https://github.com/domibies/HL7lite/actions/workflows/dotnet.yml">
@@ -25,6 +29,7 @@ A lightweight, high-performance HL7 2.x parser for .NET with modern Fluent API s
 - [Key Features](#key-features)
 - [Installation](#installation)
 - [Fluent API](#fluent-api)
+- [Path API](#path-api)
 - [Indexing Principles](#indexing-principles)
 - [Migration Guide](#migration-guide)
 - [Legacy API](#legacy-api)
@@ -35,6 +40,7 @@ A lightweight, high-performance HL7 2.x parser for .NET with modern Fluent API s
 
 - **High Performance** - Parse HL7 messages without schema validation overhead
 - **Modern Fluent API** - Intuitive, chainable methods for message access and mutation
+- **Path-based Access** - String-based path syntax wrapping legacy GetValue/SetValue/PutValue
 - **Legacy Compatibility** - Full backward compatibility with existing code
 - **Auto-creation** - Automatically create missing segments, fields, and components
 - **Lightweight** - Minimal dependencies, small footprint
@@ -214,6 +220,63 @@ obs2[1].Set()
 
 ### Advanced Features
 
+#### Message Creation and Building
+```csharp
+// One-step parsing from string
+var fluent = hl7String.ToFluentMessage();
+
+// Fluent MSH creation with intelligent defaults
+var message = new FluentMessage(new Message());
+message.CreateMSH
+    .Sender("MyApp", "MyFacility")
+    .Receiver("TheirApp", "TheirFacility")
+    .MessageType("ADT^A01")
+    .AutoControlId()      // Generates unique control ID
+    .Production()         // Sets processing ID to "P"
+    .Build();
+
+// Environment-specific builders
+message.CreateMSH
+    .Sender("TestApp", "TestFac")
+    .Receiver("TargetApp", "TargetFac")
+    .MessageType("ORU^R01")
+    .ControlId("12345")
+    .Test()               // Sets processing ID to "T"
+    .Build();
+```
+
+#### Deep Copy and Message Manipulation
+```csharp
+// Create independent copy of entire message
+var copy = fluent.Copy();
+copy.PID[5].Set().Value("NewName"); // Original unchanged
+
+// ACK/NACK generation
+var ack = fluent.GetAck();
+var nack = fluent.GetNack("AR", "Invalid patient ID");
+
+// Message cleanup
+fluent.RemoveTrailingDelimiters();
+fluent.RemoveTrailingDelimiters(MessageElement.RemoveDelimitersOptions.Fields);
+```
+
+#### DateTime Utilities
+```csharp
+// Set HL7 datetime fields
+fluent.OBX[14].Set().DateTime(DateTime.Now);
+fluent.OBX[14].Set().DateTimeNow();
+fluent.MSH[7].Set().Date(DateTime.Today);
+fluent.MSH[7].Set().DateToday();
+
+// Parse HL7 datetime fields
+DateTime? timestamp = fluent.OBX[14].AsDateTime();
+DateTime? dateOnly = fluent.MSH[7].AsDate();
+
+// Parse with timezone information
+TimeSpan offset;
+DateTime? timestampWithTz = fluent.OBX[14].AsDateTime(out offset);
+```
+
 #### Null Safety
 ```csharp
 // Non-existent fields return empty values, no exceptions
@@ -254,6 +317,153 @@ var validPatientIds = fluent.PID[3].Repetitions
     .Where(id => !string.IsNullOrEmpty(id.Value))
     .Select(id => id.Value)
     .ToList();
+```
+
+## Path API
+
+HL7lite provides a powerful path-based API that wraps the legacy `GetValue`/`SetValue`/`PutValue` methods with a modern, fluent interface. The Path API supports all existing HL7 path syntax while providing a foundation for future enhanced path features.
+
+### Basic Path Syntax
+
+The Path API supports the complete legacy path syntax:
+
+```csharp
+var fluent = new FluentMessage(message);
+
+// Basic field access
+string patientId = fluent.Path("PID.3").Value;
+string familyName = fluent.Path("PID.5.1").Value;
+string givenName = fluent.Path("PID.5.2").Value;
+
+// Component and subcomponent access
+string messageType = fluent.Path("MSH.9.1").Value;    // ADT
+string triggerEvent = fluent.Path("MSH.9.2").Value;   // A01
+
+// Field repetitions
+string firstId = fluent.Path("PID.3[1]").Value;       // First patient ID
+string secondId = fluent.Path("PID.3[2]").Value;      // Second patient ID
+
+// Complex repetition paths
+string doctorId = fluent.Path("PV1.7[1].1").Value;    // First attending doctor ID
+string doctorName = fluent.Path("PV1.7[2].3").Value;  // Second attending doctor name
+```
+
+### Path Element Properties
+
+Each path accessor provides comprehensive information about the element:
+
+```csharp
+var pathAccessor = fluent.Path("PID.5.1");
+
+// Value access
+string value = pathAccessor.Value;        // Get the value
+bool exists = pathAccessor.Exists;        // Check if element exists
+bool hasValue = pathAccessor.HasValue;    // Check if has non-empty value
+bool isNull = pathAccessor.IsNull;        // Check for HL7 null ("")
+
+// Path information
+string pathString = pathAccessor.ToString(); // Returns "PID.5.1"
+```
+
+### Path Mutation Methods
+
+The Path API provides two distinct mutation approaches that preserve the exact behavior of the legacy API:
+
+#### Set() - Update Existing Elements Only
+```csharp
+// Set() wraps SetValue() - throws exception if path doesn't exist
+fluent.Path("PID.5.1").Set("NewValue");    // Updates existing field
+fluent.Path("PID.99").Set("Value");        // ❌ Throws HL7Exception
+
+// Conditional updates
+fluent.Path("PID.5.1").SetIf("ConditionalValue", someCondition);
+
+// HL7 null values
+fluent.Path("PID.5.1").SetNull();          // Sets HL7 null ("")
+```
+
+#### Put() - Create or Update Elements
+```csharp
+// Put() wraps PutValue() - creates missing elements automatically
+fluent.Path("PID.99").Put("NewValue");     // ✅ Creates field and sets value
+fluent.Path("ZZ1.2.3").Put("CustomValue"); // Creates entire path structure
+
+// Conditional creation/updates
+fluent.Path("PID.100").PutIf("ConditionalValue", someCondition);
+
+// HL7 null values with creation
+fluent.Path("PID.101").PutNull();          // Creates field with HL7 null
+```
+
+### Method Chaining
+
+All path operations return the `FluentMessage` for seamless chaining:
+
+```csharp
+// Chain multiple path operations
+fluent.Path("PID.5.1").Set("Smith")
+      .Path("PID.5.2").Set("John")
+      .Path("PID.7").Put("19850315")
+      .Path("MSH.10").Set("12345");
+
+// Mix path operations with other fluent methods
+fluent.Path("PID.5.1").Set("Johnson")
+      .PID[8].Set().Value("M")
+      .Path("PV1.2").Put("I");
+```
+
+### Error Handling
+
+The Path API preserves the exact error handling behavior of the legacy API:
+
+```csharp
+// Non-existent paths return empty values (no exceptions)
+string nonExistent = fluent.Path("ZZZ.999").Value;     // Returns ""
+bool exists = fluent.Path("ZZZ.999").Exists;           // Returns false
+
+// Set() throws exceptions for non-existent paths (like SetValue)
+try {
+    fluent.Path("PID.999").Set("Value");
+} catch (HL7Exception ex) {
+    // "Field not available - PID.999 Error: ..."
+}
+
+// Put() never throws for valid paths (like PutValue)
+fluent.Path("PID.999").Put("Value");  // Always succeeds
+```
+
+### Path vs Fluent API Comparison
+
+Both approaches provide equivalent functionality - choose based on your preference:
+
+```csharp
+// Path API - String-based paths
+string name = fluent.Path("PID.5.1").Value;
+fluent.Path("PID.5.1").Set("Smith");
+
+// Fluent API - Indexed access
+string name = fluent.PID[5][1].Value;
+fluent.PID[5][1].Set().Value("Smith");
+
+// Path API - Repetitions
+string firstId = fluent.Path("PID.3[1]").Value;
+fluent.Path("PID.3[2]").Put("NewId");
+
+// Fluent API - Repetitions
+string firstId = fluent.PID[3].Repetition(1).Value;
+fluent.PID[3].Repetitions.Add("NewId");
+```
+
+### Legacy API Compatibility
+
+The Path API is a pure wrapper - it calls the exact same underlying methods:
+
+```csharp
+// These are equivalent:
+message.GetValue("PID.5.1");           ↔ fluent.Path("PID.5.1").Value;
+message.SetValue("PID.5.1", "Smith");  ↔ fluent.Path("PID.5.1").Set("Smith");
+message.PutValue("PID.99", "Value");   ↔ fluent.Path("PID.99").Put("Value");
+message.ValueExists("PID.5.1");       ↔ fluent.Path("PID.5.1").Exists;
 ```
 
 ## Indexing Principles
@@ -595,9 +805,17 @@ var nullValue = message.GetValue("EVN.4"); // Returns null if field contains ""
 
 ### v1.3.0 (December 2024)
 - **New Fluent API** - Modern, chainable interface for HL7 message manipulation
+- **Path API** - String-based path access wrapping legacy GetValue/SetValue/PutValue methods
 - **LINQ Support** - Query segments and repetitions using LINQ expressions
 - **Type-safe Access** - Fluent accessors with built-in null safety
 - **Collection Operations** - Advanced mutation methods for repetitions and segments
+- **MSH Builder** - Fluent MSH creation with grouped parameters and auto-generation
+- **DateTime Utilities** - HL7-specific datetime parsing and formatting methods
+- **Deep Copy** - Create independent copies of entire messages
+- **ACK/NACK Generation** - Fluent wrappers for acknowledgment message creation
+- **Message Cleanup** - RemoveTrailingDelimiters support in fluent API
+- **One-step Parsing** - String extension method for direct fluent message creation
+- **Bug Fixes** - Fixed field repetition value preservation issue
 - **Full Compatibility** - Legacy API remains unchanged and fully supported
 
 ### v1.2.0 (July 2024)

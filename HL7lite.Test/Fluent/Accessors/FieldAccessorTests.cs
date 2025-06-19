@@ -786,5 +786,63 @@ namespace HL7lite.Test.Fluent.Accessors
                 fluent.PID[3].Repetition(2).Set().AddRepetition("NEW"));
             Assert.Contains("Cannot add a repetition when operating on a specific repetition", ex.Message);
         }
+
+        [Fact]
+        public void BugTest_FieldInitiallyHasNoRepetitions_AddingRepetitionShouldUpdateHasRepetitionsAndPreserveValue()
+        {
+            // This test reproduces the bug where:
+            // 1. A field initially has no repetitions 
+            // 2. Adding a repetition via repetitions() method creates a collection
+            // 3. But HasRepetitions isn't updated
+            // 4. So .Value returns empty string instead of the field value
+            
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithSegment("PID|||ID001")  // Single field, no repetitions
+                .Build();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            var fieldAccessor = fluent.PID[3];
+            
+            // Act - Check initial state
+            var initialValue = fieldAccessor.Value;
+            var initialHasRepetitions = fieldAccessor.HasRepetitions;
+            var initialRepetitionCount = fieldAccessor.RepetitionCount;
+            
+            // Add a repetition using the field mutator
+            fieldAccessor.Set().AddRepetition("ID002");
+            
+            // Check state after adding repetition
+            var afterValue = fieldAccessor.Value;
+            var afterHasRepetitions = fieldAccessor.HasRepetitions;
+            var afterRepetitionCount = fieldAccessor.RepetitionCount;
+            
+            // Debug: Check the underlying field state
+            var segment = message.DefaultSegment("PID");
+            var underlyingField = segment.Fields(3);
+            var underlyingHasRepetitions = underlyingField.HasRepetitions;
+            var underlyingRepetitionCount = underlyingField.Repetitions().Count;
+            var underlyingFirstRepValue = underlyingField.Repetitions()[0].Value;
+            
+            // Assert
+            Assert.Equal("ID001", initialValue);
+            Assert.False(initialHasRepetitions);
+            Assert.Equal(1, initialRepetitionCount);
+            
+            // Debug assertions to understand the issue
+            Assert.True(underlyingHasRepetitions); // The underlying field should have repetitions
+            Assert.Equal(2, underlyingRepetitionCount); // Should have 2 repetitions
+            Assert.Equal("ID001", underlyingFirstRepValue); // First repetition should have the original value
+            
+            // The bug is that after adding a repetition:
+            // - HasRepetitions should be true
+            // - Value should still return the first repetition's value
+            // - RepetitionCount should be 2
+            
+            // This should now pass - underlying field is correct, but FieldAccessor.Value is wrong
+            Assert.Equal("ID001", afterValue);  // Should be the first repetition's value, not empty
+            Assert.True(afterHasRepetitions);   // Should be true after adding repetition
+            Assert.Equal(2, afterRepetitionCount);
+        }
     }
 }
