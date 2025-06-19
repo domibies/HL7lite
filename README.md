@@ -83,7 +83,8 @@ message.ParseMessage();
 var fluent = new FluentMessage(message);
 ```
 
-### Data Access Patterns
+<details>
+<summary><b>Data Access Patterns</b></summary>
 
 #### Field Access
 ```csharp
@@ -142,7 +143,10 @@ var severeDiagnoses = diagnoses
     .ToList();
 ```
 
-### Mutation Patterns
+</details>
+
+<details>
+<summary><b>Mutation Patterns</b></summary>
 
 #### Field Mutations
 ```csharp
@@ -218,7 +222,10 @@ obs2[1].Set()
     .Field(5, "Normal range");
 ```
 
-### Advanced Features
+</details>
+
+<details>
+<summary><b>Advanced Features</b></summary>
 
 #### Message Creation and Building
 ```csharp
@@ -258,6 +265,10 @@ var nack = fluent.GetNack("AR", "Invalid patient ID");
 // Message cleanup
 fluent.RemoveTrailingDelimiters();
 fluent.RemoveTrailingDelimiters(MessageElement.RemoveDelimitersOptions.Fields);
+
+// Serialize message
+string hl7String = fluent.SerializeMessage();
+string validatedHL7 = fluent.SerializeMessage(validate: true);
 ```
 
 #### DateTime Utilities
@@ -319,11 +330,14 @@ var validPatientIds = fluent.PID[3].Repetitions
     .ToList();
 ```
 
+</details>
+
 ## Path API
 
 HL7lite provides a powerful path-based API that wraps the legacy `GetValue`/`SetValue`/`PutValue` methods with a modern, fluent interface. The Path API supports all existing HL7 path syntax while providing a foundation for future enhanced path features.
 
-### Basic Path Syntax
+<details>
+<summary><b>Basic Path Syntax</b></summary>
 
 The Path API supports the complete legacy path syntax:
 
@@ -348,7 +362,10 @@ string doctorId = fluent.Path("PV1.7[1].1").Value;    // First attending doctor 
 string doctorName = fluent.Path("PV1.7[2].3").Value;  // Second attending doctor name
 ```
 
-### Path Element Properties
+</details>
+
+<details>
+<summary><b>Path Element Properties</b></summary>
 
 Each path accessor provides comprehensive information about the element:
 
@@ -365,7 +382,10 @@ bool isNull = pathAccessor.IsNull;        // Check for HL7 null ("")
 string pathString = pathAccessor.ToString(); // Returns "PID.5.1"
 ```
 
-### Path Mutation Methods
+</details>
+
+<details>
+<summary><b>Path Mutation Methods</b></summary>
 
 The Path API provides two distinct mutation approaches that preserve the exact behavior of the legacy API:
 
@@ -395,7 +415,10 @@ fluent.Path("PID.100").PutIf("ConditionalValue", someCondition);
 fluent.Path("PID.101").PutNull();          // Creates field with HL7 null
 ```
 
-### Method Chaining
+</details>
+
+<details>
+<summary><b>Method Chaining</b></summary>
 
 All path operations return the `FluentMessage` for seamless chaining:
 
@@ -412,7 +435,10 @@ fluent.Path("PID.5.1").Set("Johnson")
       .Path("PV1.2").Put("I");
 ```
 
-### Error Handling
+</details>
+
+<details>
+<summary><b>Error Handling</b></summary>
 
 The Path API preserves the exact error handling behavior of the legacy API:
 
@@ -432,7 +458,10 @@ try {
 fluent.Path("PID.999").Put("Value");  // Always succeeds
 ```
 
-### Path vs Fluent API Comparison
+</details>
+
+<details>
+<summary><b>Path vs Fluent API Comparison</b></summary>
 
 Both approaches provide equivalent functionality - choose based on your preference:
 
@@ -454,7 +483,10 @@ string firstId = fluent.PID[3].Repetition(1).Value;
 fluent.PID[3].Repetitions.Add("NewId");
 ```
 
-### Legacy API Compatibility
+</details>
+
+<details>
+<summary><b>Legacy API Compatibility</b></summary>
 
 The Path API is a pure wrapper - it calls the exact same underlying methods:
 
@@ -465,6 +497,8 @@ message.SetValue("PID.5.1", "Smith");  ↔ fluent.Path("PID.5.1").Set("Smith");
 message.PutValue("PID.99", "Value");   ↔ fluent.Path("PID.99").Put("Value");
 message.ValueExists("PID.5.1");       ↔ fluent.Path("PID.5.1").Exists;
 ```
+
+</details>
 
 ## Indexing Principles
 
@@ -505,7 +539,8 @@ This design ensures HL7 standard compliance while maintaining natural LINQ integ
 
 The Fluent API is designed for easy adoption alongside existing code. You can migrate incrementally without breaking changes.
 
-### Getting Started
+<details open>
+<summary><b>Getting Started</b></summary>
 
 ```csharp
 // Existing code continues to work
@@ -516,7 +551,10 @@ message.ParseMessage();
 var fluent = new FluentMessage(message);
 ```
 
-### Field Access Migration
+</details>
+
+<details>
+<summary><b>Field Access Migration</b></summary>
 
 **Before (Legacy API):**
 ```csharp
@@ -561,7 +599,10 @@ string secondId = fluent.PID[3].Repetitions.Count > 1
     : "";
 ```
 
-### Field Updates Migration
+</details>
+
+<details>
+<summary><b>Field Updates Migration</b></summary>
 
 **Before (Legacy API):**
 ```csharp
@@ -593,7 +634,10 @@ fluent["ZZ1"][2][3].Set().Value("CustomValue");
 fluent.PID[5].Set().Components("Smith", "John", "Michael");
 ```
 
-### Segment Operations Migration
+</details>
+
+<details>
+<summary><b>Segment Operations Migration</b></summary>
 
 **Before (Legacy API):**
 ```csharp
@@ -628,7 +672,10 @@ fluent.Segments("DG1").Add()[1].Set().Value("1");
 fluent.Segments("DG1").Last()[3].Set().Value("Primary");
 ```
 
-### LINQ Integration Migration
+</details>
+
+<details>
+<summary><b>LINQ Integration Migration</b></summary>
 
 **Before (Legacy API):**
 ```csharp
@@ -658,7 +705,10 @@ var diagnosisCodes = fluent.Segments("DG1")
     .ToList();
 ```
 
-### Incremental Migration Strategy
+</details>
+
+<details>
+<summary><b>Incremental Migration Strategy</b></summary>
 
 1. **Start Small**: Wrap existing `Message` instances with `FluentMessage`
 2. **Focus on Reads**: Migrate data access code first (lowest risk)
@@ -689,11 +739,14 @@ public void ProcessMessage(string hl7String) {
 }
 ```
 
+</details>
+
 ## Legacy API
 
 The legacy API remains fully supported and continues to work exactly as before. This section documents the original API for reference and backward compatibility.
 
-### Message Construction
+<details>
+<summary><b>Message Construction</b></summary>
 
 ```csharp
 // Create a new message
@@ -719,7 +772,10 @@ foreach (var strMsg in messages) {
 }
 ```
 
-### Data Access
+</details>
+
+<details>
+<summary><b>Data Access</b></summary>
 
 ```csharp
 // Get field values
@@ -738,7 +794,10 @@ string givenName = message.GetValue("PID.5.2");
 bool isComponentized = message.IsComponentized("PID.5");
 ```
 
-### Message Modification
+</details>
+
+<details>
+<summary><b>Message Modification</b></summary>
 
 ```csharp
 // Update values
@@ -766,7 +825,10 @@ message.RemoveSegment("NK1", 1); // Remove specific occurrence (0-based)
 message.RemoveTrailingDelimiters(RemoveDelimitersOptions.All);
 ```
 
-### ACK/NACK Generation
+</details>
+
+<details>
+<summary><b>ACK/NACK Generation</b></summary>
 
 ```csharp
 // Generate ACK
@@ -780,7 +842,10 @@ ack.SetValue("MSH.3", "MyApplication");
 ack.SetValue("MSH.4", "MyFacility");
 ```
 
-### Advanced Features
+</details>
+
+<details>
+<summary><b>Advanced Features</b></summary>
 
 ```csharp
 // Encoded content
@@ -800,6 +865,8 @@ DateTime? dt2 = MessageHelper.ParseDateTime("20151231234500");
 // Null elements are represented as ""
 var nullValue = message.GetValue("EVN.4"); // Returns null if field contains ""
 ```
+
+</details>
 
 ## What's New
 

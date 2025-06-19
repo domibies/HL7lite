@@ -368,5 +368,26 @@ namespace HL7lite.Fluent
             
             return new FluentMessage(copiedMessage);
         }
+
+        /// <summary>
+        /// Serializes the HL7 message to a string representation with optional validation.
+        /// The serialized message includes all segments, fields, and components with proper
+        /// HL7 encoding and delimiters.
+        /// </summary>
+        /// <param name="validate">Whether to validate the message before serialization (default: false)</param>
+        /// <returns>The serialized HL7 message as a string with segments separated by carriage returns</returns>
+        /// <example>
+        /// <code>
+        /// // Serialize without validation (faster)
+        /// string hl7String = fluent.SerializeMessage();
+        /// 
+        /// // Serialize with validation
+        /// string validatedHL7 = fluent.SerializeMessage(validate: true);
+        /// </code>
+        /// </example>
+        public string SerializeMessage(bool validate = false)
+        {
+            return _message.SerializeMessage(validate);
+        }
     }
 }
