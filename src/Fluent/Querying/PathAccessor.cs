@@ -98,30 +98,20 @@ namespace HL7lite.Fluent.Querying
         }
 
         /// <summary>
-        /// Sets the value at the specified path using SetValue (updates existing elements only).
-        /// Throws an exception if the path doesn't exist.
+        /// Sets the value at the specified path, creating missing elements automatically.
+        /// This method never throws exceptions for valid paths and maintains consistency
+        /// with the rest of the fluent API.
         /// </summary>
         /// <param name="value">The value to set</param>
         /// <returns>The FluentMessage for method chaining</returns>
         public FluentMessage Set(string value)
-        {
-            _message.SetValue(_path, value);
-            return _fluentMessage;
-        }
-
-        /// <summary>
-        /// Sets the value at the specified path using PutValue (creates missing elements automatically).
-        /// </summary>
-        /// <param name="value">The value to set</param>
-        /// <returns>The FluentMessage for method chaining</returns>
-        public FluentMessage Put(string value)
         {
             _message.PutValue(_path, value);
             return _fluentMessage;
         }
 
         /// <summary>
-        /// Conditionally sets the value at the specified path using SetValue.
+        /// Conditionally sets the value at the specified path, creating missing elements if needed.
         /// Only sets the value if the condition is true.
         /// </summary>
         /// <param name="value">The value to set</param>
@@ -131,42 +121,50 @@ namespace HL7lite.Fluent.Querying
         {
             if (condition)
             {
-                _message.SetValue(_path, value);
-            }
-            return _fluentMessage;
-        }
-
-        /// <summary>
-        /// Conditionally sets the value at the specified path using PutValue.
-        /// Only sets the value if the condition is true.
-        /// </summary>
-        /// <param name="value">The value to set</param>
-        /// <param name="condition">The condition that must be true to set the value</param>
-        /// <returns>The FluentMessage for method chaining</returns>
-        public FluentMessage PutIf(string value, bool condition)
-        {
-            if (condition)
-            {
                 _message.PutValue(_path, value);
             }
             return _fluentMessage;
         }
 
         /// <summary>
-        /// Sets the path to an HL7 null value using SetValue.
+        /// Sets the value at the specified path after encoding any HL7 delimiter characters.
+        /// Use this method when your value contains characters like |, ^, ~, \, or &
+        /// that need to be safely stored in the HL7 message.
         /// </summary>
+        /// <param name="value">The value to encode and set</param>
         /// <returns>The FluentMessage for method chaining</returns>
-        public FluentMessage SetNull()
+        public FluentMessage SetEncoded(string value)
         {
-            _message.SetValue(_path, _message.Encoding.PresentButNull);
+            if (value == null)
+            {
+                return Set("");
+            }
+
+            var encodedValue = _message.Encoding.Encode(value);
+            return Set(encodedValue);
+        }
+
+        /// <summary>
+        /// Conditionally sets the encoded value at the specified path, creating missing elements if needed.
+        /// Only sets the value if the condition is true. The value is encoded before setting.
+        /// </summary>
+        /// <param name="value">The value to encode and set</param>
+        /// <param name="condition">The condition that must be true to set the value</param>
+        /// <returns>The FluentMessage for method chaining</returns>
+        public FluentMessage SetEncodedIf(string value, bool condition)
+        {
+            if (condition)
+            {
+                return SetEncoded(value);
+            }
             return _fluentMessage;
         }
 
         /// <summary>
-        /// Sets the path to an HL7 null value using PutValue.
+        /// Sets the path to an HL7 null value, creating missing elements if needed.
         /// </summary>
         /// <returns>The FluentMessage for method chaining</returns>
-        public FluentMessage PutNull()
+        public FluentMessage SetNull()
         {
             _message.PutValue(_path, _message.Encoding.PresentButNull);
             return _fluentMessage;

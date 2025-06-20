@@ -109,9 +109,27 @@ namespace HL7lite.Fluent.Mutators
             return this;
         }
 
+        /// <summary>
+        /// Sets the field value after encoding any HL7 delimiter characters.
+        /// Use this method when your value contains characters like |, ^, ~, \, or &
+        /// that need to be safely stored in the HL7 message.
+        /// </summary>
+        /// <param name="value">The value to encode and set</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        public FieldMutator EncodedValue(string value)
+        {
+            if (value == null)
+            {
+                return Value(null);
+            }
+
+            var encodedValue = _message.Encoding.Encode(value);
+            return Value(encodedValue);
+        }
+
         public FieldMutator Null()
         {
-            return Value("\"\"");
+            return Value(_message.Encoding.PresentButNull);
         }
 
         public FieldMutator Clear()

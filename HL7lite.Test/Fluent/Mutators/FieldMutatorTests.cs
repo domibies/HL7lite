@@ -60,7 +60,7 @@ PV1|1|I";
 
             mutator.Null();
 
-            Assert.Equal("\"\"", message.GetValue("PID.5"));
+            Assert.Equal(message.Encoding.PresentButNull, message.GetValue("PID.5"));
         }
 
         [Fact]
@@ -398,6 +398,310 @@ PV1|1|I";
             Assert.Equal("NM", fluent.Segments("OBX")[0][2].Value);
             Assert.Equal("GLUCOSE", fluent.Segments("OBX")[0][3].Value);
             Assert.Equal("120", fluent.Segments("OBX")[0][5].Value);
+        }
+
+        #endregion
+
+        #region EncodedValue Tests
+
+        [Fact]
+        public void EncodedValue_WithDelimiterCharacters_ShouldEncodeThemCorrectly()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            var valueWithDelimiters = "Smith|John^Middle~Name\\Test&Co";
+            
+            // Act
+            mutator.EncodedValue(valueWithDelimiters);
+            
+            // Assert
+            // GetValue() automatically decodes, so we need to check the raw field value
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            // The encoding should have escaped the delimiter characters
+            Assert.Contains("\\F\\", rawValue); // | should be encoded as \F\
+            Assert.Contains("\\S\\", rawValue); // ^ should be encoded as \S\
+            Assert.Contains("\\R\\", rawValue); // ~ should be encoded as \R\
+            Assert.Contains("\\E\\", rawValue); // \ should be encoded as \E\
+            Assert.Contains("\\T\\", rawValue); // & should be encoded as \T\
+            
+            // Verify GetValue() returns the decoded value
+            var decodedValue = message.GetValue("PID.5");
+            Assert.Equal(valueWithDelimiters, decodedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_WithFieldSeparator_ShouldEncodeCorrectly()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            var valueWithFieldSeparator = "Test|Field|Separator";
+            
+            // Act
+            mutator.EncodedValue(valueWithFieldSeparator);
+            
+            // Assert
+            // GetValue() automatically decodes, so we need to check the raw field value
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            Assert.Contains("\\F\\", rawValue);
+            Assert.DoesNotContain("|", rawValue);
+            
+            // Verify GetValue() returns the decoded value
+            var decodedValue = message.GetValue("PID.5");
+            Assert.Equal(valueWithFieldSeparator, decodedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_WithComponentSeparator_ShouldEncodeCorrectly()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            var valueWithComponentSeparator = "Test^Component^Separator";
+            
+            // Act
+            mutator.EncodedValue(valueWithComponentSeparator);
+            
+            // Assert
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            Assert.Contains("\\S\\", rawValue);
+            Assert.DoesNotContain("^", rawValue);
+            
+            // Verify GetValue() returns the decoded value
+            var decodedValue = message.GetValue("PID.5");
+            Assert.Equal(valueWithComponentSeparator, decodedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_WithRepetitionSeparator_ShouldEncodeCorrectly()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            var valueWithRepetitionSeparator = "Test~Repetition~Separator";
+            
+            // Act
+            mutator.EncodedValue(valueWithRepetitionSeparator);
+            
+            // Assert
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            Assert.Contains("\\R\\", rawValue);
+            Assert.DoesNotContain("~", rawValue);
+            
+            // Verify GetValue() returns the decoded value
+            var decodedValue = message.GetValue("PID.5");
+            Assert.Equal(valueWithRepetitionSeparator, decodedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_WithEscapeCharacter_ShouldEncodeCorrectly()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            var valueWithEscapeCharacter = "Test\\Escape\\Character";
+            
+            // Act
+            mutator.EncodedValue(valueWithEscapeCharacter);
+            
+            // Assert
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            Assert.Contains("\\E\\", rawValue);
+            
+            // Verify GetValue() returns the decoded value
+            var decodedValue = message.GetValue("PID.5");
+            Assert.Equal(valueWithEscapeCharacter, decodedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_WithSubComponentSeparator_ShouldEncodeCorrectly()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            var valueWithSubComponentSeparator = "Test&SubComponent&Separator";
+            
+            // Act
+            mutator.EncodedValue(valueWithSubComponentSeparator);
+            
+            // Assert
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            Assert.Contains("\\T\\", rawValue);
+            Assert.DoesNotContain("&", rawValue);
+            
+            // Verify GetValue() returns the decoded value
+            var decodedValue = message.GetValue("PID.5");
+            Assert.Equal(valueWithSubComponentSeparator, decodedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_WithNullValue_ShouldSetEmptyValue()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            
+            // Act
+            mutator.EncodedValue(null);
+            
+            // Assert
+            var storedValue = message.GetValue("PID.5");
+            // EncodedValue(null) calls Value(null), which sets empty string per FieldMutator behavior
+            Assert.Equal("", storedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_WithEmptyString_ShouldSetEmptyString()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            
+            // Act
+            mutator.EncodedValue("");
+            
+            // Assert
+            var storedValue = message.GetValue("PID.5");
+            Assert.Equal("", storedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_WithNormalText_ShouldNotChangeValue()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            var normalText = "Smith John Middle";
+            
+            // Act
+            mutator.EncodedValue(normalText);
+            
+            // Assert
+            var storedValue = message.GetValue("PID.5");
+            Assert.Equal(normalText, storedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_ShouldReturnSelfForChaining()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            
+            // Act
+            var result = mutator.EncodedValue("Test|Value");
+            
+            // Assert
+            Assert.Same(mutator, result);
+        }
+
+        [Fact]
+        public void EncodedValue_CanBeChainedWithOtherMethods()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            
+            // Act
+            mutator
+                .EncodedValue("Smith|John^Middle")
+                .Field(7, "19850315")
+                .Field(8, "M");
+            
+            // Assert
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            Assert.Contains("\\F\\", rawValue); // | encoded
+            Assert.Contains("\\S\\", rawValue); // ^ encoded
+            Assert.Equal("19850315", message.GetValue("PID.7"));
+            Assert.Equal("M", message.GetValue("PID.8"));
+        }
+
+        [Fact]
+        public void EncodedValue_WithComplexURLLikeValue_ShouldEncodeCorrectly()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            var complexValue = "http://domain.com/resource?Action=1&ID=2|Special^Value~Test\\Path&More";
+            
+            // Act
+            mutator.EncodedValue(complexValue);
+            
+            // Assert
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            // Should contain encoded delimiters
+            Assert.Contains("\\F\\", rawValue); // |
+            Assert.Contains("\\S\\", rawValue); // ^
+            Assert.Contains("\\R\\", rawValue); // ~
+            Assert.Contains("\\E\\", rawValue); // \
+            Assert.Contains("\\T\\", rawValue); // &
+            
+            // Should not contain raw delimiters
+            Assert.DoesNotContain("|", rawValue);
+            Assert.DoesNotContain("^", rawValue);
+            Assert.DoesNotContain("~", rawValue);
+            Assert.DoesNotContain("&", rawValue);
+            
+            // Verify GetValue() returns the decoded value
+            var decodedValue = message.GetValue("PID.5");
+            Assert.Equal(complexValue, decodedValue);
+        }
+
+        [Fact]
+        public void EncodedValue_IntegrationWithFluentAPI()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var fluent = new FluentMessage(message);
+            var valueWithDelimiters = "Test|Field^Component~Rep\\Escape&Sub";
+            
+            // Act - Access through fluent API
+            fluent.PID[5].Set().EncodedValue(valueWithDelimiters);
+            
+            // Assert
+            var fluentValue = fluent.PID[5].Value;
+            var pidSegment = message.DefaultSegment("PID");
+            var field5 = pidSegment.Fields(5);
+            var rawValue = field5.Value;
+            
+            // The fluent API returns the raw encoded value (same as field.Value)
+            Assert.Equal(rawValue, fluentValue);
+            
+            // Both should contain encoded delimiters
+            Assert.Contains("\\F\\", fluentValue);
+            Assert.Contains("\\S\\", fluentValue);
+            Assert.Contains("\\R\\", fluentValue);
+            Assert.Contains("\\E\\", fluentValue);
+            Assert.Contains("\\T\\", fluentValue);
+            
+            // Verify GetValue() returns the decoded value
+            var decodedValue = message.GetValue("PID.5");
+            Assert.Equal(valueWithDelimiters, decodedValue);
         }
 
         #endregion

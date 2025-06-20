@@ -30,6 +30,7 @@ A lightweight, high-performance HL7 2.x parser for .NET with modern Fluent API s
 - [Installation](#installation)
 - [Fluent API](#fluent-api)
 - [Path API](#path-api)
+- [HL7 Encoding Support](#hl7-encoding-support)
 - [Indexing Principles](#indexing-principles)
 - [Migration Guide](#migration-guide)
 - [Legacy API](#legacy-api)
@@ -41,6 +42,7 @@ A lightweight, high-performance HL7 2.x parser for .NET with modern Fluent API s
 - **High Performance** - Parse HL7 messages without schema validation overhead
 - **Modern Fluent API** - Intuitive, chainable methods for message access and mutation
 - **Path-based Access** - String-based path syntax wrapping legacy GetValue/SetValue/PutValue
+- **HL7 Encoding Support** - Automatic encoding/decoding of delimiter characters for safe field values
 - **Legacy Compatibility** - Full backward compatibility with existing code
 - **Auto-creation** - Automatically create missing segments, fields, and components
 - **Lightweight** - Minimal dependencies, small footprint
@@ -266,9 +268,26 @@ var nack = fluent.GetNack("AR", "Invalid patient ID");
 fluent.RemoveTrailingDelimiters();
 fluent.RemoveTrailingDelimiters(MessageElement.RemoveDelimitersOptions.Fields);
 
-// Serialize message
-string hl7String = fluent.SerializeMessage();
-string validatedHL7 = fluent.SerializeMessage(validate: true);
+// Serialization with fluent builder
+string hl7String = fluent.Serialize().ToString();
+string validated = fluent.Serialize().WithValidation().ToString();
+
+// Advanced serialization with file output
+fluent.Serialize()
+    .WithValidation()
+    .WithoutTrailingDelimiters()
+    .WithEncoding(Encoding.UTF8)
+    .ToFile("output.hl7");
+
+// Network transmission
+byte[] data = fluent.Serialize()
+    .WithoutTrailingDelimiters()
+    .ToBytes();
+
+// Stream output
+fluent.Serialize()
+    .WithValidation()
+    .ToStream(networkStream);
 ```
 
 #### DateTime Utilities
@@ -387,32 +406,20 @@ string pathString = pathAccessor.ToString(); // Returns "PID.5.1"
 <details>
 <summary><b>Path Mutation Methods</b></summary>
 
-The Path API provides two distinct mutation approaches that preserve the exact behavior of the legacy API:
+The Path API provides a consistent, non-throwing approach that aligns with the rest of the fluent API:
 
-#### Set() - Update Existing Elements Only
+#### Set() - Create or Update Elements
 ```csharp
-// Set() wraps SetValue() - throws exception if path doesn't exist
-fluent.Path("PID.5.1").Set("NewValue");    // Updates existing field
-fluent.Path("PID.99").Set("Value");        // ❌ Throws HL7Exception
+// Set() creates missing elements automatically - never throws exceptions
+fluent.Path("PID.5.1").Set("NewValue");      // Updates existing field
+fluent.Path("PID.99").Set("Value");          // ✅ Creates field and sets value
+fluent.Path("ZZ1.2.3").Set("CustomValue");   // Creates entire path structure
 
-// Conditional updates
+// Conditional operations
 fluent.Path("PID.5.1").SetIf("ConditionalValue", someCondition);
 
 // HL7 null values
-fluent.Path("PID.5.1").SetNull();          // Sets HL7 null ("")
-```
-
-#### Put() - Create or Update Elements
-```csharp
-// Put() wraps PutValue() - creates missing elements automatically
-fluent.Path("PID.99").Put("NewValue");     // ✅ Creates field and sets value
-fluent.Path("ZZ1.2.3").Put("CustomValue"); // Creates entire path structure
-
-// Conditional creation/updates
-fluent.Path("PID.100").PutIf("ConditionalValue", someCondition);
-
-// HL7 null values with creation
-fluent.Path("PID.101").PutNull();          // Creates field with HL7 null
+fluent.Path("PID.5.1").SetNull();            // Sets HL7 null ("")
 ```
 
 </details>
@@ -426,13 +433,13 @@ All path operations return the `FluentMessage` for seamless chaining:
 // Chain multiple path operations
 fluent.Path("PID.5.1").Set("Smith")
       .Path("PID.5.2").Set("John")
-      .Path("PID.7").Put("19850315")
+      .Path("PID.7").Set("19850315")
       .Path("MSH.10").Set("12345");
 
 // Mix path operations with other fluent methods
 fluent.Path("PID.5.1").Set("Johnson")
       .PID[8].Set().Value("M")
-      .Path("PV1.2").Put("I");
+      .Path("PV1.2").Set("I");
 ```
 
 </details>
@@ -440,22 +447,16 @@ fluent.Path("PID.5.1").Set("Johnson")
 <details>
 <summary><b>Error Handling</b></summary>
 
-The Path API preserves the exact error handling behavior of the legacy API:
+The Path API provides consistent, safe behavior throughout:
 
 ```csharp
 // Non-existent paths return empty values (no exceptions)
 string nonExistent = fluent.Path("ZZZ.999").Value;     // Returns ""
 bool exists = fluent.Path("ZZZ.999").Exists;           // Returns false
 
-// Set() throws exceptions for non-existent paths (like SetValue)
-try {
-    fluent.Path("PID.999").Set("Value");
-} catch (HL7Exception ex) {
-    // "Field not available - PID.999 Error: ..."
-}
-
-// Put() never throws for valid paths (like PutValue)
-fluent.Path("PID.999").Put("Value");  // Always succeeds
+// Set() never throws for valid paths - creates missing elements automatically
+fluent.Path("PID.999").Set("Value");    // Always succeeds, creates if needed
+fluent.Path("ZZZ.999").Set("Value");    // Creates entire path structure
 ```
 
 </details>
@@ -476,7 +477,7 @@ fluent.PID[5][1].Set().Value("Smith");
 
 // Path API - Repetitions
 string firstId = fluent.Path("PID.3[1]").Value;
-fluent.Path("PID.3[2]").Put("NewId");
+fluent.Path("PID.3[2]").Set("NewId");
 
 // Fluent API - Repetitions
 string firstId = fluent.PID[3].Repetition(1).Value;
@@ -491,11 +492,230 @@ fluent.PID[3].Repetitions.Add("NewId");
 The Path API is a pure wrapper - it calls the exact same underlying methods:
 
 ```csharp
-// These are equivalent:
+// Legacy API equivalents:
 message.GetValue("PID.5.1");           ↔ fluent.Path("PID.5.1").Value;
-message.SetValue("PID.5.1", "Smith");  ↔ fluent.Path("PID.5.1").Set("Smith");
-message.PutValue("PID.99", "Value");   ↔ fluent.Path("PID.99").Put("Value");
+message.PutValue("PID.5.1", "Smith");  ↔ fluent.Path("PID.5.1").Set("Smith");
 message.ValueExists("PID.5.1");       ↔ fluent.Path("PID.5.1").Exists;
+
+// Note: Path.Set() uses PutValue() internally for consistent fluent behavior
+```
+
+</details>
+
+## HL7 Encoding Support
+
+HL7lite provides comprehensive support for safely handling HL7 delimiter characters in field values through automatic encoding and decoding. When field values contain HL7 delimiter characters (`|`, `^`, `~`, `\`, `&`), they must be properly escaped to prevent message corruption.
+
+<details>
+<summary><b>Why Encoding is Important</b></summary>
+
+HL7 messages use specific characters as delimiters:
+- **Field Separator**: `|` (pipe)
+- **Component Separator**: `^` (caret) 
+- **Repetition Separator**: `~` (tilde)
+- **Escape Character**: `\` (backslash)
+- **Subcomponent Separator**: `&` (ampersand)
+
+When field values contain these characters, they must be encoded using escape sequences:
+- `|` becomes `\F\`
+- `^` becomes `\S\` 
+- `~` becomes `\R\`
+- `\` becomes `\E\`
+- `&` becomes `\T\`
+
+```csharp
+// Without encoding - BREAKS the HL7 message structure
+fluent.PID[5].Set().Value("Smith|John^Medical^Center");  // ❌ Corrupts message
+
+// With encoding - SAFE for HL7 messages  
+fluent.PID[5].Set().EncodedValue("Smith|John^Medical^Center");  // ✅ Properly encoded
+```
+
+</details>
+
+<details>
+<summary><b>Field and Component Encoding</b></summary>
+
+Use `EncodedValue()` methods when setting values that may contain HL7 delimiter characters:
+
+```csharp
+// Field-level encoding
+fluent.PID[5].Set().EncodedValue("Smith|John^Middle~Name\\Test&Co");
+fluent.OBX[5].Set().EncodedValue("http://example.com/result?id=123&type=lab");
+
+// Component-level encoding  
+fluent.PID[5][1].Set().EncodedValue("Family|Name^With^Delimiters");
+fluent.PID[11][1].Set().EncodedValue("123 Main St|Apt 4B^Building A");
+
+// Method chaining with encoding
+fluent.PID[5].Set()
+    .EncodedValue("Complex|Name^With~Delimiters")
+    .Field(7, "19850315")
+    .Field(11, "123 Main St");
+
+// Automatic decoding when reading
+string originalValue = message.GetValue("PID.5");  // Returns: "Complex|Name^With~Delimiters"
+```
+
+</details>
+
+<details>
+<summary><b>Path-Based Encoding</b></summary>
+
+The Path API provides encoding methods for string-based path access:
+
+```csharp
+// Basic path encoding
+fluent.Path("PID.5.1").SetEncoded("Smith|Medical^Center");
+fluent.Path("OBX.5").SetEncoded("Result: Normal|Range: 70-100^mg/dL");
+
+// Conditional encoding
+fluent.Path("PID.5.1").SetEncodedIf("Emergency|Contact^Info", hasEmergencyContact);
+
+// Complex path with encoding
+fluent.Path("PV1.7[1].1").SetEncoded("Provider|ID^12345");
+
+// Method chaining with path encoding
+fluent.Path("PID.5.1").SetEncoded("Encoded|Name")
+      .Path("PID.7").Set("19850315") 
+      .Path("PID.8").Set("M");
+
+// Create new paths with encoding
+fluent.Path("ZZ1.99").SetEncoded("Custom|Field^Value");  // Creates path if needed
+```
+
+</details>
+
+<details>
+<summary><b>Real-World Use Cases</b></summary>
+
+Common scenarios where encoding is essential:
+
+#### URLs and Web References
+```csharp
+// Medical record URLs with query parameters
+fluent.OBX[5].Set().EncodedValue("https://emr.hospital.com/records?patient=12345&type=lab");
+
+// Document references  
+fluent.OBX[5].Set().EncodedValue("file://server/docs/report.pdf?version=2&access=restricted");
+```
+
+#### Complex Names and Addresses
+```csharp
+// Names with titles and suffixes
+fluent.PID[5].Set().EncodedValue("Smith|Johnson^Mary^Elizabeth^Jr^Dr^MD");
+
+// Addresses with special formatting
+fluent.PID[11].Set().EncodedValue("123 Main St|Suite A&B^Building Complex^City^ST^12345");
+```
+
+#### Medical Data with Special Characters
+```csharp
+// Lab results with ranges and units
+fluent.OBX[5].Set().EncodedValue("Glucose: 95^Normal Range: 70-100^mg/dL|Fasting");
+
+// Medication instructions
+fluent.RXE[21].Set().EncodedValue("Take 1 tablet|morning & evening^with food");
+```
+
+#### System Integration Values
+```csharp
+// Database connection strings
+fluent.Path("ZZ1.1").SetEncoded("Server=db.local|Database=HL7;User=app&readonly");
+
+// API endpoints
+fluent.Path("MSH.3").SetEncoded("SystemA|v2.1^Production^https://api.system.com");
+```
+
+</details>
+
+<details>
+<summary><b>Encoding vs. Regular Methods</b></summary>
+
+Choose the appropriate method based on your data:
+
+```csharp
+// Regular methods - Use when values don't contain HL7 delimiters
+fluent.PID[5].Set().Value("Smith");                    // ✅ Safe - no delimiters
+fluent.PID[7].Set().Value("19850315");                 // ✅ Safe - date format
+fluent.Path("PID.8").Set("M");                         // ✅ Safe - single character
+
+// Encoded methods - Use when values may contain HL7 delimiters  
+fluent.PID[5].Set().EncodedValue("Smith & Associates"); // ✅ Safe - contains &
+fluent.OBX[5].Set().EncodedValue("Result|Normal");      // ✅ Safe - contains |
+fluent.Path("PID.11").SetEncoded("123 Main^Street");    // ✅ Safe - contains ^
+
+// Mixed usage in the same chain
+fluent.PID[5].Set()
+    .EncodedValue("Complex|Name^With~Delimiters")       // Encoded for complex value
+    .Field(7, "19850315")                               // Regular for simple date
+    .Field(8, "M");                                     // Regular for simple value
+```
+
+</details>
+
+<details>
+<summary><b>Automatic Decoding</b></summary>
+
+HL7lite automatically handles decoding when retrieving values:
+
+```csharp
+// Set encoded value
+fluent.PID[5].Set().EncodedValue("Smith|Medical^Center~Branch\\Location&Unit");
+
+// Automatic decoding when reading
+string decodedValue = message.GetValue("PID.5");       // Returns: "Smith|Medical^Center~Branch\Location&Unit"
+string fluentValue = fluent.PID[5].Value;              // Returns: encoded raw value
+string pathValue = fluent.Path("PID.5").Value;         // Returns: encoded raw value
+
+// The legacy GetValue() method automatically decodes
+// Fluent API properties return raw values for direct field access
+```
+
+</details>
+
+<details>
+<summary><b>Best Practices</b></summary>
+
+Follow these guidelines for reliable HL7 encoding:
+
+#### When to Use Encoding
+- **Always encode** when the value source is external (user input, databases, APIs)
+- **Always encode** URLs, file paths, or connection strings
+- **Always encode** free-text fields that may contain punctuation
+- **Consider encoding** any field where delimiters are possible
+
+#### Code Examples
+```csharp
+// ✅ Good - Proactive encoding for external data
+string userInput = GetPatientNameFromForm();
+fluent.PID[5].Set().EncodedValue(userInput);
+
+// ✅ Good - Encoding for database values
+string addressFromDb = GetPatientAddress(patientId);
+fluent.PID[11].Set().EncodedValue(addressFromDb);
+
+// ✅ Good - Mixed approach based on data source
+fluent.PID[1].Set()
+    .Value("1")                                        // Known safe value
+    .Field(5, GetPatientName())                        // Unknown - use regular method BUT validate
+    .EncodedValue(GetPatientNameFromExternalSystem()); // External source - encode
+
+// ❌ Avoid - Don't encode known safe values unnecessarily
+fluent.PID[7].Set().EncodedValue("19850315");         // Overkill for date
+```
+
+#### Performance Considerations
+```csharp
+// Encoding has minimal overhead, but optimize when processing many records
+if (value.IndexOfAny(new char[] { '|', '^', '~', '\\', '&' }) >= 0)
+{
+    fluent.PID[5].Set().EncodedValue(value);           // Only encode when needed
+}
+else 
+{
+    fluent.PID[5].Set().Value(value);                  // Direct assignment when safe
+}
 ```
 
 </details>
@@ -873,6 +1093,7 @@ var nullValue = message.GetValue("EVN.4"); // Returns null if field contains ""
 ### v1.3.0 (December 2024)
 - **New Fluent API** - Modern, chainable interface for HL7 message manipulation
 - **Path API** - String-based path access wrapping legacy GetValue/SetValue/PutValue methods
+- **HL7 Encoding Support** - Automatic encoding/decoding of delimiter characters with EncodedValue() and SetEncoded() methods
 - **LINQ Support** - Query segments and repetitions using LINQ expressions
 - **Type-safe Access** - Fluent accessors with built-in null safety
 - **Collection Operations** - Advanced mutation methods for repetitions and segments
@@ -880,6 +1101,7 @@ var nullValue = message.GetValue("EVN.4"); // Returns null if field contains ""
 - **DateTime Utilities** - HL7-specific datetime parsing and formatting methods
 - **Deep Copy** - Create independent copies of entire messages
 - **ACK/NACK Generation** - Fluent wrappers for acknowledgment message creation
+- **Enhanced Serialization** - Fluent builder for serialization with file/stream/bytes output
 - **Message Cleanup** - RemoveTrailingDelimiters support in fluent API
 - **One-step Parsing** - String extension method for direct fluent message creation
 - **Bug Fixes** - Fixed field repetition value preservation issue

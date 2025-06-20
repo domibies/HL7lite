@@ -370,24 +370,39 @@ namespace HL7lite.Fluent
         }
 
         /// <summary>
-        /// Serializes the HL7 message to a string representation with optional validation.
-        /// The serialized message includes all segments, fields, and components with proper
-        /// HL7 encoding and delimiters.
+        /// Creates a serialization builder for serializing the HL7 message with various options.
         /// </summary>
-        /// <param name="validate">Whether to validate the message before serialization (default: false)</param>
-        /// <returns>The serialized HL7 message as a string with segments separated by carriage returns</returns>
+        /// <returns>A SerializationBuilder for configuring serialization</returns>
         /// <example>
         /// <code>
-        /// // Serialize without validation (faster)
-        /// string hl7String = fluent.SerializeMessage();
+        /// // Simple serialization to string
+        /// string hl7String = fluent.Serialize().ToString();
         /// 
         /// // Serialize with validation
-        /// string validatedHL7 = fluent.SerializeMessage(validate: true);
+        /// string validated = fluent.Serialize()
+        ///     .WithValidation()
+        ///     .ToString();
+        /// 
+        /// // Serialize to file with cleanup
+        /// fluent.Serialize()
+        ///     .WithValidation()
+        ///     .WithoutTrailingDelimiters()
+        ///     .ToFile("output.hl7");
+        /// 
+        /// // Serialize to stream
+        /// fluent.Serialize()
+        ///     .WithEncoding(Encoding.UTF8)
+        ///     .ToStream(networkStream);
+        /// 
+        /// // Get bytes for transmission
+        /// byte[] data = fluent.Serialize()
+        ///     .WithoutTrailingDelimiters()
+        ///     .ToBytes();
         /// </code>
         /// </example>
-        public string SerializeMessage(bool validate = false)
+        public SerializationBuilder Serialize()
         {
-            return _message.SerializeMessage(validate);
+            return new SerializationBuilder(_message, this);
         }
     }
 }

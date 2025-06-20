@@ -7,7 +7,7 @@ namespace HL7lite.Test.Fluent
     public class SerializeMessageTests
     {
         [Fact]
-        public void SerializeMessage_WithoutValidation_ReturnsHL7String()
+        public void Serialize_ToString_ReturnsHL7String()
         {
             // Arrange
             var testMessage = @"MSH|^~\&|SENDING|FACILITY|RECEIVING|FACILITY|20200101120000||ADT^A01|12345|P|2.5||
@@ -18,7 +18,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             var fluent = new FluentMessage(message);
 
             // Act
-            var serialized = fluent.SerializeMessage();
+            var serialized = fluent.Serialize().ToString();
 
             // Assert
             Assert.NotNull(serialized);
@@ -27,7 +27,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
         }
 
         [Fact]
-        public void SerializeMessage_WithValidation_ReturnsHL7String()
+        public void Serialize_WithValidation_ReturnsHL7String()
         {
             // Arrange
             var testMessage = @"MSH|^~\&|SENDING|FACILITY|RECEIVING|FACILITY|20200101120000||ADT^A01|12345|P|2.5||
@@ -38,7 +38,9 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             var fluent = new FluentMessage(message);
 
             // Act
-            var serialized = fluent.SerializeMessage(validate: true);
+            var serialized = fluent.Serialize()
+                .WithValidation()
+                .ToString();
 
             // Assert
             Assert.NotNull(serialized);
@@ -47,7 +49,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
         }
 
         [Fact]
-        public void SerializeMessage_AfterModifications_IncludesChanges()
+        public void Serialize_AfterModifications_IncludesChanges()
         {
             // Arrange
             var testMessage = @"MSH|^~\&|SENDING|FACILITY|RECEIVING|FACILITY|20200101120000||ADT^A01|12345|P|2.5||
@@ -61,7 +63,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             fluent.PID[5].Set().Components("Smith", "Jane", "Marie");
             fluent.PID[7].Set().Value("19901231");
             
-            var serialized = fluent.SerializeMessage();
+            var serialized = fluent.Serialize().ToString();
 
             // Assert
             Assert.Contains("Smith^Jane^Marie", serialized);
@@ -71,7 +73,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
         }
 
         [Fact]
-        public void SerializeMessage_RoundTrip_PreservesData()
+        public void Serialize_RoundTrip_PreservesData()
         {
             // Arrange
             var original = @"MSH|^~\&|SENDING|FACILITY|RECEIVING|FACILITY|20200101120000||ADT^A01|12345|P|2.5||
@@ -82,7 +84,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             var fluent = new FluentMessage(message);
 
             // Act
-            var serialized = fluent.SerializeMessage();
+            var serialized = fluent.Serialize().ToString();
             var reparsed = new Message(serialized);
             reparsed.ParseMessage();
             var refluentMessage = new FluentMessage(reparsed);
