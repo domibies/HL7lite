@@ -3,6 +3,44 @@ using System.Linq;
 
 namespace HL7lite.Fluent.Mutators
 {
+    /// <summary>
+    /// Provides fluent methods for modifying HL7 field values with method chaining support.
+    /// FieldMutator operates at the field level of the HL7 hierarchy and supports setting
+    /// field values, creating components, handling repetitions, and navigating to other fields.
+    /// </summary>
+    /// <remarks>
+    /// FieldMutator follows the HL7 hierarchy: Message → Segment → Field → Component → SubComponent.
+    /// All operations are null-safe and will create missing segments as needed.
+    /// Supports component creation, field repetitions, datetime formatting, encoding of HL7 delimiter characters,
+    /// null value handling, and conditional operations.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Set a simple field value
+    /// fluent.PID[3].Set().Value("12345");
+    /// 
+    /// // Set structured field with components
+    /// fluent.PID[5].Set().Components("Smith", "John", "M", "Dr.", "III");
+    /// 
+    /// // Set datetime fields
+    /// fluent.PID[7].Set().DateTime(DateTime.Parse("1985-03-15"));
+    /// fluent.PID[29].Set().DateTimeNow();
+    /// 
+    /// // Add field repetitions
+    /// fluent.PID[13].Set()
+    ///     .Value("555-1234")
+    ///     .AddRepetition("555-5678");
+    /// 
+    /// // Chain operations to other fields
+    /// fluent.PID[3].Set()
+    ///     .Value("12345")
+    ///     .Field(5, "Smith^John")
+    ///     .Field(7, "19850315");
+    /// 
+    /// // Handle delimiters safely
+    /// fluent.OBX[5].Set().EncodedValue("Result: Normal|Range: 70-100");
+    /// </code>
+    /// </example>
     public class FieldMutator
     {
         private readonly Message _message;
@@ -111,7 +149,7 @@ namespace HL7lite.Fluent.Mutators
 
         /// <summary>
         /// Sets the field value after encoding any HL7 delimiter characters.
-        /// Use this method when your value contains characters like |, ^, ~, \, or &
+        /// Use this method when your value contains characters like |, ^, ~, \, or &amp;
         /// that need to be safely stored in the HL7 message.
         /// </summary>
         /// <param name="value">The value to encode and set</param>

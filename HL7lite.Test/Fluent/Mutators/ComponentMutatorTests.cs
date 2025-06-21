@@ -278,5 +278,76 @@ PV1|1|I";
             Assert.Equal("NewFirstName", fluent.PID[5][2].Value);
             Assert.Equal("NewFirstName", message.GetValue("PID.5.2"));
         }
+
+        [Fact]
+        public void Component_ShouldSetSpecifiedComponent()
+        {
+            var message = CreateTestMessage();
+            var mutator = new ComponentMutator(message, "PID", 5, 1);
+
+            var result = mutator.Component(3, "Updated");
+
+            Assert.Equal("Updated", message.GetValue("PID.5.3"));
+            Assert.IsType<ComponentMutator>(result);
+        }
+
+        [Fact]
+        public void Component_ShouldReturnComponentMutatorForChaining()
+        {
+            var message = CreateTestMessage();
+            var mutator = new ComponentMutator(message, "PID", 5, 1);
+
+            var result = mutator.Component(2, "Test")
+                              .Component(3, "Chain");
+
+            Assert.Equal("Test", message.GetValue("PID.5.2"));
+            Assert.Equal("Chain", message.GetValue("PID.5.3"));
+        }
+
+        [Fact]
+        public void Field_ShouldSetSpecifiedField()
+        {
+            var message = CreateTestMessage();
+            var mutator = new ComponentMutator(message, "PID", 5, 1);
+
+            var result = mutator.Field(7, "19900101");
+
+            Assert.Equal("19900101", message.GetValue("PID.7"));
+            Assert.IsType<FieldMutator>(result);
+        }
+
+        [Fact]
+        public void Field_ShouldReturnFieldMutatorForCrossLevelChaining()
+        {
+            var message = CreateTestMessage();
+            var mutator = new ComponentMutator(message, "PID", 5, 1);
+
+            var result = mutator.Value("Smith")
+                              .Field(7, "19900101")
+                              .Field(8, "F");
+
+            Assert.Equal("Smith", message.GetValue("PID.5.1"));
+            Assert.Equal("19900101", message.GetValue("PID.7"));
+            Assert.Equal("F", message.GetValue("PID.8"));
+        }
+
+        [Fact]
+        public void CrossLevelChaining_ComponentToFieldToComponent_ShouldWork()
+        {
+            var message = CreateTestMessage();
+            var fluent = new FluentMessage(message);
+
+            fluent.PID[5][1].Set().Value("Johnson")
+                .Component(2, "Mary")
+                .Component(3, "Elizabeth")
+                .Field(7, "19851225")
+                .Field(8, "F");
+
+            Assert.Equal("Johnson", message.GetValue("PID.5.1"));
+            Assert.Equal("Mary", message.GetValue("PID.5.2"));
+            Assert.Equal("Elizabeth", message.GetValue("PID.5.3"));
+            Assert.Equal("19851225", message.GetValue("PID.7"));
+            Assert.Equal("F", message.GetValue("PID.8"));
+        }
     }
 }

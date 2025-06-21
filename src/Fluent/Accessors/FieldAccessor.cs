@@ -309,5 +309,15 @@ namespace HL7lite.Fluent.Accessors
         {
             return new FieldMutator(_message, _segmentName, _fieldIndex, _repetitionIndex, _segmentInstanceIndex);
         }
+
+        /// <summary>
+        /// Sets the field value directly. Shortcut for Set().Value(value).
+        /// </summary>
+        /// <param name="value">The value to set</param>
+        /// <returns>A FieldMutator for method chaining</returns>
+        public FieldMutator Set(string value)
+        {
+            return Set().Value(value);
+        }
     }
 }

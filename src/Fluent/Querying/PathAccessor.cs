@@ -128,7 +128,7 @@ namespace HL7lite.Fluent.Querying
 
         /// <summary>
         /// Sets the value at the specified path after encoding any HL7 delimiter characters.
-        /// Use this method when your value contains characters like |, ^, ~, \, or &
+        /// Use this method when your value contains characters like |, ^, ~, \, or &amp;
         /// that need to be safely stored in the HL7 message.
         /// </summary>
         /// <param name="value">The value to encode and set</param>

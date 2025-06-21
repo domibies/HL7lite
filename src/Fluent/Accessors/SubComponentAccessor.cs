@@ -1,4 +1,5 @@
 using System;
+using HL7lite.Fluent.Mutators;
 
 namespace HL7lite.Fluent.Accessors
 {
@@ -197,6 +198,25 @@ namespace HL7lite.Fluent.Accessors
                 return null;
             
             return segments[_segmentInstanceIndex];
+        }
+
+        /// <summary>
+        /// Gets a mutator for modifying this subcomponent's value.
+        /// </summary>
+        /// <returns>A SubComponentMutator for this subcomponent.</returns>
+        public SubComponentMutator Set()
+        {
+            return new SubComponentMutator(_message, _segmentName, _fieldIndex, _componentIndex, _subComponentIndex, _repetitionIndex);
+        }
+
+        /// <summary>
+        /// Sets the subcomponent value directly. Shortcut for Set().Value(value).
+        /// </summary>
+        /// <param name="value">The value to set</param>
+        /// <returns>A SubComponentMutator for method chaining</returns>
+        public SubComponentMutator Set(string value)
+        {
+            return Set().Value(value);
         }
     }
 }

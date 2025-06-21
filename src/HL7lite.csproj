@@ -22,6 +22,7 @@
 		<Owners>domibies</Owners>
 		<Summary>Lightweight HL7 2.x library compatible with .Net Standard and .Net Core, strong named</Summary>
 		<Title>HL7lite</Title>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<PropertyGroup>

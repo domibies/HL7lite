@@ -222,5 +222,15 @@ namespace HL7lite.Fluent.Accessors
         {
             return new ComponentMutator(_message, _segmentName, _fieldIndex, _componentIndex, _repetitionIndex);
         }
+
+        /// <summary>
+        /// Sets the component value directly. Shortcut for Set().Value(value).
+        /// </summary>
+        /// <param name="value">The value to set</param>
+        /// <returns>A ComponentMutator for method chaining</returns>
+        public ComponentMutator Set(string value)
+        {
+            return Set().Value(value);
+        }
     }
 }

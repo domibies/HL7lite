@@ -28,6 +28,7 @@ dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
 reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:"Cobertura;HtmlSummary;Badges"
 ```
 
+
 ## Architecture Overview
 
 HL7lite is a lightweight HL7 2.x message parser following a hierarchical structure:
@@ -42,212 +43,209 @@ Message
 │   └── Repetitions (for repeated segments)
 ```
 
-### Core Class Hierarchy
+### Core Components
 
-- **MessageElement** (abstract base) - Common functionality for all elements
-  - **Message** - Complete HL7 message with segments
-  - **Segment** - Named segment containing fields
-  - **Field** - Can contain components or be simple value
-  - **Component** - Can contain subcomponents or be simple value
-  - **SubComponent** - Leaf node, always simple value
+**Message**: Root container for HL7 message
+- Contains segments in order
+- Provides encoding rules for delimiters
+- Original API: `GetValue()`, `SetValue()`, `PutValue()`
 
-### Key Design Decisions
+**Segment**: Individual HL7 segments (MSH, PID, etc.)
+- Contains fields
+- Can have multiple instances (repeating segments)
+- Original API: `FieldList` property
 
-1. **Path Notation**: Elements accessed via paths like `"PID.5.1"` (1-based indexing)
-2. **MSH Special Handling**: MSH segment has extra field at position 1 for field separator
-3. **Lazy Parsing**: Components/subcomponents parsed on demand
-4. **Auto-creation**: `PutValue()` creates missing elements, `SetValue()` doesn't
-5. **Encoding**: Special characters handled by `HL7Encoding` class
+**Field**: Individual data fields within segments
+- Can contain components or simple values
+- Support repetitions (multiple values)
+- 1-based indexing in HL7 standard
 
-### Collections
+**Component**: Sub-parts of complex fields
+- Separated by ^ (component separator)
+- Can contain subcomponents
+- 1-based indexing
 
-All collections inherit from `ElementCollection<T>` providing consistent behavior:
-- Add/Insert/Remove operations
-- Access by index (0-based internally, 1-based in paths)
-- Support for repetitions
+**SubComponent**: Finest granularity level
+- Separated by & (subcomponent separator)
+- Contains actual values
+- 1-based indexing
 
-## Testing Approach
+## Fluent API Architecture
 
-- **Framework**: xUnit with .NET 8.0
-- **Test Data**: Sample HL7 messages in `HL7lite.Test/Sample-*.txt`
-- **Coverage**: Coverlet for code coverage, reports uploaded to Codecov
-- **CI/CD**: GitHub Actions runs tests on multiple .NET versions (6.0, 7.0, 8.0)
+The Fluent API provides a modern, intuitive interface built on top of the existing Message API:
 
-### Test Organization and Naming Conventions
+### Key Design Principles
 
-1. **Test File Structure**:
-   - One test file per production class: `{ClassName}Tests.cs`
-   - Group related tests in the same test class
-   - Place test files in `HL7lite.Test/` directory
+1. **Non-breaking**: All existing Message API functionality preserved
+2. **Null-safe**: Invalid access returns empty values instead of exceptions
+3. **Fluent**: Method chaining for intuitive operations
+4. **1-based indexing**: Follows HL7 standard (fields, components, subcomponents)
+5. **0-based collections**: LINQ-compatible collections use 0-based indexing
+6. **Cached accessors**: Performance optimization through caching
 
-2. **Test Naming Conventions**:
-   - Test methods: `MethodName_StateUnderTest_ExpectedBehavior()`
-   - Example: `Constructor_WithMessageAndCode_ShouldSetBothProperties()`
-   - Use descriptive names that explain what is being tested
+### Fluent API Components
 
-3. **Test Structure (AAA Pattern)**:
-   ```csharp
-   [Fact]
-   public void MethodName_StateUnderTest_ExpectedBehavior()
-   {
-       // Arrange - Set up test data and dependencies
-       const string expected = "value";
-       
-       // Act - Execute the method being tested
-       var result = target.Method();
-       
-       // Assert - Verify the expected outcome
-       Assert.Equal(expected, result);
-   }
-   ```
-
-4. **Test Categories**:
-   - Use `[Fact]` for single test cases
-   - Use `[Theory]` with `[InlineData]` for parameterized tests
-   - Group related tests within the same test class
-
-5. **Best Practices**:
-   - Keep tests independent and isolated
-   - Test one thing per test method
-   - Use meaningful constant names for test data
-   - Include edge cases and error scenarios
-   - Aim for high code coverage but focus on meaningful tests
-
-### Exception Testing Guidelines
-
-1. **Test Error Codes, Not Messages**:
-   ```csharp
-   // Preferred - Test error codes (stable interface)
-   private static void AssertThrowsHL7Exception(Action action, string expectedErrorCode)
-   {
-       var ex = Assert.Throws<HL7Exception>(action);
-       Assert.Equal(expectedErrorCode, ex.ErrorCode);
-   }
-   
-   // Avoid - Testing exact exception messages (brittle)
-   Assert.Equal("Exact error message", ex.Message); // Don't do this
-   ```
-
-2. **Exception Test Rationale**:
-   - Error codes are part of the public API contract
-   - Exception messages may change during development/localization
-   - Error codes provide stable integration points for error handling
-   - Testing exact messages creates maintenance burden
-
-3. **When to Test Exact Values**:
-   - **Functional tests**: When verifying encoding/decoding behavior, test exact outputs
-   - **Round-trip tests**: Verify data preservation through parse/serialize cycles
-   - **Data integrity**: Test that specific field values are correctly processed
-
-4. **Helper Methods**:
-   ```csharp
-   // Create reusable assertion helpers to reduce duplication
-   private static void AssertThrowsHL7Exception(Action action, string expectedErrorCode)
-   {
-       var ex = Assert.Throws<HL7Exception>(action);
-       Assert.Equal(expectedErrorCode, ex.ErrorCode);
-   }
-   
-   private static void AssertThrowsHL7Exception(Action action)
-   {
-       Assert.Throws<HL7Exception>(action);
-   }
-   ```
-
-### Round-Trip Testing
-
-For encoding functionality, always include round-trip tests:
+**FluentMessage**: Main entry point
 ```csharp
-[Fact]
-public void Message_FullRoundTrip_StandardToCustomToStandard_PreservesContent()
-{
-    // 1. Parse with standard encoding
-    // 2. Change to custom encoding and serialize
-    // 3. Parse custom encoded message
-    // 4. Change back to standard encoding and serialize
-    // 5. Compare original and final messages
-    Assert.Equal(originalMessage.TrimEnd('\r', '\n'), finalMessage.TrimEnd('\r', '\n'));
-}
+var fluent = new FluentMessage(message);
+// or
+var fluent = hl7String.ToFluentMessage();
 ```
 
-### Code Coverage Requirements
+**Accessors** (Read-only operations):
+- `SegmentAccessor`: Access to segments (`fluent.PID`, `fluent["MSH"]`)
+- `FieldAccessor`: Access to fields (`fluent.PID[3]`)
+- `ComponentAccessor`: Access to components (`fluent.PID[5][1]`)
+- `SubComponentAccessor`: Access to subcomponents (`fluent.PID[5][1][1]`)
 
-**ALWAYS use actual code coverage metrics instead of estimates:**
+**Mutators** (Write operations):
+- `FieldMutator`: Field mutations (`fluent.PID[3].Set()`)
+- `ComponentMutator`: Component mutations (`fluent.PID[5][1].Set()`)
+- `SubComponentMutator`: Subcomponent mutations (`fluent.PID[5][1][1].Set()`)
 
-1. **Generate Real Coverage Data**:
-   ```bash
-   # Run tests with coverage collection
-   dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
-   
-   # Generate readable report (if reportgenerator is available)
-   reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:"Cobertura;HtmlSummary;Badges"
-   ```
+**Collections** (LINQ support):
+- `SegmentCollection`: Multiple segments (`fluent.Segments("DG1")`)
+- `FieldRepetitionCollection`: Field repetitions (`fluent.PID[3].Repetitions`)
 
-2. **Extract Coverage Metrics**:
-   - **Line Coverage**: percentage of code lines executed by tests
-   - **Branch Coverage**: percentage of decision branches tested
-   - Parse the `coverage.cobertura.xml` file for exact percentages
-   - Look for `line-rate` and `branch-rate` attributes in the XML
+**Special Features**:
+- `PathAccessor`: String-based access (`fluent.Path("PID.5.1")`)
+- `MSHBuilder`: Fluent MSH header creation
+- Encoding support for HL7 delimiter characters
+- DateTime utilities for HL7 date/time formats
 
-3. **Report Coverage Accurately**:
-   - Use actual percentages from coverage tools, not estimates
-   - Report both line and branch coverage when available
-   - Identify specific classes/modules with low coverage
-   - **Target**: Maintain >85% line coverage, >80% branch coverage
+### Error Handling Philosophy
 
-4. **Coverage Analysis**:
-   ```bash
-   # Search for specific class coverage in XML
-   grep "class name.*YourClassName" coverage/**/coverage.cobertura.xml
-   
-   # Find overall project coverage
-   grep "line-rate=" coverage/**/coverage.cobertura.xml | head -1
-   ```
+**Accessors** (reading):
+- Invalid segment/field/component access returns empty accessor
+- `.Value` returns `null` for HL7 null values (`""`)
+- `.SafeValue` returns empty string instead of null
+- `.Exists` checks if element actually exists
+- Never throws exceptions for invalid access
 
-**Example Coverage Reporting**:
+**Mutators** (writing):
+- Create missing segments/fields/components automatically
+- Validate indices (negative indices throw ArgumentException)
+- Use message encoding for null values
+- Support method chaining
+
+### Indexing Strategy
+
+**1-based** (HL7 Standard):
+- Field indices: `fluent.PID[3]` (3rd field)
+- Component indices: `fluent.PID[5][1]` (1st component)  
+- SubComponent indices: `fluent.PID[5][1][1]` (1st subcomponent)
+- Collection methods: `.Repetition(1)`, `.Segment(1)`
+
+**0-based** (LINQ Compatibility):
+- Collection indexers: `fluent.Segments("DG1")[0]`
+- LINQ operations: `.Where()`, `.Select()`, `.First()`
+
+### HL7 Encoding Support
+
+All mutators support automatic encoding of HL7 delimiter characters:
+
+**Standard Delimiters**:
+- `|` (field separator) → `\F\`
+- `^` (component separator) → `\S\`  
+- `~` (repetition separator) → `\R\`
+- `\` (escape character) → `\E\`
+- `&` (subcomponent separator) → `\T\`
+
+**Usage**:
+```csharp
+// Automatic encoding
+fluent.PID[5].Set().EncodedValue("Smith|John^Medical^Center");
+fluent.PID[5][1].Set().EncodedValue("Name|With^Delimiters");
+fluent.PID[5][1][1].Set().EncodedValue("Value|With^Special&Characters");
+fluent.Path("PID.5.1").SetEncoded("Complex|Value^With~Delimiters");
 ```
-- **Overall Project**: 88.56% line coverage, 86.67% branch coverage
-- **New Feature Specific**: ComponentAccessor 87.9%, FieldAccessor 100%
+
+### Performance Considerations
+
+**Caching**:
+- Accessors are cached per FluentMessage instance
+- Reduces object allocation for repeated access
+- Thread-safe caching implementation
+
+**Lazy Evaluation**:
+- Segments/fields/components created only when accessed
+- Collections built on-demand
+- Minimal memory overhead
+
+**Direct API Usage**:
+- FieldAccessor uses `Message.GetValue()` for reliability
+- Mutations use direct FieldList manipulation for performance
+- Encoding/decoding handled by existing Message API
+
+### Test Coverage Strategy
+
+**TDD Approach**:
+- Tests written before implementation
+- Edge cases covered (null values, missing segments, invalid indices)
+- Both positive and negative test cases
+
+**Coverage Targets**:
+- Line coverage: >85%
+- Branch coverage: >80%
+- All public API methods tested
+- Error conditions validated
+
+**Test Organization**:
+- Separate test classes per component
+- Descriptive test method names
+- Arrange-Act-Assert pattern
+- Comprehensive edge case coverage
+
+### Integration Points
+
+**Legacy API Compatibility**:
+- All existing `Message` methods work unchanged
+- `GetValue()`, `SetValue()`, `PutValue()` preserved
+- Field/Component/Segment classes unchanged
+- No breaking changes to public API
+
+**Fluent API Extensions**:
+- `ToFluentMessage()` extension method
+- `GetAck()` / `GetNack()` fluent wrappers
+- `RemoveTrailingDelimiters()` utility
+- Deep copy functionality
+
+### Common Usage Patterns
+
+**Reading Values**:
+```csharp
+var fluent = message.ToFluentMessage();
+string patientId = fluent.PID[3].Value;
+string lastName = fluent.PID[5][1].Value;
+string suffix = fluent.PID[5][1][2].SafeValue;
 ```
 
-## Testing and Debugging
+**Setting Values**:
+```csharp
+fluent.PID[3].Set().Value("12345");
+fluent.PID[5].Set().Components("Smith", "John", "M");
+fluent.PID[5][1][2].Set().Value("Jr");
+```
 
-### Debugging Approach
-- **NEVER create standalone .cs files for debugging** - they fail due to missing framework specification
-- **Always add temporary debug tests to existing test files** when debugging issues
-- Use existing test patterns and remove debug tests after fixing issues
-- For quick verification, add `[Fact]` methods to existing test classes
+**Method Chaining**:
+```csharp
+fluent.PID[5].Set()
+    .Components("Smith", "John")
+    .Field(7, "19850315")
+    .Field(8, "M");
+```
 
-## Important Patterns
+**LINQ Operations**:
+```csharp
+var diagnoses = fluent.Segments("DG1")
+    .Where(dg1 => dg1[3][1].Value.Contains("Diabetes"))
+    .Select(dg1 => dg1[3][1].Value)
+    .ToList();
+```
 
-1. **Message Manipulation**:
-   ```csharp
-   message.GetValue("PID.5.1");  // Read
-   message.SetValue("PID.5.1", "value");  // Update existing
-   message.PutValue("PID.5.1", "value");  // Create if needed
-   ```
-
-2. **Segment Access**:
-   ```csharp
-   message.DefaultSegment("PID");  // First occurrence
-   message.Segments("PID")[1];     // Second occurrence (0-based)
-   ```
-
-3. **Creating Messages**:
-   ```csharp
-   var message = new Message();
-   message.AddSegmentMSH(...);  // or AddSegmentMSH() for minimal
-   ```
-
-## NuGet Publishing
-
-Publishing is manual via GitHub Actions:
-1. Go to Actions → .NET workflow
-2. Run workflow with "Publish to NuGet" checked
-3. Requires `NUGET_API_KEY` secret
-
-## Version Support
-
-- **Library**: Targets .NET Standard 1.3, 1.6, 2.0 for broad compatibility
-- **Tests**: .NET 8.0
-- **Strong Named**: Assembly signed with HL7lite.snk
+**Path-based Access**:
+```csharp
+fluent.Path("PID.5.1").Set("Smith");
+fluent.Path("PID.5.2").Set("John");
+string name = fluent.Path("PID.5").Value;
+```
