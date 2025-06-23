@@ -26,10 +26,9 @@ namespace HL7lite.Fluent.Mutators
     /// fluent.PID[7].Set().DateTime(DateTime.Parse("1985-03-15"));
     /// fluent.PID[29].Set().DateTimeNow();
     /// 
-    /// // Add field repetitions
-    /// fluent.PID[13].Set()
-    ///     .Value("555-1234")
-    ///     .AddRepetition("555-5678");
+    /// // Add field repetitions using consistent collection pattern
+    /// fluent.PID[13].Repetitions.Add("555-1234");
+    /// fluent.PID[13].Repetitions.Add("555-5678");
     /// 
     /// // Chain operations to other fields
     /// fluent.PID[3].Set()
@@ -242,68 +241,6 @@ namespace HL7lite.Fluent.Mutators
             return this;
         }
 
-        public FieldMutator AddRepetition(string value)
-        {
-            // AddRepetition doesn't make sense on a specific repetition (other than the first)
-            if (_repetitionIndex.HasValue && _repetitionIndex.Value > 1)
-            {
-                throw new InvalidOperationException("Cannot add a repetition when operating on a specific repetition. Use the field-level accessor instead.");
-            }
-
-            // Get the specific segment instance
-            Segment segment = null;
-            
-            if (_message.SegmentList.ContainsKey(_segmentCode))
-            {
-                var segments = _message.SegmentList[_segmentCode];
-                if (_segmentInstanceIndex < segments.Count)
-                {
-                    segment = segments[_segmentInstanceIndex];
-                }
-            }
-            
-            if (segment == null)
-            {
-                // Segment instance doesn't exist, create it if it's the first instance
-                if (_segmentInstanceIndex == 0)
-                {
-                    var newSegment = new Segment(_message.Encoding)
-                    {
-                        Name = _segmentCode,
-                        Value = _segmentCode
-                    };
-                    _message.AddNewSegment(newSegment);
-                    segment = newSegment;
-                }
-                else
-                {
-                    throw new InvalidOperationException($"Cannot add repetition to segment instance {_segmentInstanceIndex} that doesn't exist.");
-                }
-            }
-
-            var field = segment.Fields(_fieldIndex);
-            if (field == null || string.IsNullOrEmpty(field.Value))
-            {
-                return Value(value);
-            }
-
-            // Check if field already has repetitions
-            if (field.HasRepetitions)
-            {
-                var repetitionCount = field.Repetitions().Count;
-                var repetitionPath = $"{_segmentCode}.{_fieldIndex}({repetitionCount + 1})";
-                _message.PutValue(repetitionPath, value ?? string.Empty);
-            }
-            else
-            {
-                // Convert single field to repetition
-                var existingValue = field.Value;
-                _message.PutValue($"{_segmentCode}.{_fieldIndex}(1)", existingValue);
-                _message.PutValue($"{_segmentCode}.{_fieldIndex}(2)", value ?? string.Empty);
-            }
-
-            return this;
-        }
 
         /// <summary>
         /// Sets a value on a specific field of the segment (allows setting different fields in a chain).

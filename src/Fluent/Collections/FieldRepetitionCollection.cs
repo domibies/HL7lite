@@ -196,5 +196,87 @@ namespace HL7lite.Fluent.Collections
         }
 
         #endregion
+
+        #region Add Methods
+
+        /// <summary>
+        /// Adds a new repetition with the specified value to the field.
+        /// Handles the transition from single field to repetitions automatically.
+        /// This method follows the same pattern as SegmentCollection.Add().
+        /// </summary>
+        /// <param name="value">The value for the new repetition</param>
+        /// <returns>A FieldAccessor for the newly added repetition</returns>
+        public FieldAccessor Add(string value)
+        {
+            var segment = GetSegmentInstance();
+            if (segment == null)
+            {
+                // Segment doesn't exist, create it
+                var newSegment = new Segment(_message.Encoding)
+                {
+                    Name = _segmentName,
+                    Value = _segmentName
+                };
+                _message.AddNewSegment(newSegment);
+                segment = newSegment;
+            }
+
+            var field = segment.Fields(_fieldIndex);
+            
+            // Handle empty field case
+            if (field == null || string.IsNullOrEmpty(field.Value))
+            {
+                // Create the field with the first value
+                if (field == null)
+                {
+                    segment.AddNewField(value ?? string.Empty, _fieldIndex);
+                }
+                else
+                {
+                    field.Value = value ?? string.Empty;
+                }
+                
+                // Clear cache and return accessor for the first repetition
+                _cache.Clear();
+                return new FieldAccessor(_message, _segmentName, _fieldIndex, 1, _segmentInstanceIndex);
+            }
+
+            // Handle existing field - add as repetition
+            if (field.HasRepetitions)
+            {
+                // Field already has repetitions, add to the end
+                var repetitionCount = field.Repetitions().Count;
+                var repetitionPath = $"{_segmentName}.{_fieldIndex}({repetitionCount + 1})";
+                _message.PutValue(repetitionPath, value ?? string.Empty);
+                
+                // Clear cache and return accessor for the new repetition
+                _cache.Clear();
+                return new FieldAccessor(_message, _segmentName, _fieldIndex, repetitionCount + 1, _segmentInstanceIndex);
+            }
+            else
+            {
+                // Convert single field to repetitions
+                var existingValue = field.Value;
+                _message.PutValue($"{_segmentName}.{_fieldIndex}(1)", existingValue);
+                _message.PutValue($"{_segmentName}.{_fieldIndex}(2)", value ?? string.Empty);
+                
+                // Clear cache and return accessor for the new (second) repetition
+                _cache.Clear();
+                return new FieldAccessor(_message, _segmentName, _fieldIndex, 2, _segmentInstanceIndex);
+            }
+        }
+
+        /// <summary>
+        /// Adds a new empty repetition to the field that can be populated later.
+        /// Handles the transition from single field to repetitions automatically.
+        /// This method follows the same pattern as SegmentCollection.Add().
+        /// </summary>
+        /// <returns>A FieldAccessor for the newly added repetition</returns>
+        public FieldAccessor Add()
+        {
+            return Add(string.Empty);
+        }
+
+        #endregion
     }
 }

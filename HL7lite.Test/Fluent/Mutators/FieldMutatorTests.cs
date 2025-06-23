@@ -174,39 +174,6 @@ PV1|1|I";
             Assert.Same(mutator, result);
         }
 
-        [Fact]
-        public void AddRepetition_ShouldAddNewRepetition()
-        {
-            var message = CreateTestMessage();
-            var mutator = new FieldMutator(message, "PID", 3);
-
-            mutator.AddRepetition("67890");
-
-            Assert.Equal("12345", message.GetValue("PID.3(1)"));
-            Assert.Equal("67890", message.GetValue("PID.3(2)"));
-        }
-
-        [Fact]
-        public void AddRepetition_OnEmptyField_ShouldCreateFirstRepetition()
-        {
-            var message = CreateTestMessage();
-            var mutator = new FieldMutator(message, "PID", 20);
-
-            mutator.AddRepetition("FirstValue");
-
-            Assert.Equal("FirstValue", message.GetValue("PID.20"));
-        }
-
-        [Fact]
-        public void AddRepetition_ShouldReturnSelfForChaining()
-        {
-            var message = CreateTestMessage();
-            var mutator = new FieldMutator(message, "PID", 3);
-
-            var result = mutator.AddRepetition("Test");
-
-            Assert.Same(mutator, result);
-        }
 
         [Fact]
         public void MethodChaining_ShouldWorkCorrectly()

@@ -92,6 +92,33 @@ namespace HL7lite.Fluent.Collections
             return this[newIndex];
         }
 
+        /// <summary>
+        /// Adds a deep copy of an existing segment to the message.
+        /// The segment is deep copied to ensure independence between messages.
+        /// </summary>
+        /// <param name="segment">The segment to copy and add</param>
+        /// <returns>A SegmentAccessor for the added segment copy</returns>
+        /// <exception cref="ArgumentNullException">Thrown when segment is null</exception>
+        /// <exception cref="ArgumentException">Thrown when segment name doesn't match collection type</exception>
+        public SegmentAccessor AddCopy(Segment segment)
+        {
+            if (segment == null)
+                throw new ArgumentNullException(nameof(segment));
+            
+            if (segment.Name != _segmentName)
+                throw new ArgumentException($"Segment name '{segment.Name}' does not match collection type '{_segmentName}'", nameof(segment));
+            
+            // Create a deep copy to ensure independence
+            var segmentCopy = segment.DeepCopy();
+            _message.AddNewSegment(segmentCopy);
+            
+            // Clear cache for the new index to ensure fresh accessor
+            var newIndex = Count - 1;
+            if (_cache.ContainsKey(newIndex))
+                _cache.Remove(newIndex);
+            
+            return this[newIndex];
+        }
 
         /// <summary>
         /// Removes a segment at the specified one-based segment number

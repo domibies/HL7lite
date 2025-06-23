@@ -7,7 +7,7 @@ namespace HL7lite.Test.Fluent
     public class FieldRepetitionBugTests
     {
         [Fact]
-        public void FieldAccessor_FluentAPIAddRepetition_WorksCorrectlyAfterFix()
+        public void FieldAccessor_FluentAPIRepetitions_WorksCorrectlyAfterFix()
         {
             // Arrange - Create message with single field value
             var message = new FluentMessage(new Message());
@@ -26,9 +26,9 @@ namespace HL7lite.Test.Fluent
             Assert.False(message.PID[5].HasRepetitions);
             Assert.Equal(1, message.PID[5].RepetitionCount);
             
-            // Act - Add repetition using fluent API mutator approach  
-            // This demonstrates typical usage where users would expect this to work
-            message.PID[5].Set().AddRepetition("SMITH^JANE^F");
+            // Act - Add repetition using consistent collection approach  
+            // This demonstrates the new consistent API pattern
+            message.PID[5].Repetitions.Add("SMITH^JANE^F");
             
             // Assert - The bug is fixed, so this should work correctly
             Assert.True(message.PID[5].HasRepetitions);
@@ -39,7 +39,7 @@ namespace HL7lite.Test.Fluent
         }
         
         [Fact] 
-        public void FieldAccessor_DirectFieldAddRepetition_ChecksHasRepetitionsLogic()
+        public void FieldAccessor_DirectFieldRepetition_ChecksHasRepetitionsLogic()
         {
             // Arrange - Create message and verify we can access the underlying field
             var message = new FluentMessage(new Message());

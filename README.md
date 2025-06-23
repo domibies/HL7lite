@@ -1,9 +1,8 @@
-<div align="center">
-
 # HL7lite
 
-A lightweight, high-performance HL7 2.x parser for .NET with modern Fluent API support.
-
+<div align="center">
+  <img src="https://raw.githubusercontent.com/domibies/HL7lite/master/assets/hl7lite-logo.png" alt="HL7lite Logo" width="200">
+  <h3>Simple, Lightweight HL7 v2.x Parsing and Manipulation for .NET</h3>
 </div>
 
 <p align="center">
@@ -24,54 +23,32 @@ A lightweight, high-performance HL7 2.x parser for .NET with modern Fluent API s
   </a>
 </p>
 
-## Table of Contents
-
-- [Key Features](#key-features)
-- [Installation](#installation)
-- [Fluent API](#fluent-api)
-- [Path API](#path-api)
-- [HL7 Encoding Support](#hl7-encoding-support)
-- [Indexing Principles](#indexing-principles)
-- [Migration Guide](#migration-guide)
-- [Legacy API](#legacy-api)
-- [What's New](#whats-new)
-- [Contributing](#contributing)
-
 ## Key Features
 
-- **High Performance** - Parse HL7 messages without schema validation overhead
-- **Modern Fluent API** - Intuitive, chainable methods for message access and mutation
-- **Path-based Access** - String-based path syntax wrapping legacy GetValue/SetValue/PutValue
-- **HL7 Encoding Support** - Automatic encoding/decoding of delimiter characters for safe field values
-- **Legacy Compatibility** - Full backward compatibility with existing code
-- **Auto-creation** - Automatically create missing segments, fields, and components
-- **Lightweight** - Minimal dependencies, small footprint
-- **Comprehensive Testing** - High code coverage and production usage
-- **.NET Standard** - Compatible with .NET Framework, .NET Core, and .NET 5+
-- **Schema-free** - Works with any HL7 2.x message format
+- ⚡ **Lightning Fast** - Parse HL7 messages without schema validation overhead
+- 🎯 **Modern Fluent API** - Intuitive, chainable methods for message manipulation
+- 🛡️ **Never Throws** - Fluent API returns empty values instead of throwing exceptions
+- 🔧 **Auto-creation** - Automatically create missing segments, fields, and components
+- 📦 **Lightweight** - Minimal dependencies, small footprint
+- ✅ **Battle-tested** - High code coverage and real-world usage
+- 🌐 **.NET Standard** - Compatible with .NET Framework, .NET Core, and .NET 5+
 
-## Installation
+## Quick Start
 
-### .NET CLI
+### Installation
+
 ```bash
+# .NET CLI
 dotnet add package HL7lite
-```
 
-### Package Manager
-```powershell
+# Package Manager
 Install-Package HL7lite
+
+# PackageReference
+<PackageReference Include="HL7lite" Version="2.0.0-rc.1" />
 ```
 
-### PackageReference
-```xml
-<PackageReference Include="HL7lite" Version="1.2.0" />
-```
-
-## Fluent API
-
-HL7lite provides a modern Fluent API for intuitive HL7 message manipulation. The Fluent API offers type-safe, chainable methods for accessing and modifying HL7 messages while maintaining full compatibility with the legacy API.
-
-### Basic Usage
+### Getting Data
 
 ```csharp
 using HL7lite;
@@ -83,1067 +60,372 @@ message.ParseMessage();
 
 // Create fluent wrapper
 var fluent = new FluentMessage(message);
-```
 
-<details>
-<summary><b>Data Access Patterns</b></summary>
-
-#### Field Access
-```csharp
-// Get field values
+// Get patient information
 string patientId = fluent.PID[3].Value;
-string familyName = fluent.PID[5][1].Value;
-string givenName = fluent.PID[5][2].Value;
-string middleName = fluent.PID[5][3].Value;
+string lastName = fluent.PID[5][1].Value;
+string firstName = fluent.PID[5][2].Value;
+string dateOfBirth = fluent.PID[7].Value;
 
-// Safe access with null handling
-string dateOfBirth = fluent.PID[7].SafeValue; // Never returns null
-bool hasValue = fluent.PID[8].HasValue;
-bool isNull = fluent.PID[8].IsNull; // true for HL7 "" values
-```
+// Access with safe navigation - never throws
+string gender = fluent.PID[8].SafeValue; // Returns "" instead of null
+string missing = fluent.ZZZ[99].Value;   // Returns null, doesn't throw
 
-#### Component and Subcomponent Access
-```csharp
-// Access nested components
-string addressLine1 = fluent.PID[11][1][1].Value;
-string city = fluent.PID[11][3].Value;
-string zipCode = fluent.PID[11][5].Value;
+// Use path-based access
+string ssn = fluent.Path("PID.19").Value;
+string phone = fluent.Path("PID.13[1].1").Value;
 
-// Check component existence
-bool hasMiddleName = fluent.PID[5][3].Exists;
-```
-
-#### Field Repetitions
-```csharp
-// Access field repetitions
-var patientIds = fluent.PID[3].Repetitions;
-string firstId = patientIds[0].Value;
-string secondId = patientIds[1].Value;
-
-// Get repetition count
-int idCount = fluent.PID[3].RepetitionCount;
-bool hasMultipleIds = fluent.PID[3].HasRepetitions;
-
-// Access specific repetition
-string thirdId = fluent.PID[3].Repetition(3).Value; // 1-based
-```
-
-#### Multiple Segments
-```csharp
-// Check for multiple segments
-bool hasMultipleDiagnoses = fluent.DG1.HasMultiple;
-int diagnosisCount = fluent.DG1.Count;
-
-// Access specific instance
-string firstDiagnosis = fluent.DG1.Instance(1)[3][1].Value; // 1-based
-
-// Use segment collections with LINQ
-var diagnoses = fluent.Segments("DG1");
-var severeDiagnoses = diagnoses
-    .Where(d => d[4].Value.Contains("Severe"))
-    .Select(d => d[3][1].Value)
-    .ToList();
-```
-
-</details>
-
-<details>
-<summary><b>Mutation Patterns</b></summary>
-
-#### Field Mutations
-```csharp
-// Set field values
-fluent.PID[5].Set().Value("Smith^John^Michael");
-fluent.PID[7].Set().Value("19850315");
-
-// Set individual components
-fluent.PID[5].Set().Components("Smith", "John", "Michael");
-
-// Clear fields
-fluent.PID[8].Set().Clear();
-fluent.PID[9].Set().Null(); // Sets HL7 null ("")
-```
-
-#### Component Mutations
-```csharp
-// Set component values
-fluent.PID[5][1].Set().Value("Johnson");
-fluent.PID[5][2].Set().Value("Robert");
-
-// Set subcomponents
-fluent.PID[11][1].Set().SubComponents("123 Main St", "Apt 4B");
-```
-
-#### Conditional Mutations
-```csharp
-// Conditional updates
-fluent.PID[5].Set().ValueIf("Unknown^Patient", string.IsNullOrEmpty(currentName));
-
-// Method chaining
-fluent.PID[5].Set()
-    .Clear()
-    .Components("Brown", "Alice")
-    .ValueIf("Default^Name", someCondition);
-
-// Multi-field setting in one chain
-fluent.PID[1].Set()
-    .Value("1")
-    .Field(5, "Smith^John^M")
-    .Field(7, "19850315")
-    .Field(8, "M");
-```
-
-#### Collection Mutations
-```csharp
-// Add field repetitions
-fluent.PID[3].Set().AddRepetition("ALT123456");
-
-// Remove repetitions
-fluent.PID[3].Repetitions.RemoveRepetition(1); // Remove first repetition
-fluent.PID[3].Repetitions.RemoveRepetition(2); // Remove second repetition
-fluent.PID[3].Repetitions.Clear(); // Remove all
-
-// Segment operations
-var diagnosisSegments = fluent.Segments("DG1");
-diagnosisSegments.Add(); // Add new DG1 segment
-diagnosisSegments.RemoveSegment(1); // Remove first segment (1-based)
-
-// Add multiple segments with field values
-var obs1 = fluent.Segments("OBX").Add();
-obs1[1].Set()
-    .Value("1")
-    .Field(2, "NM")
-    .Field(3, "GLUCOSE")
-    .Field(5, "120");
-
-var obs2 = fluent.Segments("OBX").Add();
-obs2[1].Set()
-    .Value("2")
-    .Field(2, "ST")
-    .Field(3, "COMMENTS")
-    .Field(5, "Normal range");
-```
-
-</details>
-
-<details>
-<summary><b>Advanced Features</b></summary>
-
-#### Message Creation and Building
-```csharp
-// One-step parsing from string
-var fluent = hl7String.ToFluentMessage();
-
-// Fluent MSH creation with intelligent defaults
-var message = new FluentMessage(new Message());
-message.CreateMSH
-    .Sender("MyApp", "MyFacility")
-    .Receiver("TheirApp", "TheirFacility")
-    .MessageType("ADT^A01")
-    .AutoControlId()      // Generates unique control ID
-    .Production()         // Sets processing ID to "P"
-    .Build();
-
-// Environment-specific builders
-message.CreateMSH
-    .Sender("TestApp", "TestFac")
-    .Receiver("TargetApp", "TargetFac")
-    .MessageType("ORU^R01")
-    .ControlId("12345")
-    .Test()               // Sets processing ID to "T"
-    .Build();
-```
-
-#### Deep Copy and Message Manipulation
-```csharp
-// Create independent copy of entire message
-var copy = fluent.Copy();
-copy.PID[5].Set().Value("NewName"); // Original unchanged
-
-// ACK/NACK generation
-var ack = fluent.GetAck();
-var nack = fluent.GetNack("AR", "Invalid patient ID");
-
-// Message cleanup
-fluent.RemoveTrailingDelimiters();
-fluent.RemoveTrailingDelimiters(MessageElement.RemoveDelimitersOptions.Fields);
-
-// Serialization with fluent builder
-string hl7String = fluent.Serialize().ToString();
-string validated = fluent.Serialize().WithValidation().ToString();
-
-// Advanced serialization with file output
-fluent.Serialize()
-    .WithValidation()
-    .WithoutTrailingDelimiters()
-    .WithEncoding(Encoding.UTF8)
-    .ToFile("output.hl7");
-
-// Network transmission
-byte[] data = fluent.Serialize()
-    .WithoutTrailingDelimiters()
-    .ToBytes();
-
-// Stream output
-fluent.Serialize()
-    .WithValidation()
-    .ToStream(networkStream);
-```
-
-#### DateTime Utilities
-```csharp
-// Set HL7 datetime fields
-fluent.OBX[14].Set().DateTime(DateTime.Now);
-fluent.OBX[14].Set().DateTimeNow();
-fluent.MSH[7].Set().Date(DateTime.Today);
-fluent.MSH[7].Set().DateToday();
-
-// Parse HL7 datetime fields
-DateTime? timestamp = fluent.OBX[14].AsDateTime();
-DateTime? dateOnly = fluent.MSH[7].AsDate();
-
-// Parse with timezone information
-TimeSpan offset;
-DateTime? timestampWithTz = fluent.OBX[14].AsDateTime(out offset);
-```
-
-#### Null Safety
-```csharp
-// Non-existent fields return empty values, no exceptions
-string nonExistent = fluent["ZZZ"][999].Value; // Returns ""
-string safeValue = fluent["ZZZ"][999].SafeValue; // Returns ""
-
-// HL7 null handling
-if (fluent.PID[8].IsNull) {
-    // Field contains HL7 null ("")
-    var value = fluent.PID[8].Value; // Returns null
+// Check field repetitions
+if (fluent.PID[3].HasRepetitions) {
+    var ids = fluent.PID[3].Repetitions
+        .Select(r => r.Value)
+        .ToList();
 }
-```
 
-#### Dynamic Segment Access
-```csharp
-// Access segments by name
-var customSegment = fluent["ZIC"];
-string customValue = fluent["ZIC"][3][1].Value;
-
-// Generic field access
-string anyField = fluent[segmentName][fieldIndex].Value;
-```
-
-#### LINQ Integration
-```csharp
-// Complex queries with LINQ
-var criticalDiagnoses = fluent.Segments("DG1")
-    .Where(diag => diag[4].Value.Contains("Critical"))
-    .Select(diag => new {
-        Code = diag[3][1].Value,
-        Description = diag[3][2].Value,
-        Severity = diag[4].Value
+// Query multiple segments
+var diagnoses = fluent.Segments("DG1")
+    .Select(dg1 => new {
+        Code = dg1[3][1].Value,
+        Description = dg1[3][2].Value,
+        Type = dg1[6].Value
     })
     .ToList();
-
-// Filter repetitions
-var validPatientIds = fluent.PID[3].Repetitions
-    .Where(id => !string.IsNullOrEmpty(id.Value))
-    .Select(id => id.Value)
-    .ToList();
 ```
 
-</details>
-
-## Path API
-
-HL7lite provides a powerful path-based API that wraps the legacy `GetValue`/`SetValue`/`PutValue` methods with a modern, fluent interface. The Path API supports all existing HL7 path syntax while providing a foundation for future enhanced path features.
-
-<details>
-<summary><b>Basic Path Syntax</b></summary>
-
-The Path API supports the complete legacy path syntax:
+### Manipulating Data
 
 ```csharp
+// Set simple fields
+fluent.PID[3].Set("12345");
+fluent.PID[5].Set().Components("Smith", "John", "M");
+fluent.PID[7].Set("19850315");
+
+// Cross Chaining - Set multiple fields in one statement
+fluent.PID[5].Set()
+    .Components("Johnson", "Mary", "Elizabeth")
+    .Field(7, "19901225")              // Date of birth
+    .Field(8, "F")                      // Gender
+    .Field(11, "123 Main St")           // Address
+    .Component(11, 3, "Springfield")    // City
+    .Component(11, 4, "IL")            // State
+    .Component(11, 5, "62701");        // Zip
+
+// Auto-creation: Set() never throws - creates missing elements automatically
+fluent["ZZ1"][99][3].Set("CustomValue");  // Creates entire structure
+fluent.Path("NEW.99.99").Set("Value");    // Creates segment, field, component
+
+// Add field repetitions (correct pattern)
+fluent.PID[3].Set()
+    .Value("MRN001")
+    .AddRepetition("ENC123");
+
+// Work with multiple segments using structured data
+fluent.Segments("DG1").Add()
+    .Field(1, "1")                      // Set ID
+    .Field(3).Components("I10", "250.00", "Diabetes mellitus type 2")
+    .Field(6, "F");                    // Type
+
+// Complex cross-chaining with structured components
+fluent.Segments("OBX").Add()
+    .Field(1, "1")                      // Set ID
+    .Field(2, "ST")                    // Value type
+    .Field(3).Components("GLUCOSE", "Glucose Level")
+    .Field(5, "95")                    // Result
+    .Field(6, "mg/dL")                 // Units
+    .Field(7, "70-100")                // Reference range
+    .Field(8, "N")                     // Abnormal flag
+    .Component(14, 1, "20231215120000"); // Observation date/time
+
+// Set subcomponents for complex fields
+fluent.PID[11].Set()
+    .Components("123 Main St", "Apt 4B", "Springfield", "IL", "62701", "USA")
+    .SubComponents(1, "123 Main St", "Building A", "Suite 100");
+```
+
+<details>
+<summary><b>Message Construction and Copying</b></summary>
+
+### Creating New Messages
+
+```csharp
+// Create a new message from scratch
+var message = new Message();
 var fluent = new FluentMessage(message);
 
-// Basic field access
-string patientId = fluent.Path("PID.3").Value;
-string familyName = fluent.Path("PID.5.1").Value;
-string givenName = fluent.Path("PID.5.2").Value;
+// Build MSH segment fluently
+fluent.CreateMSH
+    .Sender("SENDING_APP", "FACILITY_A")
+    .Receiver("RECEIVING_APP", "FACILITY_B")
+    .MessageType("ADT^A01")
+    .ControlId("12345")
+    .ProcessingId("P")
+    .Version("2.5")
+    .Build();
 
-// Component and subcomponent access
-string messageType = fluent.Path("MSH.9.1").Value;    // ADT
-string triggerEvent = fluent.Path("MSH.9.2").Value;   // A01
+// Or use convenient defaults
+fluent.CreateMSH
+    .Sender("APP", "FAC")
+    .Receiver("DEST", "FAC2") 
+    .MessageType("ORU^R01")
+    .Production()              // Sets ProcessingId to "P" (production)
+    .AutoControlId()           // Generates unique control ID automatically
+    .Build();                  // MessageTime is automatically set to current timestamp
 
-// Field repetitions
-string firstId = fluent.Path("PID.3[1]").Value;       // First patient ID
-string secondId = fluent.Path("PID.3[2]").Value;      // Second patient ID
+// Even simpler - minimal required fields only
+fluent.CreateMSH
+    .Sender("APP", "FAC")
+    .Receiver("DEST", "FAC2")
+    .MessageType("ADT^A08")
+    .AutoControlId()           // Auto-generates unique ID like "20250623120000123"
+    .Build();                  // Uses defaults: Version="2.5", ProcessingId="P", MessageTime=now
 
-// Complex repetition paths
-string doctorId = fluent.Path("PV1.7[1].1").Value;    // First attending doctor ID
-string doctorName = fluent.Path("PV1.7[2].3").Value;  // Second attending doctor name
+// Add patient segment
+fluent.Segments("PID").Add()[1].Set().Value("1");
+fluent.PID[3].Set("PAT001");
+fluent.PID[5].Set().Components("Doe", "John", "Middle");
+fluent.PID[7].Set("19800101");
+fluent.PID[8].Set("M");
+
+// One-step segment creation with multiple fields
+fluent.Segments("PV1").Add()
+    .Field(1, "1")
+    .Field(2, "I")                     // Patient class
+    .Field(3).Components("ICU", "001", "A")
+    .Field(7).Components("1234", "Smith", "John", "Dr")
+    .Field(44, "20231215080000");     // Admit date/time
+```
+
+### Copying Messages and Segments
+
+```csharp
+// Deep copy entire message with fluent API
+var original = hl7String.ToFluentMessage();
+var copy = original.Copy();
+
+// Modify the copy without affecting the original
+copy.PID[3].Set("NEW_ID");
+copy.PID[5].Set().Components("NewLastName", "NewFirstName");
+
+// Copy specific segments between messages
+var source = sourceHL7.ToFluentMessage();
+var target = new FluentMessage(new Message());
+
+// Copy all DG1 segments from source to target (using AddCopy for independence)
+var sourceDG1Segments = source.UnderlyingMessage.GetSegments("DG1");
+foreach (var segment in sourceDG1Segments) {
+    target.Segments("DG1").AddCopy(segment);
+}
+
+// Copy and modify a segment
+var sourcePIDSegment = source.UnderlyingMessage.GetSegments("PID")[0];
+var pidAccessor = target.Segments("PID").AddCopy(sourcePIDSegment);
+pidAccessor[3].Set().Value("MODIFIED_ID");
+
+// Copy with selective field updates
+var sourceOBXSegment = source.UnderlyingMessage.GetSegments("OBX")[0];
+var obxAccessor = target.Segments("OBX").AddCopy(sourceOBXSegment);
+obxAccessor[5].Set().Value("Updated Result");
+obxAccessor[14][1].Set().Value(DateTime.Now.ToString("yyyyMMddHHmmss"));
 ```
 
 </details>
 
 <details>
-<summary><b>Path Element Properties</b></summary>
+<summary><b>Path API</b></summary>
 
-Each path accessor provides comprehensive information about the element:
+The Path API provides string-based access to message elements, wrapping the legacy GetValue/SetValue methods.
+
+**Important**: Unlike the legacy API, Path.Set() behaves like PutValue() - it never throws exceptions and creates missing elements automatically.
 
 ```csharp
-var pathAccessor = fluent.Path("PID.5.1");
+// Basic path access
+string patientName = fluent.Path("PID.5.1").Value;
+fluent.Path("PID.5.1").Set("NewLastName");
 
-// Value access
-string value = pathAccessor.Value;        // Get the value
-bool exists = pathAccessor.Exists;        // Check if element exists
-bool hasValue = pathAccessor.HasValue;    // Check if has non-empty value
-bool isNull = pathAccessor.IsNull;        // Check for HL7 null ("")
+// Access repetitions using array notation
+string firstId = fluent.Path("PID.3[1]").Value;
+string secondId = fluent.Path("PID.3[2]").Value;
 
-// Path information
-string pathString = pathAccessor.ToString(); // Returns "PID.5.1"
-```
+// Create complex paths
+fluent.Path("PV1.7[1].1").Set("1234");     // First attending doctor ID
+fluent.Path("PV1.7[1].2").Set("Smith");    // Last name
+fluent.Path("PV1.7[1].3").Set("John");     // First name
 
-</details>
+// Or better, use structured data
+fluent.PV1[7].Repetition(1).Set().Components("1234", "Smith", "John", "Dr");
 
-<details>
-<summary><b>Path Mutation Methods</b></summary>
-
-The Path API provides a consistent, non-throwing approach that aligns with the rest of the fluent API:
-
-#### Set() - Create or Update Elements
-```csharp
-// Set() creates missing elements automatically - never throws exceptions
-fluent.Path("PID.5.1").Set("NewValue");      // Updates existing field
-fluent.Path("PID.99").Set("Value");          // ✅ Creates field and sets value
-fluent.Path("ZZ1.2.3").Set("CustomValue");   // Creates entire path structure
+// Check if path exists
+bool hasAllergies = fluent.Path("AL1.3").Exists;
 
 // Conditional operations
-fluent.Path("PID.5.1").SetIf("ConditionalValue", someCondition);
+fluent.Path("PID.6.1").SetIf("MAIDEN", patient.HasMaidenName);
 
-// HL7 null values
-fluent.Path("PID.5.1").SetNull();            // Sets HL7 null ("")
+// Auto-creation: Set() never throws exceptions
+fluent.Path("ZZ1.5.3").Set("CustomValue"); // Creates entire path if missing
+fluent.Path("NEW.99.99").Set("Value");     // Creates segment, field, component
 ```
 
 </details>
 
 <details>
-<summary><b>Method Chaining</b></summary>
+<summary><b>Encoding</b></summary>
 
-All path operations return the `FluentMessage` for seamless chaining:
+HL7lite automatically handles encoding and decoding of delimiter characters to ensure message integrity.
 
-```csharp
-// Chain multiple path operations
-fluent.Path("PID.5.1").Set("Smith")
-      .Path("PID.5.2").Set("John")
-      .Path("PID.7").Set("19850315")
-      .Path("MSH.10").Set("12345");
+### Understanding HL7 Encoding
 
-// Mix path operations with other fluent methods
-fluent.Path("PID.5.1").Set("Johnson")
-      .PID[8].Set().Value("M")
-      .Path("PV1.2").Set("I");
-```
-
-</details>
-
-<details>
-<summary><b>Error Handling</b></summary>
-
-The Path API provides consistent, safe behavior throughout:
+When field values contain HL7 delimiter characters (`|`, `^`, `~`, `\`, `&`), they must be escaped to prevent message corruption. Setting encoded values ensures these characters are properly escaped:
 
 ```csharp
-// Non-existent paths return empty values (no exceptions)
-string nonExistent = fluent.Path("ZZZ.999").Value;     // Returns ""
-bool exists = fluent.Path("ZZZ.999").Exists;           // Returns false
+// WITHOUT encoding - corrupts the message structure
+fluent.PID[5].Set().Components("Smith|Jones", "Mary");  // ❌ The | breaks field separation
 
-// Set() never throws for valid paths - creates missing elements automatically
-fluent.Path("PID.999").Set("Value");    // Always succeeds, creates if needed
-fluent.Path("ZZZ.999").Set("Value");    // Creates entire path structure
+// WITH encoding - properly escaped
+fluent.PID[5][1].Set().EncodedValue("Smith|Jones");  // ✅ Becomes "Smith\F\Jones"
+
+// Best practice: Use structured data when possible
+fluent.PID[5].Set().Components("Smith-Jones", "Mary");  // ✅ No delimiters needed
 ```
 
-</details>
-
-<details>
-<summary><b>Path vs Fluent API Comparison</b></summary>
-
-Both approaches provide equivalent functionality - choose based on your preference:
+### Real-World Examples
 
 ```csharp
-// Path API - String-based paths
-string name = fluent.Path("PID.5.1").Value;
-fluent.Path("PID.5.1").Set("Smith");
+// URLs with query parameters
+fluent.OBX[5].Set().EncodedValue("https://lab.hospital.com/results?id=123&type=CBC");
 
-// Fluent API - Indexed access
-string name = fluent.PID[5][1].Value;
-fluent.PID[5][1].Set().Value("Smith");
+// Medical notes with special characters
+fluent.NTE[3].Set().EncodedValue("Blood pressure: 120/80 | Temp: 98.6°F");
 
-// Path API - Repetitions
-string firstId = fluent.Path("PID.3[1]").Value;
-fluent.Path("PID.3[2]").Set("NewId");
+// Complex addresses using structured data (preferred)
+fluent.PID[11].Set()
+    .Components("123 Main St", "Suite A&B", "Boston", "MA", "02101")
+    .SubComponents(2, "Suite A&B", "Building 5", "East Wing");
 
-// Fluent API - Repetitions
-string firstId = fluent.PID[3].Repetition(1).Value;
-fluent.PID[3].Repetitions.Add("NewId");
+// Lab results with ranges - use structured components when possible
+fluent.OBX[5].Set().Components("95", "mg/dL");
+fluent.OBX[7].Set("70-100");  // Reference range in separate field
+
+// File paths
+fluent.OBX[5].Set().EncodedValue("\\\\server\\lab\\results\\patient123.pdf");
 ```
 
-</details>
+### Automatic Decoding
 
-<details>
-<summary><b>Legacy API Compatibility</b></summary>
-
-The Path API is a pure wrapper - it calls the exact same underlying methods:
-
-```csharp
-// Legacy API equivalents:
-message.GetValue("PID.5.1");           ↔ fluent.Path("PID.5.1").Value;
-message.PutValue("PID.5.1", "Smith");  ↔ fluent.Path("PID.5.1").Set("Smith");
-message.ValueExists("PID.5.1");       ↔ fluent.Path("PID.5.1").Exists;
-
-// Note: Path.Set() uses PutValue() internally for consistent fluent behavior
-```
-
-</details>
-
-## HL7 Encoding Support
-
-HL7lite provides comprehensive support for safely handling HL7 delimiter characters in field values through automatic encoding and decoding. When field values contain HL7 delimiter characters (`|`, `^`, `~`, `\`, `&`), they must be properly escaped to prevent message corruption.
-
-<details>
-<summary><b>Why Encoding is Important</b></summary>
-
-HL7 messages use specific characters as delimiters:
-- **Field Separator**: `|` (pipe)
-- **Component Separator**: `^` (caret) 
-- **Repetition Separator**: `~` (tilde)
-- **Escape Character**: `\` (backslash)
-- **Subcomponent Separator**: `&` (ampersand)
-
-When field values contain these characters, they must be encoded using escape sequences:
-- `|` becomes `\F\`
-- `^` becomes `\S\` 
-- `~` becomes `\R\`
-- `\` becomes `\E\`
-- `&` becomes `\T\`
-
-```csharp
-// Without encoding - BREAKS the HL7 message structure
-fluent.PID[5].Set().Value("Smith|John^Medical^Center");  // ❌ Corrupts message
-
-// With encoding - SAFE for HL7 messages  
-fluent.PID[5].Set().EncodedValue("Smith|John^Medical^Center");  // ✅ Properly encoded
-```
-
-</details>
-
-<details>
-<summary><b>Field and Component Encoding</b></summary>
-
-Use `EncodedValue()` methods when setting values that may contain HL7 delimiter characters:
-
-```csharp
-// Field-level encoding
-fluent.PID[5].Set().EncodedValue("Smith|John^Middle~Name\\Test&Co");
-fluent.OBX[5].Set().EncodedValue("http://example.com/result?id=123&type=lab");
-
-// Component-level encoding  
-fluent.PID[5][1].Set().EncodedValue("Family|Name^With^Delimiters");
-fluent.PID[11][1].Set().EncodedValue("123 Main St|Apt 4B^Building A");
-
-// Method chaining with encoding
-fluent.PID[5].Set()
-    .EncodedValue("Complex|Name^With~Delimiters")
-    .Field(7, "19850315")
-    .Field(11, "123 Main St");
-
-// Automatic decoding when reading
-string originalValue = message.GetValue("PID.5");  // Returns: "Complex|Name^With~Delimiters"
-```
-
-</details>
-
-<details>
-<summary><b>Path-Based Encoding</b></summary>
-
-The Path API provides encoding methods for string-based path access:
-
-```csharp
-// Basic path encoding
-fluent.Path("PID.5.1").SetEncoded("Smith|Medical^Center");
-fluent.Path("OBX.5").SetEncoded("Result: Normal|Range: 70-100^mg/dL");
-
-// Conditional encoding
-fluent.Path("PID.5.1").SetEncodedIf("Emergency|Contact^Info", hasEmergencyContact);
-
-// Complex path with encoding
-fluent.Path("PV1.7[1].1").SetEncoded("Provider|ID^12345");
-
-// Method chaining with path encoding
-fluent.Path("PID.5.1").SetEncoded("Encoded|Name")
-      .Path("PID.7").Set("19850315") 
-      .Path("PID.8").Set("M");
-
-// Create new paths with encoding
-fluent.Path("ZZ1.99").SetEncoded("Custom|Field^Value");  // Creates path if needed
-```
-
-</details>
-
-<details>
-<summary><b>Real-World Use Cases</b></summary>
-
-Common scenarios where encoding is essential:
-
-#### URLs and Web References
-```csharp
-// Medical record URLs with query parameters
-fluent.OBX[5].Set().EncodedValue("https://emr.hospital.com/records?patient=12345&type=lab");
-
-// Document references  
-fluent.OBX[5].Set().EncodedValue("file://server/docs/report.pdf?version=2&access=restricted");
-```
-
-#### Complex Names and Addresses
-```csharp
-// Names with titles and suffixes
-fluent.PID[5].Set().EncodedValue("Smith|Johnson^Mary^Elizabeth^Jr^Dr^MD");
-
-// Addresses with special formatting
-fluent.PID[11].Set().EncodedValue("123 Main St|Suite A&B^Building Complex^City^ST^12345");
-```
-
-#### Medical Data with Special Characters
-```csharp
-// Lab results with ranges and units
-fluent.OBX[5].Set().EncodedValue("Glucose: 95^Normal Range: 70-100^mg/dL|Fasting");
-
-// Medication instructions
-fluent.RXE[21].Set().EncodedValue("Take 1 tablet|morning & evening^with food");
-```
-
-#### System Integration Values
-```csharp
-// Database connection strings
-fluent.Path("ZZ1.1").SetEncoded("Server=db.local|Database=HL7;User=app&readonly");
-
-// API endpoints
-fluent.Path("MSH.3").SetEncoded("SystemA|v2.1^Production^https://api.system.com");
-```
-
-</details>
-
-<details>
-<summary><b>Encoding vs. Regular Methods</b></summary>
-
-Choose the appropriate method based on your data:
-
-```csharp
-// Regular methods - Use when values don't contain HL7 delimiters
-fluent.PID[5].Set().Value("Smith");                    // ✅ Safe - no delimiters
-fluent.PID[7].Set().Value("19850315");                 // ✅ Safe - date format
-fluent.Path("PID.8").Set("M");                         // ✅ Safe - single character
-
-// Encoded methods - Use when values may contain HL7 delimiters  
-fluent.PID[5].Set().EncodedValue("Smith & Associates"); // ✅ Safe - contains &
-fluent.OBX[5].Set().EncodedValue("Result|Normal");      // ✅ Safe - contains |
-fluent.Path("PID.11").SetEncoded("123 Main^Street");    // ✅ Safe - contains ^
-
-// Mixed usage in the same chain
-fluent.PID[5].Set()
-    .EncodedValue("Complex|Name^With~Delimiters")       // Encoded for complex value
-    .Field(7, "19850315")                               // Regular for simple date
-    .Field(8, "M");                                     // Regular for simple value
-```
-
-</details>
-
-<details>
-<summary><b>Automatic Decoding</b></summary>
-
-HL7lite automatically handles decoding when retrieving values:
+When reading values, delimiters are automatically decoded:
 
 ```csharp
 // Set encoded value
-fluent.PID[5].Set().EncodedValue("Smith|Medical^Center~Branch\\Location&Unit");
+fluent.PID[5][1].Set().EncodedValue("Smith|Jones");
 
-// Automatic decoding when reading
-string decodedValue = message.GetValue("PID.5");       // Returns: "Smith|Medical^Center~Branch\Location&Unit"
-string fluentValue = fluent.PID[5].Value;              // Returns: encoded raw value
-string pathValue = fluent.Path("PID.5").Value;         // Returns: encoded raw value
-
-// The legacy GetValue() method automatically decodes
-// Fluent API properties return raw values for direct field access
+// Read value - automatically decoded
+string name = fluent.PID[5][1].Value;  // Returns: "Smith|Jones"
 ```
 
 </details>
 
 <details>
-<summary><b>Best Practices</b></summary>
+<summary><b>Indexing</b></summary>
 
-Follow these guidelines for reliable HL7 encoding:
+HL7lite uses consistent indexing conventions:
 
-#### When to Use Encoding
-- **Always encode** when the value source is external (user input, databases, APIs)
-- **Always encode** URLs, file paths, or connection strings
-- **Always encode** free-text fields that may contain punctuation
-- **Consider encoding** any field where delimiters are possible
+### HL7 Elements (1-based)
+- **Fields**: `PID[3]` - Third field (per HL7 standard)
+- **Components**: `PID[5][1]` - First component
+- **Subcomponents**: `PID[5][1][2]` - Second subcomponent  
+- **Path notation**: `"PID.5.1"` - All indices are 1-based
 
-#### Code Examples
+### Collections (0-based)
+Collections use 0-based indexing for LINQ compatibility:
+
 ```csharp
-// ✅ Good - Proactive encoding for external data
-string userInput = GetPatientNameFromForm();
-fluent.PID[5].Set().EncodedValue(userInput);
+// Segment collection access
+var segments = fluent.Segments("DG1");
+var firstDiagnosis = segments[0];          // 0-based for LINQ
+var filtered = segments.Where((s, i) => i > 0);
 
-// ✅ Good - Encoding for database values
-string addressFromDb = GetPatientAddress(patientId);
-fluent.PID[11].Set().EncodedValue(addressFromDb);
-
-// ✅ Good - Mixed approach based on data source
-fluent.PID[1].Set()
-    .Value("1")                                        // Known safe value
-    .Field(5, GetPatientName())                        // Unknown - use regular method BUT validate
-    .EncodedValue(GetPatientNameFromExternalSystem()); // External source - encode
-
-// ❌ Avoid - Don't encode known safe values unnecessarily
-fluent.PID[7].Set().EncodedValue("19850315");         // Overkill for date
-```
-
-#### Performance Considerations
-```csharp
-// Encoding has minimal overhead, but optimize when processing many records
-if (value.IndexOfAny(new char[] { '|', '^', '~', '\\', '&' }) >= 0)
-{
-    fluent.PID[5].Set().EncodedValue(value);           // Only encode when needed
-}
-else 
-{
-    fluent.PID[5].Set().Value(value);                  // Direct assignment when safe
-}
+// But methods remain 1-based
+fluent.PID[3].Repetitions.RemoveRepetition(1);  // Removes first repetition
+segments.RemoveSegment(1);                       // Removes first segment
 ```
 
 </details>
 
-## Indexing Principles
+<details>
+<summary><b>Legacy API</b></summary>
 
-HL7lite follows consistent indexing conventions throughout the API:
+The Pre-2.0 API remains fully supported with backward compatibility guaranteed.
 
-### 1-Based Indexing (HL7 Standard)
-All HL7 element access and manipulation methods use 1-based indexing to align with HL7 standards:
-
-- **Fields**: `PID[3]` accesses the third field
-- **Components**: `PID[5][1]` accesses the first component  
-- **Repetitions**: `.Repetition(1)` accesses the first repetition
-- **Segments**: `.Instance(1)` accesses the first segment occurrence
-- **Path Notation**: `"PID.5.1"` uses 1-based indices throughout
-
-### Collection Access (0-Based for LINQ)
-Collections themselves use 0-based indexing to maintain compatibility with LINQ and standard .NET conventions:
+### Basic Usage
 
 ```csharp
-// Direct collection access is 0-based (for LINQ compatibility)
-var segments = fluent.Segments("DG1");
-var firstSegment = segments[0];                  // 0-based indexer
-var filtered = segments.Where((s, i) => i > 0); // 0-based LINQ
-
-// But all methods use 1-based numbering
-segments.RemoveSegment(1);                       // Removes first segment
-fluent.PID[3].Repetitions.RemoveRepetition(1);  // Removes first repetition
-```
-
-### Key Points
-- **Methods are 1-based**: `RemoveSegment(1)`, `RemoveRepetition(1)`, `Instance(1)`, `Repetition(1)`
-- **Collection indexers are 0-based**: `collection[0]` for LINQ compatibility
-- **No 0-based methods**: We don't provide `RemoveAt(0)` to avoid confusion
-- **Path strings are 1-based**: `"PID.3"` refers to the third field
-
-This design ensures HL7 standard compliance while maintaining natural LINQ integration.
-
-## Migration Guide
-
-The Fluent API is designed for easy adoption alongside existing code. You can migrate incrementally without breaking changes.
-
-<details open>
-<summary><b>Getting Started</b></summary>
-
-```csharp
-// Existing code continues to work
+// Create and parse message
 var message = new Message(hl7String);
 message.ParseMessage();
 
-// Add fluent wrapper when ready
-var fluent = new FluentMessage(message);
-```
-
-</details>
-
-<details>
-<summary><b>Field Access Migration</b></summary>
-
-**Before (Legacy API):**
-```csharp
-// Verbose field access
+// Get values
 string patientId = message.GetValue("PID.3");
-string familyName = message.GetValue("PID.5.1");
-string givenName = message.GetValue("PID.5.2");
+string lastName = message.GetValue("PID.5.1");
 
-// Manual null checking
-string dateOfBirth = message.GetValue("PID.7");
-if (string.IsNullOrEmpty(dateOfBirth)) {
-    dateOfBirth = "Unknown";
-}
-
-// Complex repetition handling
-bool hasReps = message.HasRepetitions("PID.3");
-if (hasReps) {
-    var field = message.DefaultSegment("PID").Fields(3);
-    var reps = field.Repetitions();
-    string secondId = reps.Count > 1 ? reps[1].Value : "";
-}
-```
-
-**After (Fluent API):**
-```csharp
-var fluent = new FluentMessage(message);
-
-// Clean, intuitive access
-string patientId = fluent.PID[3].Value;
-string familyName = fluent.PID[5][1].Value;
-string givenName = fluent.PID[5][2].Value;
-
-// Built-in null safety
-string dateOfBirth = fluent.PID[7].SafeValue;
-if (string.IsNullOrEmpty(dateOfBirth)) {
-    dateOfBirth = "Unknown";
-}
-
-// Simple repetition access
-string secondId = fluent.PID[3].Repetitions.Count > 1 
-    ? fluent.PID[3].Repetitions[1].Value 
-    : "";
-```
-
-</details>
-
-<details>
-<summary><b>Field Updates Migration</b></summary>
-
-**Before (Legacy API):**
-```csharp
-// Basic field updates
+// Set values
+message.SetValue("PID.3", "12345");
 message.SetValue("PID.5.1", "Smith");
-message.SetValue("PID.5.2", "John");
 
-// Auto-creation requires PutValue
-if (!message.ValueExists("ZZ1.2.3")) {
-    message.PutValue("ZZ1.2.3", "CustomValue");
-}
+// Auto-create missing elements
+message.PutValue("ZZ1.2.3", "CustomValue");
 
-// Manual component building
-message.SetValue("PID.5", "Smith^John^Michael");
-```
+// Check existence
+bool hasValue = message.ValueExists("PID.7");
 
-**After (Fluent API):**
-```csharp
-var fluent = new FluentMessage(message);
-
-// Chainable mutations
-fluent.PID[5][1].Set().Value("Smith");
-fluent.PID[5][2].Set().Value("John");
-
-// Auto-creation built-in
-fluent["ZZ1"][2][3].Set().Value("CustomValue");
-
-// Component helpers
-fluent.PID[5].Set().Components("Smith", "John", "Michael");
-```
-
-</details>
-
-<details>
-<summary><b>Segment Operations Migration</b></summary>
-
-**Before (Legacy API):**
-```csharp
-// Check for multiple segments
-var segments = message.Segments("DG1");
-bool hasMultiple = segments.Count > 1;
-
-// Access specific segment
-if (segments.Count > 0) {
-    string diagnosis = segments[0].Fields(3).Components(1).Value;
-}
-
-// Add new segment
-var newSeg = new Segment("DG1", message.Encoding);
-newSeg.AddNewField("1", 1);
-newSeg.AddNewField("Primary", 3);
-message.AddNewSegment(newSeg);
-```
-
-**After (Fluent API):**
-```csharp
-var fluent = new FluentMessage(message);
-
-// Intuitive segment checking
-bool hasMultiple = fluent.DG1.HasMultiple;
-
-// Clean segment access
-string diagnosis = fluent.DG1[3][1].Value;
-
-// Simple segment addition
-fluent.Segments("DG1").Add()[1].Set().Value("1");
-fluent.Segments("DG1").Last()[3].Set().Value("Primary");
-```
-
-</details>
-
-<details>
-<summary><b>LINQ Integration Migration</b></summary>
-
-**Before (Legacy API):**
-```csharp
-// Manual iteration and filtering
-var diagnosisCodes = new List<string>();
-var dg1Segments = message.Segments("DG1");
-foreach (var segment in dg1Segments) {
-    string severity = segment.Fields(4).Value;
-    if (severity.Contains("Critical")) {
-        string code = segment.Fields(3).Components(1).Value;
-        if (!string.IsNullOrEmpty(code)) {
-            diagnosisCodes.Add(code);
-        }
-    }
-}
-```
-
-**After (Fluent API):**
-```csharp
-var fluent = new FluentMessage(message);
-
-// LINQ-enabled operations
-var diagnosisCodes = fluent.Segments("DG1")
-    .Where(d => d[4].Value.Contains("Critical"))
-    .Select(d => d[3][1].Value)
-    .Where(code => !string.IsNullOrEmpty(code))
-    .ToList();
-```
-
-</details>
-
-<details>
-<summary><b>Incremental Migration Strategy</b></summary>
-
-1. **Start Small**: Wrap existing `Message` instances with `FluentMessage`
-2. **Focus on Reads**: Migrate data access code first (lowest risk)
-3. **Add Mutations**: Replace `SetValue`/`PutValue` calls with fluent mutations
-4. **Leverage LINQ**: Replace manual loops with LINQ operations
-5. **Keep Legacy**: Maintain legacy API usage where fluent doesn't add value
-
-```csharp
-// Mixed usage example
-public void ProcessMessage(string hl7String) {
-    // Parse with legacy API
-    var message = new Message(hl7String);
-    message.ParseMessage();
-    
-    // Use fluent for complex operations
-    var fluent = new FluentMessage(message);
-    
-    // LINQ for data extraction
-    var diagnoses = fluent.Segments("DG1")
-        .Select(d => d[3][1].Value)
-        .ToList();
-    
-    // Legacy for compatibility
-    string sendingApp = message.GetValue("MSH.3");
-    
-    // Fluent for updates
-    fluent.PID[5].Set().Components("Updated", "Name");
-}
-```
-
-</details>
-
-## Legacy API
-
-The legacy API remains fully supported and continues to work exactly as before. This section documents the original API for reference and backward compatibility.
-
-<details>
-<summary><b>Message Construction</b></summary>
-
-```csharp
-// Create a new message
-var message = new Message();
-message.AddSegmentMSH("LAB400", "LAB", 
-                      "EPD", "NEUROLOGY",
-                      "", "ADT^A01", 
-                      "84768948", "P", "2.3");
-
-// Parse existing message
-Message message = new Message(strMsg);
-try {
-    message.ParseMessage();
-} catch(HL7Exception ex) {
-    // Handle parse errors
-}
-
-// Extract from MLLP frame
-var messages = MessageHelper.ExtractMessages(mlllpBuffer);
-foreach (var strMsg in messages) {
-    var message = new Message(strMsg);
-    message.ParseMessage();
-}
-```
-
-</details>
-
-<details>
-<summary><b>Data Access</b></summary>
-
-```csharp
-// Get field values
-string sendingFacility = message.GetValue("MSH.4");
-sendingFacility = message.DefaultSegment("MSH").Fields(4).Value;
-sendingFacility = message.Segments("MSH")[0].Fields(4).Value;
-
-// Work with repeating fields
-bool hasRepetitions = message.HasRepetitions("PID.3");
-List<Field> patientIds = message.Segments("PID")[0].Fields(3).Repetitions();
-string secondId = message.GetValue("PID.3[2]");
-
-// Handle components
-string familyName = message.GetValue("PID.5.1");
-string givenName = message.GetValue("PID.5.2");
-bool isComponentized = message.IsComponentized("PID.5");
-```
-
-</details>
-
-<details>
-<summary><b>Message Modification</b></summary>
-
-```csharp
-// Update values
-message.SetValue("PV1.2", "I");
-message.SetValue("PID.5.1", "SMITH");
-
-// Create missing elements automatically
-message.PutValue("ZZ1.2.4", "SYSTEM59");
-
-// Check existence before updating
-if (message.ValueExists("ZZ1.2"))
-    message.PutValue("ZZ1.2.4", "SYSTEM59");
-
-// Add new segments
-var newSegment = new Segment("ZIM", message.Encoding);
-newSegment.AddNewField("1.57884", 3);
-newSegment.Fields(3).AddNewComponent(new Component("MM", message.Encoding), 2);
+// Add segments
+var segment = new Segment("PV1", message.Encoding);
+segment.AddNewField("1", 1);
+segment.AddNewField("O", 2);
 message.AddNewSegment(segment);
-
-// Remove segments
-message.RemoveSegment("NK1");
-message.RemoveSegment("NK1", 1); // Remove specific occurrence (0-based)
-
-// Clean up messages
-message.RemoveTrailingDelimiters(RemoveDelimitersOptions.All);
 ```
 
-</details>
+### Migration to Fluent API
 
-<details>
-<summary><b>ACK/NACK Generation</b></summary>
+The Fluent API wraps the legacy API, so you can migrate incrementally:
 
 ```csharp
-// Generate ACK
-Message ack = message.GetACK();
+// Legacy code continues to work
+var message = new Message(hl7String);
+message.ParseMessage();
+string id = message.GetValue("PID.3");
 
-// Generate NACK with error
-Message nack = message.GetNACK("AR", "Invalid patient ID");
+// Add fluent wrapper when convenient
+var fluent = new FluentMessage(message);
+string name = fluent.PID[5][1].Value;
 
-// Customize ACK fields
-ack.SetValue("MSH.3", "MyApplication");
-ack.SetValue("MSH.4", "MyFacility");
+// Both APIs work on the same message
+message.SetValue("PID.7", "19850315");
+var dob = fluent.PID[7].Value;  // "19850315"
 ```
 
 </details>
 
 <details>
-<summary><b>Advanced Features</b></summary>
+<summary><b>What's New</b></summary>
 
-```csharp
-// Encoded content
-var obx = new Segment("OBX", new HL7Encoding());
-obx.AddNewField(obx.Encoding.Encode("domain.com/resource.html?Action=1&ID=2"));
+### v2.0.0-rc.1 (June 2025)
+- **Modern Fluent API** - Complete rewrite with intuitive, chainable interface
+- **Cross Chaining** - Set multiple fields and components in one statement
+- **Path API** - String-based paths wrapping legacy methods
+- **Enhanced Collections** - Full LINQ support for segments and repetitions
+- **Better Encoding** - Improved EncodedValue methods for delimiter handling
+- **Full Compatibility** - Legacy API unchanged and fully supported
 
-// Deep copy segments
-Segment pidCopy = originalMessage.DefaultSegment("PID").DeepCopy();
-newMessage.AddNewSegment(pidCopy);
-
-// Date handling
-string hl7DateTime = "20151231234500.1234+2358";
-TimeSpan offset;
-DateTime? dt = MessageHelper.ParseDateTime(hl7DateTime, out offset);
-DateTime? dt2 = MessageHelper.ParseDateTime("20151231234500");
-
-// Null elements are represented as ""
-var nullValue = message.GetValue("EVN.4"); // Returns null if field contains ""
-```
+### Previous Versions
+- v1.2.0 - Optional validation, improved error handling
+- v1.1.x - Bug fixes and stability improvements
+- v1.0.0 - Initial stable release
 
 </details>
-
-## What's New
-
-### v1.3.0 (December 2024)
-- **New Fluent API** - Modern, chainable interface for HL7 message manipulation
-- **Path API** - String-based path access wrapping legacy GetValue/SetValue/PutValue methods
-- **HL7 Encoding Support** - Automatic encoding/decoding of delimiter characters with EncodedValue() and SetEncoded() methods
-- **LINQ Support** - Query segments and repetitions using LINQ expressions
-- **Type-safe Access** - Fluent accessors with built-in null safety
-- **Collection Operations** - Advanced mutation methods for repetitions and segments
-- **MSH Builder** - Fluent MSH creation with grouped parameters and auto-generation
-- **DateTime Utilities** - HL7-specific datetime parsing and formatting methods
-- **Deep Copy** - Create independent copies of entire messages
-- **ACK/NACK Generation** - Fluent wrappers for acknowledgment message creation
-- **Enhanced Serialization** - Fluent builder for serialization with file/stream/bytes output
-- **Message Cleanup** - RemoveTrailingDelimiters support in fluent API
-- **One-step Parsing** - String extension method for direct fluent message creation
-- **Bug Fixes** - Fixed field repetition value preservation issue
-- **Full Compatibility** - Legacy API remains unchanged and fully supported
-
-### v1.2.0 (July 2024)
-- Optional validation skip in ParseMessage
-- Improved error handling with proper HL7Exceptions
-- Parameterless AddSegmentMSH() for minimal segments
-- Updated to latest .NET test frameworks
-
-### v1.1.6 (July 2022)
-- Fixed GetValue() exception for removed segments
-
-### v1.1.5 (November 2021)
-- Support for custom segment names ending with '0' (e.g., 'ZZ0')
 
 <details>
-<summary><b>Older Versions</b></summary>
-
-### v1.1.3 (November 2021)
-- Fixed HasRepetitions() method
-
-### v1.1.2 (May 2021)
-- Added RemoveTrailingDelimiters() functionality
-
-### v1.1.1 (April 2021)
-- Added PutValue() for auto-creating elements
-- Added ValueExists() for checking element existence
-- Added Ensure methods for element creation
-- Added SwapFields() for field reordering
-</details>
-
-## Contributing
+<summary><b>Contributing</b></summary>
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ## License
 
@@ -1151,23 +433,6 @@ This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.t
 
 ## Credits
 
-This library is based on a fork of [HL7-dotnetcore](https://github.com/Efferent-Health/HL7-dotnetcore), which itself evolved from Jayant Singh's original HL7 parser.
+Based on [HL7-dotnetcore](https://github.com/Efferent-Health/HL7-dotnetcore) and Jayant Singh's original HL7 parser.
 
-### Original Projects
-- [HL7-dotnetcore](https://github.com/Efferent-Health/HL7-dotnetcore)
-- [hl7-cSharp-parser](https://github.com/j4jayant/hl7-cSharp-parser)
-- [Original article](http://j4jayant.com/articles/hl7/31-hl7-parsing-lib)
-
-Field encoding/decoding methods based on [hl7inspector](https://github.com/elomagic/hl7inspector).
-
-## Breaking Changes
-
-### Since v1.0
-- `ParseMessage()` now throws exceptions on failure instead of returning boolean
-- Use `ParseMessage(false)` to skip serialization checks
-
-### Since v2.9 (from upstream)
-- MSH segment includes field separator at position 1 (per HL7 standard)
-- All MSH field indices should be incremented by one
-- Lowercase methods removed in favor of uppercase equivalents
-- `GetValue()` now automatically decodes returned content
+</details>

@@ -717,9 +717,9 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluent = new HL7lite.Fluent.FluentMessage(message);
             
             // Create initial repetitions with components
-            fluent.PID[3].Set().Value("ID001^System1");
-            fluent.PID[3].Set().AddRepetition("ID002^System2");
-            fluent.PID[3].Set().AddRepetition("ID003^System3");
+            fluent.PID[3].Repetitions.Add("ID001^System1");
+            fluent.PID[3].Repetitions.Add("ID002^System2");
+            fluent.PID[3].Repetitions.Add("ID003^System3");
             
             // Act - Set component 2 of repetition 2
             fluent.PID[3].Repetition(2)[2].Set().Value("UpdatedSystem2");
@@ -771,21 +771,6 @@ namespace HL7lite.Test.Fluent.Accessors
             Assert.Equal("ID003", fluent.PID[3].Repetition(3).Value);
         }
 
-        [Fact]
-        public void Set_AddRepetitionOnSpecificRepetition_ShouldThrow()
-        {
-            // Arrange
-            var message = HL7MessageBuilder.Create()
-                .WithMSH()
-                .WithSegment("PID|||ID001~ID002")
-                .Build();
-            var fluent = new HL7lite.Fluent.FluentMessage(message);
-            
-            // Act & Assert - Adding repetition on repetition 2 should throw
-            var ex = Assert.Throws<InvalidOperationException>(() => 
-                fluent.PID[3].Repetition(2).Set().AddRepetition("NEW"));
-            Assert.Contains("Cannot add a repetition when operating on a specific repetition", ex.Message);
-        }
 
         [Fact]
         public void BugTest_FieldInitiallyHasNoRepetitions_AddingRepetitionShouldUpdateHasRepetitionsAndPreserveValue()
@@ -809,8 +794,8 @@ namespace HL7lite.Test.Fluent.Accessors
             var initialHasRepetitions = fieldAccessor.HasRepetitions;
             var initialRepetitionCount = fieldAccessor.RepetitionCount;
             
-            // Add a repetition using the field mutator
-            fieldAccessor.Set().AddRepetition("ID002");
+            // Add a repetition using the consistent pattern
+            fieldAccessor.Repetitions.Add("ID002");
             
             // Check state after adding repetition
             var afterValue = fieldAccessor.Value;

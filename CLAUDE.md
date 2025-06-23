@@ -196,6 +196,12 @@ fluent.Path("PID.5.1").SetEncoded("Complex|Value^With~Delimiters");
 - Arrange-Act-Assert pattern
 - Comprehensive edge case coverage
 
+**Important Testing Notes**:
+- **Always create new test files within existing test projects** - standalone test files are not automatically included in the test discovery
+- Add new test classes to `/HL7lite.Test/` with proper namespace `HL7lite.Test.*`
+- Use descriptive test class names ending in `Tests` (e.g. `FieldSetVsAddRepetitionTests`)
+- Test files must be in the same project structure to be discovered by `dotnet test`
+
 ### Integration Points
 
 **Legacy API Compatibility**:
@@ -248,4 +254,26 @@ var diagnoses = fluent.Segments("DG1")
 fluent.Path("PID.5.1").Set("Smith");
 fluent.Path("PID.5.2").Set("John");
 string name = fluent.Path("PID.5").Value;
+```
+
+**Field Repetitions - Consistent API Pattern**:
+```csharp
+// CONSISTENT PATTERN: Use collection.Add() (matches Segments pattern)
+fluent.PID[3].Repetitions.Add("MRN001");
+fluent.PID[3].Repetitions.Add("ENC123");
+fluent.PID[3].Repetitions.Add("SSN456");
+
+// Chain operations on returned accessor
+fluent.PID[3].Repetitions.Add("MRN001").Set().Components("MRN", "001", "HOSPITAL");
+fluent.PID[3].Repetitions.Add("ENC123").Set().Components("ENC", "123", "VISIT");
+
+// IMPORTANT: Set().Value() resets the entire field, losing all repetitions
+fluent.PID[3].Repetitions.Add("FirstID");
+fluent.PID[3].Repetitions.Add("SecondID"); // Now has 2 repetitions
+fluent.PID[3].Set().Value("NewID"); // ❌ Resets field, loses all repetitions!
+
+// CORRECT: Use only the collection approach for repetitions
+fluent.PID[3].Repetitions.Add("MRN001");
+fluent.PID[3].Repetitions.Add("ENC123");
+fluent.PID[3].Repetitions.Add("SSN456");
 ```

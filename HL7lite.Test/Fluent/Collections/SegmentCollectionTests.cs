@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using HL7lite.Fluent;
+using HL7lite.Fluent.Accessors;
 using HL7lite.Fluent.Collections;
 using Xunit;
 
@@ -605,6 +607,179 @@ PV1|1|I";
 
             Assert.Single(recentDiagnoses);
             Assert.Equal("250.00", recentDiagnoses[0].Code);
+        }
+
+        #endregion
+
+        #region AddCopy Tests
+
+        [Fact]
+        public void AddCopy_WithValidSegment_AddsDeepCopyToCollection()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceFluent = new FluentMessage(sourceMessage);
+            var sourceSegment = sourceFluent.Segments("DG1")[0];
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            
+            // Get the actual segment from the source message using reflection for test purposes
+            var sourceSegmentInternal = GetSegmentFromMessage(sourceMessage, "DG1", 0);
+            
+            // Act
+            var result = targetCollection.AddCopy(sourceSegmentInternal);
+            
+            // Assert
+            Assert.Equal(1, targetCollection.Count);
+            Assert.NotNull(result);
+            Assert.Equal("250.00", result[3][1].Value);
+            Assert.Equal("Diabetes Mellitus", result[3][2].Value);
+        }
+
+        [Fact]
+        public void AddCopy_CreatesIndependentCopy_OriginalUnchangedWhenCopyModified()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceSegment = GetSegmentFromMessage(sourceMessage, "DG1", 0);
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            
+            // Act
+            var copiedSegment = targetCollection.AddCopy(sourceSegment);
+            copiedSegment[3][2].Set().Value("Modified Diagnosis");
+            
+            // Assert - Original segment unchanged (check via fluent API)
+            var sourceFluent = new FluentMessage(sourceMessage);
+            Assert.Equal("Diabetes Mellitus", sourceFluent.Segments("DG1")[0][3][2].Value);
+            // Assert - Copy is modified
+            Assert.Equal("Modified Diagnosis", copiedSegment[3][2].Value);
+        }
+
+        [Fact]
+        public void AddCopy_CreatesIndependentCopy_CopyUnchangedWhenOriginalModified()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceSegment = GetSegmentFromMessage(sourceMessage, "DG1", 0);
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            var copiedSegment = targetCollection.AddCopy(sourceSegment);
+            
+            // Act - Modify original segment through fluent API
+            var sourceFluent = new FluentMessage(sourceMessage);
+            sourceFluent.Segments("DG1")[0][3][2].Set().Value("Changed Original");
+            
+            // Assert - Copy unchanged
+            Assert.Equal("Diabetes Mellitus", copiedSegment[3][2].Value);
+            // Assert - Original is modified
+            Assert.Equal("Changed Original", sourceFluent.Segments("DG1")[0][3][2].Value);
+        }
+
+        [Fact]
+        public void AddCopy_WithNullSegment_ThrowsArgumentNullException()
+        {
+            // Arrange
+            var message = CreateEmptyMessage();
+            var collection = new SegmentCollection(message, "DG1");
+            
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() => collection.AddCopy(null));
+        }
+
+        [Fact]
+        public void AddCopy_WithMismatchedSegmentName_ThrowsArgumentException()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceSegment = GetSegmentFromMessage(sourceMessage, "DG1", 0); // DG1 segment
+            var targetCollection = new SegmentCollection(targetMessage, "OBX"); // OBX collection
+            
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentException>(() => targetCollection.AddCopy(sourceSegment));
+            Assert.Contains("DG1", exception.Message);
+            Assert.Contains("OBX", exception.Message);
+        }
+
+        [Fact]
+        public void AddCopy_AddsToCorrectPosition_WhenCollectionHasExistingSegments()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceSegment = GetSegmentFromMessage(sourceMessage, "DG1", 1); // Second DG1 segment
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            
+            // Add one segment first
+            targetCollection.Add();
+            targetCollection[0][3].Set().Value("First^Diagnosis");
+            
+            // Act
+            var result = targetCollection.AddCopy(sourceSegment);
+            
+            // Assert
+            Assert.Equal(2, targetCollection.Count);
+            Assert.Equal("First^Diagnosis", targetCollection[0][3].Value);
+            Assert.Equal("401.9", result[3][1].Value); // Copied segment data
+        }
+
+        [Fact]
+        public void AddCopy_ClearsCache_ForNewIndex()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceSegment = GetSegmentFromMessage(sourceMessage, "DG1", 0);
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            
+            // Pre-populate cache by accessing an index that doesn't exist yet
+            try { var _ = targetCollection[0]; } catch { }
+            
+            // Act
+            var result = targetCollection.AddCopy(sourceSegment);
+            
+            // Assert - Should be able to access the new segment without issues
+            Assert.NotNull(result);
+            Assert.Equal("250.00", result[3][1].Value);
+        }
+
+        [Fact]
+        public void AddCopy_MultipleSegments_AllGetIndependentCopies()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            
+            // Act - Copy all DG1 segments
+            var results = new List<SegmentAccessor>();
+            for (int i = 0; i < 3; i++) // We know there are 3 DG1 segments
+            {
+                var segment = GetSegmentFromMessage(sourceMessage, "DG1", i);
+                results.Add(targetCollection.AddCopy(segment));
+            }
+            
+            // Assert
+            Assert.Equal(3, targetCollection.Count);
+            Assert.Equal("250.00", results[0][3][1].Value);
+            Assert.Equal("401.9", results[1][3][1].Value);
+            Assert.Equal("493.90", results[2][3][1].Value);
+            
+            // Modify one copy and ensure others unchanged
+            results[0][3][2].Set().Value("Modified");
+            Assert.Equal("Modified", results[0][3][2].Value);
+            Assert.Equal("Hypertension", results[1][3][2].Value); // Unchanged
+            Assert.Equal("Asthma", results[2][3][2].Value); // Unchanged
+        }
+
+        // Helper method to access internal segments for testing
+        private Segment GetSegmentFromMessage(Message message, string segmentName, int index)
+        {
+            var segmentListProperty = typeof(Message).GetProperty("SegmentList", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var segmentList = (Dictionary<string, List<Segment>>)segmentListProperty.GetValue(message);
+            return segmentList[segmentName][index];
         }
 
         #endregion
