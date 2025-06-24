@@ -1,7 +1,7 @@
 # HL7lite
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/domibies/HL7lite/master/assets/hl7lite-logo.png" alt="HL7lite Logo" width="200">
+  <img src="assets/hl7lite-logo.png" alt="HL7lite Logo" width="200">
   <h3>Simple, Lightweight HL7 v2.x Parsing and Manipulation for .NET</h3>
 </div>
 
