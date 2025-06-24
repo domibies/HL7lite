@@ -77,9 +77,14 @@ string lastName = fluent.PID[5][1].Value;
 string firstName = fluent.PID[5][2].Value;
 string dateOfBirth = fluent.PID[7].Value;
 
+// Parse dates and timestamps
+DateTime? birthDate = fluent.PID[7].AsDate();           // Parse "19850315" -> DateTime
+DateTime? timestamp = fluent.EVN[2].AsDateTime();       // Parse "20240624143022" -> DateTime
+DateTime? timestampWithTz = fluent.EVN[2].AsDateTime(out TimeSpan offset); // Include timezone
+
 // Access with safe navigation - never throws
 string gender = fluent.PID[8].Value ?? ""; // Handle null with null-coalescing
-string missing = fluent.ZZZ[99].Value;     // Returns null, doesn't throw
+string missing = fluent.ZZZ[99].Value;     // Returns "", doesn't throw
 
 // Use path-based access
 string ssn = fluent.Path("PID.19").Value;
@@ -109,6 +114,12 @@ var diagnoses = fluent.Segments("DG1")
 fluent.PID[3].Set("12345");
 fluent.PID[5].Set().Components("Smith", "John", "M");
 fluent.PID[7].Set("19850315");
+
+// DateTime shortcuts for dates and timestamps
+fluent.PID[7].Set().Date(new DateTime(1985, 3, 15));     // Birth date: "19850315"
+fluent.EVN[2].Set().DateTime(DateTime.Now);              // Event timestamp: "20240624143022"
+fluent.EVN[2].Set().DateTimeNow();                       // Current timestamp
+fluent.PV1[44].Set().DateToday();                        // Today's date: "20240624"
 
 // Cross Chaining - Set multiple fields in one statement
 fluent.PID[5].Set()
