@@ -72,10 +72,16 @@ message.ParseMessage();
 var fluent = new FluentMessage(message);
 
 // Get patient information
-string patientId = fluent.PID[3].Value;
-string lastName = fluent.PID[5][1].Value;
-string firstName = fluent.PID[5][2].Value;
+string patientId = fluent.PID[3].Value;        // Single field value
+string lastName = fluent.PID[5][1].Value;      // First component only
+string firstName = fluent.PID[5][2].Value;     // Second component only
+string fullName = fluent.PID[5].Value;         // Entire field: "Smith^John^M^Jr"
 string dateOfBirth = fluent.PID[7].Value;
+
+// .Value returns entire structure with HL7 separators:
+// - Field.Value includes all components: "Smith^John^M"
+// - Field.Value with repetitions: "ID1~ID2~ID3" 
+// - Component.Value includes subcomponents: "Home&555-1234"
 
 // Parse dates and timestamps
 DateTime? birthDate = fluent.PID[7].AsDate();           // Parse "19850315" -> DateTime
@@ -84,7 +90,7 @@ DateTime? timestampWithTz = fluent.EVN[2].AsDateTime(out TimeSpan offset); // In
 
 // Access with safe navigation - never throws
 string gender = fluent.PID[8].Value ?? ""; // Handle null with null-coalescing
-string missing = fluent.ZZZ[99].Value;     // Returns "", doesn't throw
+string missing = fluent.PID[99].Value;     // Non-existing field returns "", doesn't throw
 
 // Use path-based access
 string ssn = fluent.Path("PID.19").Value;
@@ -132,13 +138,12 @@ fluent.PID[5].Set()
     .Component(11, 5, "62701");        // Zip
 
 // Auto-creation: Set() never throws - creates missing elements automatically
-fluent["ZZ1"][99][3].Set("CustomValue");  // Creates entire structure
-fluent.Path("NEW.99.99").Set("Value");    // Creates segment, field, component
+fluent["Z01"][99][3].Set("CustomValue");  // Creates entire structure
+fluent.Path("Z02.99.99").Set("Value");    // Creates segment, field, component
 
 // Add field repetitions (correct pattern)
-fluent.PID[3].Set()
-    .Value("MRN001")
-    .AddRepetition("ENC123");
+fluent.PID[3].Repetitions.Add("MRN001");
+fluent.PID[3].Repetitions.Add("ENC123");
 
 // Work with multiple segments using structured data
 fluent.Segments("DG1").Add()
@@ -443,7 +448,7 @@ var dob = fluent.PID[7].Value;  // "19850315"
 
 </details>
 
-## API Reference {#api-reference}
+## HL7lite API Reference
 
 ### FluentMessage
 
