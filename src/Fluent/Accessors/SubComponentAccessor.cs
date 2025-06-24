@@ -30,11 +30,17 @@ namespace HL7lite.Fluent.Accessors
         {
         }
 
+        /// <summary>
+        /// Initializes a new SubComponentAccessor.
+        /// </summary>
         public SubComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int subComponentIndex, int repetitionIndex)
             : this(message, segmentName, fieldIndex, componentIndex, subComponentIndex, repetitionIndex, 0)
         {
         }
 
+        /// <summary>
+        /// Initializes a new SubComponentAccessor with segment instance.
+        /// </summary>
         public SubComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int subComponentIndex, int repetitionIndex, int segmentInstanceIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
@@ -103,10 +109,6 @@ namespace HL7lite.Fluent.Accessors
             }
         }
 
-        /// <summary>
-        /// Gets the value of the subcomponent, never returning null. Returns empty string for both null and non-existent subcomponents.
-        /// </summary>
-        public string SafeValue => Value ?? "";
 
         /// <summary>
         /// Gets whether the subcomponent exists in the message.

@@ -4,36 +4,8 @@ using System.Linq;
 namespace HL7lite.Fluent.Mutators
 {
     /// <summary>
-    /// Provides fluent methods for modifying HL7 component values with method chaining support.
-    /// ComponentMutator operates at the component level of the HL7 hierarchy and allows setting
-    /// component values while supporting navigation to subcomponents, other components, and fields.
+    /// Provides fluent methods for modifying HL7 component values.
     /// </summary>
-    /// <remarks>
-    /// ComponentMutator follows the HL7 hierarchy: Message → Segment → Field → Component → SubComponent.
-    /// All operations are null-safe and will create missing segments/fields as needed.
-    /// Supports subcomponent creation, encoding of HL7 delimiter characters, null value handling, and conditional operations.
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// // Set a component value
-    /// fluent.PID[5][1].Set().Value("Smith");
-    /// 
-    /// // Set structured component with subcomponents
-    /// fluent.PID[5][1].Set().SubComponents("LastName", "Suffix", "Prefix");
-    /// 
-    /// // Chain operations across levels
-    /// fluent.PID[5][1].Set()
-    ///     .Value("Smith")
-    ///     .Component(2, "John")
-    ///     .Field(7, "19851225");
-    /// 
-    /// // Handle delimiters safely
-    /// fluent.OBX[5][1].Set().EncodedValue("Data with &amp; characters");
-    /// 
-    /// // Conditional operations
-    /// fluent.PID[5][4].Set().ValueIf("Dr.", hasTitle);
-    /// </code>
-    /// </example>
     public class ComponentMutator
     {
         private readonly Message _message;
@@ -43,11 +15,17 @@ namespace HL7lite.Fluent.Mutators
         private readonly int _repetitionIndex;
         private readonly string _path;
 
+        /// <summary>
+        /// Initializes a new ComponentMutator.
+        /// </summary>
         public ComponentMutator(Message message, string segmentCode, int fieldIndex, int componentIndex)
             : this(message, segmentCode, fieldIndex, componentIndex, 1)
         {
         }
 
+        /// <summary>
+        /// Initializes a new ComponentMutator with repetition index.
+        /// </summary>
         public ComponentMutator(Message message, string segmentCode, int fieldIndex, int componentIndex, int repetitionIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
@@ -62,6 +40,9 @@ namespace HL7lite.Fluent.Mutators
             _path = $"{_segmentCode}.{_fieldIndex}({_repetitionIndex}).{_componentIndex}";
         }
 
+        /// <summary>
+        /// Sets the component value.
+        /// </summary>
         public ComponentMutator Value(string value)
         {
             // Ensure segment exists
@@ -102,18 +83,27 @@ namespace HL7lite.Fluent.Mutators
             return Value(encodedValue);
         }
 
+        /// <summary>
+        /// Sets the component to HL7 null value.
+        /// </summary>
         public ComponentMutator Null()
         {
             _message.PutValue(_path, _message.Encoding.PresentButNull);
             return this;
         }
 
+        /// <summary>
+        /// Clears the component value.
+        /// </summary>
         public ComponentMutator Clear()
         {
             _message.PutValue(_path, string.Empty);
             return this;
         }
 
+        /// <summary>
+        /// Sets multiple subcomponent values.
+        /// </summary>
         public ComponentMutator SubComponents(params string[] subComponents)
         {
             if (subComponents == null || subComponents.Length == 0)
@@ -128,6 +118,9 @@ namespace HL7lite.Fluent.Mutators
             return Value(value);
         }
 
+        /// <summary>
+        /// Sets the component value if the condition is true.
+        /// </summary>
         public ComponentMutator ValueIf(string value, bool condition)
         {
             if (condition)

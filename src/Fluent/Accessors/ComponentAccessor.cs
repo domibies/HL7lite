@@ -30,11 +30,17 @@ namespace HL7lite.Fluent.Accessors
         {
         }
 
+        /// <summary>
+        /// Initializes a new ComponentAccessor.
+        /// </summary>
         public ComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int repetitionIndex)
             : this(message, segmentName, fieldIndex, componentIndex, repetitionIndex, 0)
         {
         }
 
+        /// <summary>
+        /// Initializes a new ComponentAccessor with segment instance.
+        /// </summary>
         public ComponentAccessor(Message message, string segmentName, int fieldIndex, int componentIndex, int repetitionIndex, int segmentInstanceIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
@@ -108,10 +114,6 @@ namespace HL7lite.Fluent.Accessors
             return segments[_segmentInstanceIndex];
         }
 
-        /// <summary>
-        /// Gets the value of the component, never returning null. Returns empty string for both null and non-existent components.
-        /// </summary>
-        public string SafeValue => Value ?? "";
 
         /// <summary>
         /// Gets whether the component exists in the message.

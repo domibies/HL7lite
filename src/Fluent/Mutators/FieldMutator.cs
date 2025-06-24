@@ -4,42 +4,8 @@ using System.Linq;
 namespace HL7lite.Fluent.Mutators
 {
     /// <summary>
-    /// Provides fluent methods for modifying HL7 field values with method chaining support.
-    /// FieldMutator operates at the field level of the HL7 hierarchy and supports setting
-    /// field values, creating components, handling repetitions, and navigating to other fields.
+    /// Provides fluent methods for modifying HL7 field values.
     /// </summary>
-    /// <remarks>
-    /// FieldMutator follows the HL7 hierarchy: Message → Segment → Field → Component → SubComponent.
-    /// All operations are null-safe and will create missing segments as needed.
-    /// Supports component creation, field repetitions, datetime formatting, encoding of HL7 delimiter characters,
-    /// null value handling, and conditional operations.
-    /// </remarks>
-    /// <example>
-    /// <code>
-    /// // Set a simple field value
-    /// fluent.PID[3].Set().Value("12345");
-    /// 
-    /// // Set structured field with components
-    /// fluent.PID[5].Set().Components("Smith", "John", "M", "Dr.", "III");
-    /// 
-    /// // Set datetime fields
-    /// fluent.PID[7].Set().DateTime(DateTime.Parse("1985-03-15"));
-    /// fluent.PID[29].Set().DateTimeNow();
-    /// 
-    /// // Add field repetitions using consistent collection pattern
-    /// fluent.PID[13].Repetitions.Add("555-1234");
-    /// fluent.PID[13].Repetitions.Add("555-5678");
-    /// 
-    /// // Chain operations to other fields
-    /// fluent.PID[3].Set()
-    ///     .Value("12345")
-    ///     .Field(5, "Smith^John")
-    ///     .Field(7, "19850315");
-    /// 
-    /// // Handle delimiters safely
-    /// fluent.OBX[5].Set().EncodedValue("Result: Normal|Range: 70-100");
-    /// </code>
-    /// </example>
     public class FieldMutator
     {
         private readonly Message _message;
@@ -49,6 +15,9 @@ namespace HL7lite.Fluent.Mutators
         private readonly int _segmentInstanceIndex;
         private readonly string _path;
 
+        /// <summary>
+        /// Initializes a new FieldMutator.
+        /// </summary>
         public FieldMutator(Message message, string segmentCode, int fieldIndex, int? repetitionIndex = null, int segmentInstanceIndex = 0)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
@@ -67,6 +36,9 @@ namespace HL7lite.Fluent.Mutators
                 : $"{_segmentCode}.{_fieldIndex}";
         }
 
+        /// <summary>
+        /// Sets the field value.
+        /// </summary>
         public FieldMutator Value(string value)
         {
             // Get the specific segment instance
@@ -153,6 +125,9 @@ namespace HL7lite.Fluent.Mutators
         /// </summary>
         /// <param name="value">The value to encode and set</param>
         /// <returns>The FieldMutator for method chaining</returns>
+        /// <summary>
+        /// Sets the field value with HL7 delimiter encoding.
+        /// </summary>
         public FieldMutator EncodedValue(string value)
         {
             if (value == null)
@@ -164,16 +139,25 @@ namespace HL7lite.Fluent.Mutators
             return Value(encodedValue);
         }
 
+        /// <summary>
+        /// Sets the field to HL7 null value.
+        /// </summary>
         public FieldMutator Null()
         {
             return Value(_message.Encoding.PresentButNull);
         }
 
+        /// <summary>
+        /// Clears the field value.
+        /// </summary>
         public FieldMutator Clear()
         {
             return Value(string.Empty);
         }
 
+        /// <summary>
+        /// Sets multiple field components.
+        /// </summary>
         public FieldMutator Components(params string[] components)
         {
             if (components == null || components.Length == 0)
@@ -194,6 +178,9 @@ namespace HL7lite.Fluent.Mutators
         /// </summary>
         /// <param name="dateTime">The DateTime to set</param>
         /// <returns>The FieldMutator for method chaining</returns>
+        /// <summary>
+        /// Sets the field to a formatted DateTime value.
+        /// </summary>
         public FieldMutator DateTime(DateTime dateTime)
         {
             var hl7DateTime = MessageHelper.LongDateWithFractionOfSecond(dateTime);
@@ -205,6 +192,9 @@ namespace HL7lite.Fluent.Mutators
         /// Uses the full precision format: yyyyMMddHHmmss.FFFF
         /// </summary>
         /// <returns>The FieldMutator for method chaining</returns>
+        /// <summary>
+        /// Sets the field to the current DateTime.
+        /// </summary>
         public FieldMutator DateTimeNow()
         {
             return DateTime(System.DateTime.Now);
@@ -216,6 +206,9 @@ namespace HL7lite.Fluent.Mutators
         /// </summary>
         /// <param name="date">The DateTime to extract date from</param>
         /// <returns>The FieldMutator for method chaining</returns>
+        /// <summary>
+        /// Sets the field to a formatted date value.
+        /// </summary>
         public FieldMutator Date(DateTime date)
         {
             var hl7Date = date.ToString("yyyyMMdd");
@@ -227,11 +220,17 @@ namespace HL7lite.Fluent.Mutators
         /// Uses the format: yyyyMMdd
         /// </summary>
         /// <returns>The FieldMutator for method chaining</returns>
+        /// <summary>
+        /// Sets the field to today's date.
+        /// </summary>
         public FieldMutator DateToday()
         {
             return Date(System.DateTime.Today);
         }
 
+        /// <summary>
+        /// Sets the field value if the condition is true.
+        /// </summary>
         public FieldMutator ValueIf(string value, bool condition)
         {
             if (condition)
@@ -248,6 +247,9 @@ namespace HL7lite.Fluent.Mutators
         /// <param name="fieldIndex">The 1-based field index to set.</param>
         /// <param name="value">The value to set.</param>
         /// <returns>This FieldMutator for chaining.</returns>
+        /// <summary>
+        /// Sets a different field on the same segment.
+        /// </summary>
         public FieldMutator Field(int fieldIndex, string value)
         {
             if (fieldIndex <= 0)

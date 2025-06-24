@@ -107,33 +107,6 @@ namespace HL7lite.Test.Fluent.Accessors
             Assert.Equal("", value);
         }
 
-        [Fact]
-        public void SafeValue_WhenComponentExists_ShouldReturnValue()
-        {
-            // Arrange
-            var message = CreateTestMessage();
-            var component = new ComponentAccessor(message, "PID", 5, 1);
-            
-            // Act
-            var value = component.SafeValue;
-            
-            // Assert
-            Assert.Equal("Smith", value);
-        }
-
-        [Fact]
-        public void SafeValue_WhenComponentDoesNotExist_ShouldReturnEmptyString()
-        {
-            // Arrange
-            var message = CreateTestMessage();
-            var component = new ComponentAccessor(message, "PID", 5, 99);
-            
-            // Act
-            var value = component.SafeValue;
-            
-            // Assert
-            Assert.Equal("", value);
-        }
 
         [Fact]
         public void Exists_WhenComponentPresent_ShouldReturnTrue()

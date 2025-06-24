@@ -1,9 +1,7 @@
-# HL7lite
-
-<div align="center">
-  <img src="assets/hl7lite-logo.png" alt="HL7lite Logo" width="200">
-  <h3>Simple, Lightweight HL7 v2.x Parsing and Manipulation for .NET</h3>
-</div>
+<h1 align="center">
+  <img src="assets/hl7lite-logo.png" alt="HL7lite" width="200">
+</h1>
+<h3 align="center">Simple, Lightweight HL7 v2.x Parsing and Manipulation for .NET</h3>
 
 <p align="center">
   <a href="https://github.com/domibies/HL7lite/actions/workflows/dotnet.yml">
@@ -26,26 +24,38 @@
 ## Key Features
 
 - ⚡ **Lightning Fast** - Parse HL7 messages without schema validation overhead
-- 🎯 **Modern Fluent API** - Intuitive, chainable methods for message manipulation
-- 🛡️ **Never Throws** - Fluent API returns empty values instead of throwing exceptions
+- 🎯 **Modern Fluent API** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Intuitive, chainable methods for message manipulation
+- 🛡️ **Safe Data Access** - Fluent API returns empty values instead of throwing exceptions
 - 🔧 **Auto-creation** - Automatically create missing segments, fields, and components
 - 📦 **Lightweight** - Minimal dependencies, small footprint
-- ✅ **Battle-tested** - High code coverage and real-world usage
+- ✅ **Battle-tested** - Key integration component in Belgium's largest hospital group ([ZAS](https://www.zas.be))
+- 🔄 **Always Compatible** - Full backward compatibility with [legacy API](README.Legacy.md)
 - 🌐 **.NET Standard** - Compatible with .NET Framework, .NET Core, and .NET 5+
 
 ## Quick Start
 
 ### Installation
 
+> **Note**: The fluent API is currently in Release Candidate. Installing without specifying a version will install the latest stable 1.2.0 version (legacy API only).
+
 ```bash
-# .NET CLI
+# .NET CLI - Fluent API (RC)
+dotnet add package HL7lite --version 2.0.0-rc.1
+
+# .NET CLI - Legacy API only (stable)
 dotnet add package HL7lite
 
-# Package Manager
+# Package Manager - Fluent API (RC)
+Install-Package HL7lite -Version 2.0.0-rc.1
+
+# Package Manager - Legacy API only (stable)
 Install-Package HL7lite
 
-# PackageReference
+# PackageReference - Fluent API (RC)
 <PackageReference Include="HL7lite" Version="2.0.0-rc.1" />
+
+# PackageReference - Legacy API only (stable)
+<PackageReference Include="HL7lite" Version="1.*" />
 ```
 
 ### Getting Data
@@ -68,8 +78,8 @@ string firstName = fluent.PID[5][2].Value;
 string dateOfBirth = fluent.PID[7].Value;
 
 // Access with safe navigation - never throws
-string gender = fluent.PID[8].SafeValue; // Returns "" instead of null
-string missing = fluent.ZZZ[99].Value;   // Returns null, doesn't throw
+string gender = fluent.PID[8].Value ?? ""; // Handle null with null-coalescing
+string missing = fluent.ZZZ[99].Value;     // Returns null, doesn't throw
 
 // Use path-based access
 string ssn = fluent.Path("PID.19").Value;
@@ -353,7 +363,7 @@ segments.RemoveSegment(1);                       // Removes first segment
 <details>
 <summary><b>Legacy API</b></summary>
 
-The Pre-2.0 API remains fully supported with backward compatibility guaranteed.
+The Pre-2.0 API remains fully supported with backward compatibility guaranteed. For complete legacy documentation, see [README.Legacy.md](README.Legacy.md).
 
 ### Basic Usage
 
@@ -422,6 +432,300 @@ var dob = fluent.PID[7].Value;  // "19850315"
 
 </details>
 
+## API Reference {#api-reference}
+
+### FluentMessage
+
+The main entry point for the fluent API. Wraps a legacy `Message` object.
+
+```csharp
+var fluent = new FluentMessage(message);
+var fluent = hl7String.ToFluentMessage();  // Extension method
+```
+
+**Properties:**
+- `MSH`, `PID`, `PV1`, etc. - Direct segment accessors (37 common segments)
+- `UnderlyingMessage` - Access to wrapped Message object
+- `CreateMSH` - MSH segment builder
+
+**Methods:**
+- `Segments(string code)` - Get collection of segments by code
+- `Path(string path)` - Path-based accessor
+- `Copy()` - Deep copy the message
+- `GetAck()` / `GetNack(code, text)` - Generate acknowledgments
+- `RemoveTrailingDelimiters()` - Clean up message
+- `Serialize()` - Get serialization builder
+- `this[string code]` - Segment accessor by code
+
+### Accessors (Read Operations)
+
+#### SegmentAccessor
+Access to segment-level data.
+
+```csharp
+var pid = fluent.PID;
+var custom = fluent["ZZ1"];
+```
+
+**Properties:**
+- `Exists` - True if segment exists
+- `Count` - Number of instances (for repeating segments)
+- `HasMultiple` - True if segment repeats
+- `IsSingle` - True if only one instance
+
+**Methods:**
+- `Field(int index)` / `this[int index]` - Get field accessor
+- `Instance(int instance)` - Get specific segment instance
+
+#### FieldAccessor
+Access to field-level data with repetition support.
+
+```csharp
+var field = fluent.PID[3];
+var component = fluent.PID[5][1];
+```
+
+**Properties:**
+- `Value` - Field value (null for HL7 nulls "")
+- `Exists` - True if field exists in message
+- `HasValue` - True if not empty/null
+- `IsNull` - True for HL7 null values ("")
+- `IsEmpty` - True for empty or null
+- `HasRepetitions` - True if field has repetitions
+- `RepetitionCount` - Number of repetitions
+- `Repetitions` - Collection of repetitions
+
+**Methods:**
+- `Component(int index)` / `this[int index]` - Get component accessor
+- `Repetition(int index)` - Get specific repetition (1-based)
+- `Set()` - Get field mutator
+- `Set(string value)` - Set field value and return mutator
+- `AsDate(bool throwOnError = false)` - Parse as date
+- `AsDateTime` - Parse as date/time
+
+#### ComponentAccessor
+Access to component-level data.
+
+```csharp
+var component = fluent.PID[5][1];  // Last name
+```
+
+**Properties:**
+- Same as FieldAccessor (Value, Exists, etc.)
+
+**Methods:**
+- `SubComponent(int index)` / `this[int index]` - Get subcomponent
+- `Set()` - Get component mutator
+- `Set(string value)` - Set component value and return mutator
+
+#### SubComponentAccessor
+Access to subcomponent-level data.
+
+```csharp
+var subcomp = fluent.PID[5][1][2];
+```
+
+**Properties:**
+- Same as FieldAccessor (Value, Exists, etc.)
+
+**Methods:**
+- `Set()` - Get subcomponent mutator
+- `Set(string value)` - Set subcomponent value and return mutator
+
+### Mutators (Write Operations)
+
+All mutators support method chaining and auto-create missing elements.
+
+#### FieldMutator
+Modify field values.
+
+```csharp
+fluent.PID[3].Set()
+    .Value("12345")
+    .Field(5, "Smith^John")
+    .Field(7, "19850315");
+```
+
+**Methods:**
+- `Value(string value)` - Set field value
+- `Null()` - Set HL7 null value ("")
+- `Clear()` - Clear field (empty string)
+- `Components(params string[] values)` - Set multiple components
+- `EncodedValue(string value)` - Set with delimiter encoding
+- `ValueIf(string value, bool condition)` - Conditional set
+- `Field(int index, string value)` - Set different field
+- `Date(DateTime date)` - Set date (YYYYMMDD)
+- `DateTime(DateTime dateTime)` - Set date/time (YYYYMMDDHHMMSS)
+- `DateToday()` / `DateTimeNow()` - Set current date/time
+
+#### ComponentMutator
+Modify component values.
+
+```csharp
+fluent.PID[5][1].Set()
+    .Value("Smith")
+    .Component(2, "John")
+    .Field(7, "19850315");
+```
+
+**Methods:**
+- `Value(string value)` - Set component value
+- `Null()` - Set HL7 null value
+- `Clear()` - Clear component
+- `SubComponents(params string[] values)` - Set subcomponents
+- `EncodedValue(string value)` - Set with encoding
+- `ValueIf(string value, bool condition)` - Conditional set
+- `Component(int index, string value)` - Set different component
+- `Field(int index, string value)` - Set field value
+
+#### SubComponentMutator
+Modify subcomponent values.
+
+```csharp
+fluent.PID[5][1][1].Set()
+    .Value("Smith")
+    .SubComponent(2, "Jr")
+    .Component(2, "John");
+```
+
+**Methods:**
+- Same as ComponentMutator but at subcomponent level
+
+### Collections
+
+#### SegmentCollection
+LINQ-compatible collection of segments.
+
+```csharp
+var diagnoses = fluent.Segments("DG1");
+var primary = diagnoses[0];  // 0-based indexer
+var count = diagnoses.Count;
+```
+
+**Properties:**
+- `Count` - Number of segments
+
+**Methods:**
+- `Add()` - Add new segment, returns accessor
+- `AddCopy(Segment segment)` - Add copy of segment
+- `Clear()` - Remove all segments
+- `Segment(int index)` - Get by 1-based index
+- `RemoveSegment(int index)` - Remove by 1-based index
+- `this[int index]` - Get by 0-based index
+- LINQ methods (Where, Select, etc.)
+
+#### FieldRepetitionCollection
+Collection of field repetitions.
+
+```csharp
+var ids = fluent.PID[3].Repetitions;
+ids.Add("MRN001");
+ids.Add("SSN123");
+```
+
+**Properties:**
+- `Count` - Number of repetitions
+
+**Methods:**
+- `Add(string value)` - Add new repetition
+- `Add()` - Add empty repetition
+- `Clear()` - Remove all repetitions
+- `Repetition(int index)` - Get by 1-based index
+- `RemoveRepetition(int index)` - Remove by 1-based index
+- `this[int index]` - Get by 0-based index
+- LINQ methods
+
+### Path API
+
+String-based access using HL7 path notation.
+
+```csharp
+var path = fluent.Path("PID.5.1");
+```
+
+**Properties:**
+- `Value` - Get value at path
+- `Exists` - True if path exists
+- `HasValue` - True if not empty
+- `IsNull` - True for HL7 nulls
+
+**Methods:**
+- `Set(string value)` - Set value (auto-creates)
+- `SetIf(string value, bool condition)` - Conditional set
+- `SetNull()` - Set HL7 null
+- `SetEncoded(string value)` - Set with encoding
+- `SetEncodedIf(string value, bool condition)` - Conditional encoded set
+
+### Builders
+
+#### MSHBuilder
+Fluent builder for MSH segments with intelligent defaults.
+
+```csharp
+fluent.CreateMSH
+    .Sender("APP", "FACILITY")
+    .Receiver("DEST", "FACILITY2")
+    .MessageType("ADT^A01")
+    .AutoControlId()
+    .Production()
+    .Build();
+```
+
+**Methods:**
+- `Sender(string app, string facility)` - Set sending application and facility
+- `Receiver(string app, string facility)` - Set receiving application and facility
+- `MessageType(string messageType)` - Set message type (e.g., "ADT^A01")
+- `ControlId(string id)` - Set specific control ID
+- `AutoControlId()` - Generate unique control ID (timestamp-based)
+- `ProcessingId(string id)` - Set processing ID ("P", "T", "D")
+- `Production()` - Set processing ID to "P" (production)
+- `Test()` - Set processing ID to "T" (test)
+- `Debug()` - Set processing ID to "D" (debug)
+- `Version(string version)` - Set HL7 version (default "2.5")
+- `Security(string security)` - Set security field
+- `AutoTimestamp()` - Set current timestamp (auto-applied)
+- `Build()` - Create the MSH segment and apply to message
+
+**Defaults applied automatically:**
+- Message timestamp: Current date/time
+- HL7 version: "2.5"
+- Processing ID: "P" if not specified
+- Field separators: Standard HL7 encoding (`|^~\&`)
+
+#### SerializationBuilder
+Fluent builder for message serialization.
+
+```csharp
+string hl7 = fluent.Serialize()
+    .WithoutTrailingDelimiters()
+    .WithValidation()
+    .ToString();
+```
+
+**Methods:**
+- `WithoutTrailingDelimiters()` - Remove trailing delimiters
+- `WithValidation()` - Validate before serializing
+- `WithEncoding(Encoding)` - Set text encoding
+- `ToString()` - Serialize to string
+- `ToBytes()` - Serialize to byte array
+- `ToFile(string path)` - Write to file
+- `ToStream(Stream)` - Write to stream
+- `TrySerialize(out string result, out string error)` - Safe serialize
+
+### Extension Methods
+
+```csharp
+// String to FluentMessage
+var fluent = hl7String.ToFluentMessage();
+
+// Legacy Message to FluentMessage
+var fluent = message.ToFluentMessage();
+```
+
+### Utility Methods
+
+- `MessageHelper.GetMLLP(string hl7, Encoding encoding)` - Add MLLP wrapper
+
 <details>
 <summary><b>Contributing</b></summary>
 
@@ -435,4 +739,10 @@ This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.t
 
 Based on [HL7-dotnetcore](https://github.com/Efferent-Health/HL7-dotnetcore) and Jayant Singh's original HL7 parser.
 
+---
+
 </details>
+
+<p align="center">
+  Made with ❤️ for the healthcare developer community
+</p>

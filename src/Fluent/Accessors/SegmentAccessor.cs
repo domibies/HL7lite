@@ -8,11 +8,16 @@ namespace HL7lite.Fluent.Accessors
     /// </summary>
     public class SegmentAccessor
     {
+        /// <summary>The underlying message instance</summary>
         protected readonly Message _message;
+        /// <summary>The segment code</summary>
         protected readonly string _segmentName;
         private readonly Segment _segment;
         private readonly Dictionary<int, FieldAccessor> _fieldCache = new Dictionary<int, FieldAccessor>();
 
+        /// <summary>
+        /// Initializes a new SegmentAccessor.
+        /// </summary>
         public SegmentAccessor(Message message, string segmentName)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));

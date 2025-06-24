@@ -35,9 +35,13 @@
 
 	<PropertyGroup>
 		<PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+		<PackageIcon>hl7lite-logo.png</PackageIcon>
+		<PackageReadmeFile>README.Package.md</PackageReadmeFile>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<None Include="../LICENSE.txt" Pack="true" PackagePath="$(PackageLicenseFile)" />
+		<None Include="../assets/hl7lite-logo.png" Pack="true" PackagePath="$(PackageIcon)" />
+		<None Include="../README.Package.md" Pack="true" PackagePath="$(PackageReadmeFile)" />
 	</ItemGroup>
 </Project>

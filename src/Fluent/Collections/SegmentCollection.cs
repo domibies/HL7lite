@@ -16,6 +16,9 @@ namespace HL7lite.Fluent.Collections
         private readonly string _segmentName;
         private readonly Dictionary<int, SegmentAccessor> _cache = new Dictionary<int, SegmentAccessor>();
 
+        /// <summary>
+        /// Initializes a new SegmentCollection.
+        /// </summary>
         public SegmentCollection(Message message, string segmentName)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));

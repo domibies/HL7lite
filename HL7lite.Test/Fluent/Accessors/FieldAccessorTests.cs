@@ -138,56 +138,6 @@ namespace HL7lite.Test.Fluent.Accessors
             Assert.Null(value);
         }
 
-        [Fact]
-        public void SafeValue_WhenFieldExists_ShouldReturnCorrectValue()
-        {
-            // Arrange
-            const string expectedPatientId = "123456";
-            var message = HL7MessageBuilder.Create()
-                .WithMSH()
-                .WithPID(expectedPatientId, "Doe", "John")
-                .Build();
-            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
-
-            // Act
-            var value = fluentMessage["PID"][3].SafeValue; // Patient ID field
-
-            // Assert
-            Assert.Equal(expectedPatientId, value);
-        }
-
-        [Fact]
-        public void SafeValue_WhenFieldDoesNotExist_ShouldReturnEmptyString()
-        {
-            // Arrange
-            var message = HL7MessageBuilder.Create()
-                .WithMSH()
-                .WithPID()
-                .Build();
-            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
-
-            // Act
-            var value = fluentMessage["PID"][99].SafeValue; // Non-existent field
-
-            // Assert
-            Assert.Equal("", value);
-        }
-
-        [Fact]
-        public void SafeValue_WhenFieldIsExplicitNull_ShouldReturnEmptyString()
-        {
-            // Arrange
-            var messageString = TestMessages.NullValues; // Contains explicit null values
-            var message = new Message(messageString);
-            message.ParseMessage();
-            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
-
-            // Act
-            var value = fluentMessage["PID"][8].SafeValue; // Date of birth (explicitly null)
-
-            // Assert
-            Assert.Equal("", value);
-        }
 
         [Fact]
         public void IsNull_WhenFieldIsExplicitNull_ShouldReturnTrue()
@@ -327,7 +277,6 @@ namespace HL7lite.Test.Fluent.Accessors
                 // Check the property without asserting specific values (graceful handling)
                 var _ = accessor.Exists;
                 var __ = accessor.Value;
-                var ___ = accessor.SafeValue;
             }
         }
 

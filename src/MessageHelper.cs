@@ -5,6 +5,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
 namespace HL7lite
 {
     public static class MessageHelper

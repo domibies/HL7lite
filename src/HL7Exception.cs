@@ -1,5 +1,7 @@
 ﻿using System;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
 namespace HL7lite
 {
     public class HL7Exception : Exception

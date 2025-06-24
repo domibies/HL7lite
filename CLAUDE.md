@@ -118,7 +118,6 @@ var fluent = hl7String.ToFluentMessage();
 **Accessors** (reading):
 - Invalid segment/field/component access returns empty accessor
 - `.Value` returns `null` for HL7 null values (`""`)
-- `.SafeValue` returns empty string instead of null
 - `.Exists` checks if element actually exists
 - Never throws exceptions for invalid access
 
@@ -223,7 +222,7 @@ fluent.Path("PID.5.1").SetEncoded("Complex|Value^With~Delimiters");
 var fluent = message.ToFluentMessage();
 string patientId = fluent.PID[3].Value;
 string lastName = fluent.PID[5][1].Value;
-string suffix = fluent.PID[5][1][2].SafeValue;
+string suffix = fluent.PID[5][1][2].Value ?? "";
 ```
 
 **Setting Values**:

@@ -133,10 +133,6 @@ namespace HL7lite.Fluent.Accessors
             return segments[_segmentInstanceIndex];
         }
 
-        /// <summary>
-        /// Gets the field value, never returns null (converts nulls to empty string)
-        /// </summary>
-        public string SafeValue => Value ?? "";
 
         /// <summary>
         /// Gets whether the field is explicitly null in HL7 format ("")
