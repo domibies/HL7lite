@@ -16,17 +16,19 @@ PID|||12345||Doe^John^Middle||19800315|M|||123 Main St^Apt 4B^City^ST^12345".ToF
 var patientName = message.PID[5][1].Value;        // "Doe"
 var dateOfBirth = message.PID[7].Value;           // "19800315"
 
-// Modify values
-message.PID[5].Set().Components("Smith", "Jane", "Marie");
-message.PID[13].Repetitions.Add("555-1234");
-message.PID[13].Repetitions.Add("555-5678");
+// Modify values with fluent chaining
+message.PID[5].SetComponents("Smith", "Jane", "Marie")
+    .Field(7).Set("19850315")
+    .Field(8).Set("M")
+    .Field(13).Repetitions.Add("555-1234")
+                          .Add("555-5678");
 
-// Create new segments
-var obx = message.Segments("OBX").Add();
-obx[1].Set().Value("1");
-obx[2].Set().Value("NM");
-obx[3].Set().Value("GLUCOSE");
-obx[5].Set().Value("120");
+// Create new segments with fluent building
+var obx = message.Segments("OBX").Add()
+    .Field(1).Set("1")
+    .Field(2).Set("NM")
+    .Field(3).Set("GLUCOSE")
+    .Field(5).Set("120");
 ```
 
 ## Key Features
@@ -59,32 +61,48 @@ string secondId = message.PID[3].Repetition(2).Value;
 ### Setting Values
 ```csharp
 // Set field value
-message.PID[3].Set().Value("12345");
+message.PID[3].Set("12345");
 
 // Set with components
-message.PID[5].Set().Components("Smith", "John", "M");
+message.PID[5].SetComponents("Smith", "John", "M");
 
-// Add field repetitions
-message.PID[13].Repetitions.Add("555-1234");
-message.PID[13].Repetitions.Add("555-5678");
+// Add field repetitions with chaining
+message.PID[13].Repetitions.Add("555-1234")
+                           .Add("555-5678");
 
-// Method chaining
-message.PID[5].Set()
-    .Components("Johnson", "Robert")
-    .Field(7, "19850315")
-    .Field(8, "M");
+// Pure navigation with method chaining
+message.PID[5].SetComponents("Johnson", "Robert")
+    .Field(7).Set("19850315")
+    .Field(8).Set("M")
+    .Field(11).SetComponents("123 Main St", "Boston", "MA");
 ```
 
 ### Working with Segments
 ```csharp
-// Add segments
-var dg1 = message.Segments("DG1").Add();
-dg1[3].Set().Value("I10^Essential Hypertension");
+// Add segments with fluent building
+var dg1 = message.Segments("DG1").Add()
+    .Field(1).Set("1")
+    .Field(3).SetComponents("I10", "Essential Hypertension")
+    .Field(6).Set("F");
 
 // Query segments with LINQ
 var diagnoses = message.Segments("DG1")
     .Where(d => d[6].Value == "F")
     .Select(d => d[3][2].Value);
+
+// Create complete message from scratch
+var fluent = FluentMessage.Create();
+fluent.CreateMSH
+    .Sender("HIS", "HOSPITAL")
+    .Receiver("LAB", "LABORATORY")
+    .MessageType("ADT^A01")
+    .AutoControlId()
+    .Build();
+
+fluent.Segments("PID").Add()
+    .Field(3).Set("12345")
+    .Field(5).SetComponents("Smith", "John", "M")
+    .Field(7).Set("19850315");
 ```
 
 ## Path-based Access
@@ -95,6 +113,13 @@ string value = message.Path("PID.5.1").Value;
 // Set values using paths
 message.Path("PID.5.1").Set("Smith");
 message.Path("OBX.5").Set("120");
+
+// Handle special characters with encoding
+message.Path("PID.5.1").SetEncoded("Smith&Jones");  // Name with ampersand
+message.Path("OBX.5").SetEncoded("http://lab.com/result?id=123&type=CBC");
+
+// Conditional path operations
+message.Path("PID.6").SetIf("MAIDEN", hasMiddleName);
 ```
 
 ## Documentation & Support
