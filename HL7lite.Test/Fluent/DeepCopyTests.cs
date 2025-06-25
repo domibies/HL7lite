@@ -36,8 +36,8 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var copy = original.Copy();
 
             // Act - Modify copy
-            copy.PID[5].Set().Value("SMITH^JANE^F");
-            copy.PID[8].Set().Value("F");
+            copy.PID[5].Set("SMITH^JANE^F");
+            copy.PID[8].Set("F");
 
             // Assert - Original unchanged
             Assert.Equal("DOE^JOHN^M", original.PID[5].Value);
@@ -59,8 +59,8 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var copy = original.Copy();
 
             // Act - Modify original
-            original.PID[5].Set().Value("BROWN^ROBERT^L");
-            original.PID[8].Set().Value("F");
+            original.PID[5].Set("BROWN^ROBERT^L");
+            original.PID[8].Set("F");
 
             // Assert - Copy unchanged  
             Assert.Equal("DOE^JOHN^M", copy.PID[5].Value);
@@ -184,13 +184,13 @@ PID|1||12345^^^MRN~67890^^^SSN||DOE^JOHN^M^JR~SMITH^J^M||19800101|M|||123 MAIN S
                 .Build();
                 
             original.Segments("PID").Add();
-            original.PID[5].Set().Value("DOE^JOHN^M");
-            original.PID[8].Set().Value("M");
+            original.PID[5].Set("DOE^JOHN^M");
+            original.PID[8].Set("M");
             
             original.Segments("OBX").Add();
-            original.OBX[1].Set().Value("1");
-            original.OBX[2].Set().Value("NM");
-            original.OBX[5].Set().Value("120");
+            original.OBX[1].Set("1");
+            original.OBX[2].Set("NM");
+            original.OBX[5].Set("120");
 
             // Act
             var copy = original.Copy();
@@ -222,9 +222,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
 
             // Act - Add segments to copy
             copy.Segments("OBX").Add();
-            copy.OBX[1].Set().Value("1");
-            copy.OBX[2].Set().Value("NM");
-            copy.OBX[5].Set().Value("150");
+            copy.OBX[1].Set("1");
+            copy.OBX[2].Set("NM");
+            copy.OBX[5].Set("150");
 
             // Assert - Copy has new segment
             Assert.True(copy.OBX.Exists);
@@ -298,8 +298,8 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var copy2 = original.Copy();
 
             // Modify each copy differently
-            copy1.PID[5].Set().Value("SMITH^JANE^F");
-            copy2.PID[5].Set().Value("BROWN^ROBERT^L");
+            copy1.PID[5].Set("SMITH^JANE^F");
+            copy2.PID[5].Set("BROWN^ROBERT^L");
 
             // Assert - All copies are independent
             Assert.Equal("DOE^JOHN^M", original.PID[5].Value);
@@ -329,9 +329,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             for (int i = 1; i <= 5; i++)
             {
                 original.Segments("OBX").Add();
-                original.Segments("OBX")[i-1][1].Set().Value(i.ToString());
-                original.Segments("OBX")[i-1][2].Set().Value("NM");
-                original.Segments("OBX")[i-1][5].Set().Value((100 + i).ToString());
+                original.Segments("OBX")[i-1][1].Set(i.ToString());
+                original.Segments("OBX")[i-1][2].Set("NM");
+                original.Segments("OBX")[i-1][5].Set((100 + i).ToString());
             }
 
             // Act

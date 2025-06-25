@@ -365,7 +365,7 @@ namespace HL7lite.Fluent
         /// <example>
         /// <code>
         /// var copy = original.Copy();
-        /// copy.PID[5].Set().Value("NewName"); // Original remains unchanged
+        /// copy.PID[5].Set("NewName"); // Original remains unchanged
         /// </code>
         /// </example>
         public FluentMessage Copy()

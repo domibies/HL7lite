@@ -19,7 +19,7 @@ namespace HL7lite.Test.Fluent
                 .Build();
             
             message.Segments("PID").Add();
-            message.PID[5].Set().Value("DOE^JOHN^M");
+            message.PID[5].Set("DOE^JOHN^M");
             
             // Verify initial state - single field, no repetitions
             Assert.Equal("DOE^JOHN^M", message.PID[5].Value);
@@ -51,7 +51,7 @@ namespace HL7lite.Test.Fluent
                 .Build();
             
             message.Segments("PID").Add();
-            message.PID[5].Set().Value("DOE^JOHN^M");
+            message.PID[5].Set("DOE^JOHN^M");
             
             // Get the underlying field to manipulate it directly
             var underlyingField = message.UnderlyingMessage.DefaultSegment("PID").Fields(5);

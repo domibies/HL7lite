@@ -23,7 +23,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().Value("Johnson");
+            fluent.PID[5][1][1].Set("Johnson");
 
             Assert.Equal("Johnson", fluent.PID[5][1][1].Value);
             Assert.Equal("Johnson", fluent.UnderlyingMessage.GetValue("PID.5.1.1"));
@@ -34,7 +34,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().Value(null);
+            fluent.PID[5][1][1].Set(null);
 
             Assert.Equal("", fluent.PID[5][1][1].Value);
         }
@@ -44,7 +44,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().EncodedValue("Test|With^Delimiters");
+            fluent.PID[5][1][1].Set().SetEncoded("Test|With^Delimiters");
 
             var expectedEncoded = fluent.UnderlyingMessage.Encoding.Encode("Test|With^Delimiters");
             Assert.Equal(expectedEncoded, fluent.PID[5][1][1].Value);
@@ -55,7 +55,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().EncodedValue(null);
+            fluent.PID[5][1][1].Set().SetEncoded(null);
 
             Assert.Equal("", fluent.PID[5][1][1].Value);
         }
@@ -65,7 +65,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().Null();
+            fluent.PID[5][1][1].Set().SetNull();
 
             var expectedNull = fluent.UnderlyingMessage.Encoding.PresentButNull;
             Assert.Equal(expectedNull, fluent.UnderlyingMessage.GetValue("PID.5.1.1"));
@@ -77,7 +77,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().Value("SomeValue");
+            fluent.PID[5][1][1].Set("SomeValue");
             fluent.PID[5][1][1].Set().Clear();
 
             Assert.Equal("", fluent.PID[5][1][1].Value);
@@ -88,7 +88,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().ValueIf("ConditionalValue", true);
+            fluent.PID[5][1][1].Set().SetIf("ConditionalValue", true);
 
             Assert.Equal("ConditionalValue", fluent.PID[5][1][1].Value);
         }
@@ -99,7 +99,7 @@ PV1|1|I";
             var fluent = CreateTestMessage();
             var originalValue = fluent.PID[5][1][1].Value;
 
-            fluent.PID[5][1][1].Set().ValueIf("ConditionalValue", false);
+            fluent.PID[5][1][1].Set().SetIf("ConditionalValue", false);
 
             Assert.Equal(originalValue, fluent.PID[5][1][1].Value);
         }
@@ -109,9 +109,8 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set()
-                .Value("First")
-                .SubComponent(2).Value("Second");
+            fluent.PID[5][1][1].Set("First")
+                .SubComponent(2).Set("Second");
 
             Assert.Equal("First", fluent.PID[5][1][1].Value);
             Assert.Equal("Second", fluent.PID[5][1][2].Value);
@@ -122,9 +121,8 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set()
-                .Value("FirstSubComp")
-                .Component(2).Value("SecondComponent");
+            fluent.PID[5][1][1].Set("FirstSubComp")
+                .Component(2).Set("SecondComponent");
 
             Assert.Equal("FirstSubComp", fluent.PID[5][1][1].Value);
             Assert.Equal("SecondComponent", fluent.PID[5][2].Value);
@@ -135,9 +133,8 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set()
-                .Value("SubCompValue")
-                .Field(7).Value("19900101");
+            fluent.PID[5][1][1].Set("SubCompValue")
+                .Field(7).Set("19900101");
 
             Assert.Equal("SubCompValue", fluent.PID[5][1][1].Value);
             Assert.Equal("19900101", fluent.PID[7].Value);
@@ -148,10 +145,9 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            var result = fluent.PID[5][1][1].Set()
-                .Value("Test")
+            var result = fluent.PID[5][1][1].Set("Test")
                 .Clear()
-                .Value("Final");
+                .Set("Final");
 
             Assert.Equal("Final", fluent.PID[5][1][1].Value);
             Assert.IsType<HL7lite.Fluent.Mutators.SubComponentMutator>(result);
@@ -162,7 +158,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.OBX[1][1][1].Set().Value("NewSegmentValue");
+            fluent.OBX[1][1][1].Set("NewSegmentValue");
 
             Assert.Equal("NewSegmentValue", fluent.OBX[1][1][1].Value);
             Assert.Equal("NewSegmentValue", fluent.UnderlyingMessage.GetValue("OBX.1.1.1"));
@@ -174,7 +170,7 @@ PV1|1|I";
             var fluent = CreateTestMessage();
 
             // Test with repetition index on field level
-            fluent.PID[3].Repetition(1)[1][1].Set().Value("FirstRep");
+            fluent.PID[3].Repetition(1)[1][1].Set("FirstRep");
 
             Assert.Equal("FirstRep", fluent.PID[3].Repetition(1)[1][1].Value);
         }
@@ -184,12 +180,11 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set()
-                .Value("LastName")
-                .SubComponent(2).Value("FirstName")
-                .Component(2).Value("GivenName")
-                .Field(7).Value("19851225")
-                .Field(8).Value("M");
+            fluent.PID[5][1][1].Set("LastName")
+                .SubComponent(2).Set("FirstName")
+                .Component(2).Set("GivenName")
+                .Field(7).Set("19851225")
+                .Field(8).Set("M");
 
             Assert.Equal("LastName", fluent.PID[5][1][1].Value);
             Assert.Equal("FirstName", fluent.PID[5][1][2].Value);
@@ -289,9 +284,9 @@ PV1|1|I";
             var mutator = new SubComponentMutator(message.UnderlyingMessage, "PID", 5, 1, 1);
             
             // Act
-            mutator.SubComponent(2).Value("Jr")
-                .Field(7).Value("19851225")
-                .Field(8).Value("M");
+            mutator.SubComponent(2).Set("Jr")
+                .Field(7).Set("19851225")
+                .Field(8).Set("M");
             
             // Assert
             Assert.Equal("Jr", message.UnderlyingMessage.GetValue("PID.5.1.2"));

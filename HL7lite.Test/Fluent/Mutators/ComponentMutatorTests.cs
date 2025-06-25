@@ -25,7 +25,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            mutator.Value("Jane");
+            mutator.Set("Jane");
 
             Assert.Equal("Jane", message.GetValue("PID.5.2"));
         }
@@ -36,7 +36,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            var result = mutator.Value("Test");
+            var result = mutator.Set("Test");
 
             Assert.Same(mutator, result);
         }
@@ -47,7 +47,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 6);
 
-            mutator.Value("NewComponent");
+            mutator.Set("NewComponent");
 
             Assert.Equal("NewComponent", message.GetValue("PID.5.6"));
         }
@@ -58,7 +58,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            mutator.Null();
+            mutator.SetNull();
 
             Assert.Equal("\"\"", message.GetValue("PID.5.2"));
         }
@@ -69,7 +69,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            var result = mutator.Null();
+            var result = mutator.SetNull();
 
             Assert.Same(mutator, result);
         }
@@ -102,7 +102,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 11, 1);
 
-            mutator.SubComponents("123 Main St", "Suite 200", "Building A");
+            mutator.SetSubComponents("123 Main St", "Suite 200", "Building A");
 
             Assert.Equal("123 Main St&Suite 200&Building A", message.GetValue("PID.11.1"));
         }
@@ -113,7 +113,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 11, 1);
 
-            mutator.SubComponents("Line1", null, "Line3");
+            mutator.SetSubComponents("Line1", null, "Line3");
 
             Assert.Equal("Line1&&Line3", message.GetValue("PID.11.1"));
         }
@@ -124,7 +124,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            mutator.SubComponents();
+            mutator.SetSubComponents();
 
             Assert.Equal("", message.GetValue("PID.5.2"));
         }
@@ -135,7 +135,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            var result = mutator.SubComponents("Test");
+            var result = mutator.SetSubComponents("Test");
 
             Assert.Same(mutator, result);
         }
@@ -146,7 +146,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            mutator.ValueIf("NewValue", true);
+            mutator.SetIf("NewValue", true);
 
             Assert.Equal("NewValue", message.GetValue("PID.5.2"));
         }
@@ -158,7 +158,7 @@ PV1|1|I";
             var originalValue = message.GetValue("PID.5.2");
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            mutator.ValueIf("NewValue", false);
+            mutator.SetIf("NewValue", false);
 
             Assert.Equal(originalValue, message.GetValue("PID.5.2"));
         }
@@ -169,7 +169,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 2);
 
-            var result = mutator.ValueIf("Test", true);
+            var result = mutator.SetIf("Test", true);
 
             Assert.Same(mutator, result);
         }
@@ -182,8 +182,8 @@ PV1|1|I";
 
             mutator
                 .Clear()
-                .Value("Robert")
-                .ValueIf("Override", false);
+                .Set("Robert")
+                .SetIf("Override", false);
 
             Assert.Equal("Robert", message.GetValue("PID.5.2"));
         }
@@ -196,7 +196,7 @@ PV1|1|I";
             message.PutValue("PID.3[1]", "ID002");
             
             var mutator = new ComponentMutator(message, "PID", 3, 1, 2);
-            mutator.Value("NewID");
+            mutator.Set("NewID");
 
             Assert.Equal("NewID", message.GetValue("PID.3(2).1"));
         }
@@ -207,7 +207,7 @@ PV1|1|I";
             var message = CreateTestMessage();
 
             var mutator = new ComponentMutator(message, "ZZZ", 1, 1);
-            mutator.Value("Test");
+            mutator.Set("Test");
 
             Assert.Equal("Test", message.GetValue("ZZZ.1.1"));
         }
@@ -273,7 +273,7 @@ PV1|1|I";
             var fluent = new FluentMessage(message);
             
             // Test that mutator works correctly when accessed through fluent API
-            fluent.PID[5][2].Set().Value("NewFirstName");
+            fluent.PID[5][2].Set("NewFirstName");
             
             Assert.Equal("NewFirstName", fluent.PID[5][2].Value);
             Assert.Equal("NewFirstName", message.GetValue("PID.5.2"));
@@ -285,7 +285,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 1);
 
-            var result = mutator.Component(3).Value("Updated");
+            var result = mutator.Component(3).Set("Updated");
 
             Assert.Equal("Updated", message.GetValue("PID.5.3"));
             Assert.IsType<ComponentMutator>(result);
@@ -297,8 +297,8 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 1);
 
-            var result = mutator.Component(2).Value("Test")
-                              .Component(3).Value("Chain");
+            var result = mutator.Component(2).Set("Test")
+                              .Component(3).Set("Chain");
 
             Assert.Equal("Test", message.GetValue("PID.5.2"));
             Assert.Equal("Chain", message.GetValue("PID.5.3"));
@@ -311,7 +311,7 @@ PV1|1|I";
             var mutator = new ComponentMutator(message, "PID", 5, 1);
 
             var result = mutator.Field(7);
-            result.Value("19900101");
+            result.Set("19900101");
 
             Assert.Equal("19900101", message.GetValue("PID.7"));
             Assert.IsType<FieldMutator>(result);
@@ -323,9 +323,9 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new ComponentMutator(message, "PID", 5, 1);
 
-            var result = mutator.Value("Smith")
-                              .Field(7).Value("19900101")
-                              .Field(8).Value("F");
+            var result = mutator.Set("Smith")
+                              .Field(7).Set("19900101")
+                              .Field(8).Set("F");
 
             Assert.Equal("Smith", message.GetValue("PID.5.1"));
             Assert.Equal("19900101", message.GetValue("PID.7"));
@@ -338,11 +338,11 @@ PV1|1|I";
             var message = CreateTestMessage();
             var fluent = new FluentMessage(message);
 
-            fluent.PID[5][1].Set().Value("Johnson")
-                .Component(2).Value("Mary")
-                .Component(3).Value("Elizabeth")
-                .Field(7).Value("19851225")
-                .Field(8).Value("F");
+            fluent.PID[5][1].Set("Johnson")
+                .Component(2).Set("Mary")
+                .Component(3).Set("Elizabeth")
+                .Field(7).Set("19851225")
+                .Field(8).Set("F");
 
             Assert.Equal("Johnson", message.GetValue("PID.5.1"));
             Assert.Equal("Mary", message.GetValue("PID.5.2"));
@@ -427,7 +427,7 @@ PV1|1|I";
             var mutator = new ComponentMutator(message, "PID", 5, 1);
             
             // Act
-            mutator.Component(2).SubComponent(1).Value("MiddleName");
+            mutator.Component(2).SubComponent(1).Set("MiddleName");
             
             // Assert
             Assert.Equal("MiddleName", message.GetValue("PID.5.2.1"));

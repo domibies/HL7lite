@@ -273,9 +273,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||NOT_A_DATE||";
 
             // Act - Chain DateTime with other operations
             fluent.Segments("OBX").Add();
-            fluent.OBX[1].Set().Value("1");
-            fluent.OBX[2].Set().Value("NM");
-            fluent.OBX[3].Set().Value("GLUCOSE");
+            fluent.OBX[1].Set("1");
+            fluent.OBX[2].Set("NM");
+            fluent.OBX[3].Set("GLUCOSE");
             fluent.OBX[14].Set().DateTime(testDateTime);
 
             // Assert
@@ -301,13 +301,13 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||NOT_A_DATE||";
 
             // Add multiple OBX segments with different datetime formats
             fluent.Segments("OBX").Add(); // Full format
-            fluent.OBX[14].Set().Value("20231219145530.1234");
+            fluent.OBX[14].Set("20231219145530.1234");
             
             fluent.Segments("OBX").Add(); // Date only  
-            fluent.Segments("OBX")[1][14].Set().Value("20231219");
+            fluent.Segments("OBX")[1][14].Set("20231219");
             
             fluent.Segments("OBX").Add(); // Year-month only
-            fluent.Segments("OBX")[2][14].Set().Value("202312");
+            fluent.Segments("OBX")[2][14].Set("202312");
 
             // Act & Assert
             var fullDateTime = fluent.Segments("OBX")[0][14].AsDateTime();

@@ -144,8 +144,8 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var fluentMessage = hl7.ToFluentMessage();
             
             // Manipulate the message
-            fluentMessage.PID[5].Set().Value("SMITH^JANE^F");
-            fluentMessage.PID[8].Set().Value("F");
+            fluentMessage.PID[5].Set("SMITH^JANE^F");
+            fluentMessage.PID[8].Set("F");
 
             // Assert
             Assert.Equal("SMITH^JANE^F", fluentMessage.PID[5].Value);
@@ -164,9 +164,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             
             // Add new segment via fluent API
             fluentMessage.Segments("OBX").Add();
-            fluentMessage.OBX[1].Set().Value("1");
-            fluentMessage.OBX[2].Set().Value("NM");
-            fluentMessage.OBX[3].Set().Value("GLUCOSE");
+            fluentMessage.OBX[1].Set("1");
+            fluentMessage.OBX[2].Set("NM");
+            fluentMessage.OBX[3].Set("GLUCOSE");
 
             // Assert
             Assert.True(fluentMessage.OBX.Exists);

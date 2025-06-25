@@ -365,7 +365,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var accessor = new ComponentAccessor(message, "PID", 5, 2);
             
             // Act
-            accessor.Set().Value("Jane");
+            accessor.Set("Jane");
             
             // Assert
             Assert.Equal("Jane", accessor.Value);

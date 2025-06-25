@@ -647,7 +647,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var accessor = fluent.PID[3];
             
             // Act
-            accessor.Set().Value("ID002");
+            accessor.Set("ID002");
             
             // Assert
             Assert.Equal("ID002", accessor.Value);
@@ -671,7 +671,7 @@ namespace HL7lite.Test.Fluent.Accessors
             fluent.PID[3].Repetitions.Add("ID003^System3");
             
             // Act - Set component 2 of repetition 2
-            fluent.PID[3].Repetition(2)[2].Set().Value("UpdatedSystem2");
+            fluent.PID[3].Repetition(2)[2].Set("UpdatedSystem2");
             
             // Assert
             Assert.Equal("ID001", fluent.PID[3].Repetition(1)[1].Value);
@@ -693,7 +693,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluent = new HL7lite.Fluent.FluentMessage(message);
             
             // Act - Use Repetitions collection (0-based) to access component
-            fluent.PID[3].Repetitions[1][2].Set().Value("NewSystem");
+            fluent.PID[3].Repetitions[1][2].Set("NewSystem");
             
             // Assert
             Assert.Equal("System1", fluent.PID[3].Repetitions[0][2].Value);
@@ -711,7 +711,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluent = new HL7lite.Fluent.FluentMessage(message);
             
             // Act - Set value on specific repetition
-            fluent.PID[3].Repetition(2).Set().Value("UPDATED");
+            fluent.PID[3].Repetition(2).Set("UPDATED");
             
             // Assert - All repetitions should still exist
             Assert.Equal(3, fluent.PID[3].RepetitionCount);

@@ -37,9 +37,22 @@ namespace HL7lite.Fluent.Mutators
         }
 
         /// <summary>
-        /// Sets the field value.
+        /// Sets the field to the specified value. Creates the field if it doesn't exist.
+        /// Null values are converted to empty strings. For explicit HL7 null values, use the SetNull() method.
         /// </summary>
-        public FieldMutator Value(string value)
+        /// <param name="value">The value to set. Null values are converted to empty strings.</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <example>
+        /// <code>
+        /// // Set field value
+        /// fluent.PID[3].Set("12345");
+        /// 
+        /// // Chain multiple operations
+        /// fluent.PID[3].Set("12345")
+        ///     .Field(5).Set("Smith^John");
+        /// </code>
+        /// </example>
+        public FieldMutator Set(string value)
         {
             // Get the specific segment instance
             Segment targetSegment = null;
@@ -125,40 +138,77 @@ namespace HL7lite.Fluent.Mutators
         /// </summary>
         /// <param name="value">The value to encode and set</param>
         /// <returns>The FieldMutator for method chaining</returns>
-        /// <summary>
-        /// Sets the field value with HL7 delimiter encoding.
-        /// </summary>
-        public FieldMutator EncodedValue(string value)
+        /// <example>
+        /// <code>
+        /// // Set value with special characters
+        /// fluent.PID[5].SetEncoded("Smith|Jones");  // Becomes "Smith\\F\\Jones"
+        /// 
+        /// // Chain with other operations
+        /// fluent.PID[5].SetEncoded("Complex|Value")
+        ///     .Field(7).Set("19850315");
+        /// </code>
+        /// </example>
+        public FieldMutator SetEncoded(string value)
         {
             if (value == null)
             {
-                return Value(null);
+                return Set(null);
             }
 
             var encodedValue = _message.Encoding.Encode(value);
-            return Value(encodedValue);
+            return Set(encodedValue);
+        }
+
+
+        /// <summary>
+        /// Sets the field to HL7 null value.
+        /// In HL7, null values are represented as empty strings ("").
+        /// </summary>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <example>
+        /// <code>
+        /// // Set field to explicit null
+        /// fluent.PID[6].SetNull();
+        /// 
+        /// // Chain with other operations
+        /// fluent.PID[6].SetNull()
+        ///     .Field(7).Set("19850315");
+        /// </code>
+        /// </example>
+        public FieldMutator SetNull()
+        {
+            return Set(_message.Encoding.PresentButNull);
         }
 
         /// <summary>
         /// Sets the field to HL7 null value.
         /// </summary>
-        public FieldMutator Null()
-        {
-            return Value(_message.Encoding.PresentButNull);
-        }
 
         /// <summary>
         /// Clears the field value.
         /// </summary>
         public FieldMutator Clear()
         {
-            return Value(string.Empty);
+            return Set(string.Empty);
         }
 
         /// <summary>
-        /// Sets multiple field components.
+        /// Sets multiple field components in a single operation.
+        /// Components are joined with the HL7 component separator (^).
         /// </summary>
-        public FieldMutator Components(params string[] components)
+        /// <param name="components">The component values to set</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <example>
+        /// <code>
+        /// // Set patient name components
+        /// fluent.PID[5].SetComponents("Smith", "John", "M", "Jr", "Dr");
+        /// 
+        /// // Chain with other operations
+        /// fluent.PID[5].SetComponents("Smith", "John")
+        ///     .Field(7).Set("19850315");
+        /// </code>
+        /// </example>
+        public FieldMutator SetComponents(params string[] components)
         {
             if (components == null || components.Length == 0)
             {
@@ -169,8 +219,12 @@ namespace HL7lite.Fluent.Mutators
             var componentSeparator = encoding.ComponentDelimiter;
             var value = string.Join(componentSeparator.ToString(), components.Select(c => c ?? string.Empty));
             
-            return Value(value);
+            return Set(value);
         }
+
+        /// <summary>
+        /// Sets multiple field components.
+        /// </summary>
 
         /// <summary>
         /// Sets the field value to an HL7-formatted datetime string.
@@ -179,12 +233,33 @@ namespace HL7lite.Fluent.Mutators
         /// <param name="dateTime">The DateTime to set</param>
         /// <returns>The FieldMutator for method chaining</returns>
         /// <summary>
+        /// Sets the field to a formatted DateTime value in HL7 format.
+        /// Uses the full precision format: yyyyMMddHHmmss.FFFF
+        /// </summary>
+        /// <param name="dateTime">The DateTime to set</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <example>
+        /// <code>
+        /// // Set observation timestamp
+        /// fluent.OBX[14].SetDateTime(DateTime.Now);
+        /// 
+        /// // Chain with other operations
+        /// fluent.OBX[14].SetDateTime(observationTime)
+        ///     .Field(15).Set("Lab");
+        /// </code>
+        /// </example>
+        public FieldMutator SetDateTime(DateTime dateTime)
+        {
+            return DateTime(dateTime);
+        }
+
+        /// <summary>
         /// Sets the field to a formatted DateTime value.
         /// </summary>
         public FieldMutator DateTime(DateTime dateTime)
         {
             var hl7DateTime = MessageHelper.LongDateWithFractionOfSecond(dateTime);
-            return Value(hl7DateTime);
+            return Set(hl7DateTime);
         }
 
         /// <summary>
@@ -193,11 +268,52 @@ namespace HL7lite.Fluent.Mutators
         /// </summary>
         /// <returns>The FieldMutator for method chaining</returns>
         /// <summary>
+        /// Sets the field to the current DateTime in HL7 format.
+        /// Convenience method that uses the current date and time.
+        /// </summary>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <example>
+        /// <code>
+        /// // Set current timestamp
+        /// fluent.EVN[2].SetDateTimeNow();
+        /// 
+        /// // Chain with other operations
+        /// fluent.EVN[2].SetDateTimeNow()
+        ///     .Field(6).SetDateTimeNow();
+        /// </code>
+        /// </example>
+        public FieldMutator SetDateTimeNow()
+        {
+            return DateTimeNow();
+        }
+
+        /// <summary>
         /// Sets the field to the current DateTime.
         /// </summary>
         public FieldMutator DateTimeNow()
         {
             return DateTime(System.DateTime.Now);
+        }
+
+        /// <summary>
+        /// Sets the field to an HL7 date in YYYYMMDD format.
+        /// Only the date portion is used, time is ignored.
+        /// </summary>
+        /// <param name="date">The DateTime to format as a date</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <example>
+        /// <code>
+        /// // Set date of birth
+        /// fluent.PID[7].SetDate(new DateTime(1985, 3, 15));
+        /// 
+        /// // Chain with other operations
+        /// fluent.PID[7].SetDate(birthDate)
+        ///     .Field(8).Set("M");
+        /// </code>
+        /// </example>
+        public FieldMutator SetDate(DateTime date)
+        {
+            return Date(date);
         }
 
         /// <summary>
@@ -212,7 +328,27 @@ namespace HL7lite.Fluent.Mutators
         public FieldMutator Date(DateTime date)
         {
             var hl7Date = date.ToString("yyyyMMdd");
-            return Value(hl7Date);
+            return Set(hl7Date);
+        }
+
+        /// <summary>
+        /// Sets the field to today's date in HL7 format (YYYYMMDD).
+        /// Convenience method that uses the current date.
+        /// </summary>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <example>
+        /// <code>
+        /// // Set service date to today
+        /// fluent.DG1[5].SetDateToday();
+        /// 
+        /// // Chain with other operations
+        /// fluent.DG1[5].SetDateToday()
+        ///     .Field(6).Set("F");
+        /// </code>
+        /// </example>
+        public FieldMutator SetDateToday()
+        {
+            return DateToday();
         }
 
         /// <summary>
@@ -229,13 +365,27 @@ namespace HL7lite.Fluent.Mutators
         }
 
         /// <summary>
-        /// Sets the field value if the condition is true.
+        /// Sets the field value conditionally based on a boolean condition.
+        /// If the condition is false, the field is not modified.
         /// </summary>
-        public FieldMutator ValueIf(string value, bool condition)
+        /// <param name="value">The value to set if condition is true</param>
+        /// <param name="condition">The condition to evaluate</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <example>
+        /// <code>
+        /// // Set field only if patient has insurance
+        /// fluent.PID[18].SetIf("INS001", patient.HasInsurance);
+        /// 
+        /// // Chain with other conditional operations
+        /// fluent.PID[18].SetIf("INS001", patient.HasInsurance)
+        ///     .Field(19).SetIf("SSN123", patient.HasSSN);
+        /// </code>
+        /// </example>
+        public FieldMutator SetIf(string value, bool condition)
         {
             if (condition)
             {
-                return Value(value);
+                return Set(value);
             }
             return this;
         }

@@ -21,8 +21,8 @@ namespace HL7lite.Test.Fluent
             message.Segments("PID").Add();
             
             // Act - Call Set() multiple times
-            message.PID[3].Set().Value("FirstID");
-            message.PID[3].Set().Value("SecondID");
+            message.PID[3].Set("FirstID");
+            message.PID[3].Set("SecondID");
             
             // Assert - Should only have the last value, not repetitions
             Assert.Equal("SecondID", message.PID[3].Value);
@@ -45,7 +45,7 @@ namespace HL7lite.Test.Fluent
             message.Segments("PID").Add();
             
             // Act - Set initial value, then add repetition
-            message.PID[3].Set().Value("FirstID");
+            message.PID[3].Set("FirstID");
             message.PID[3].Repetitions.Add("SecondID");
             
             // Assert - Should have both values as repetitions
@@ -100,14 +100,14 @@ namespace HL7lite.Test.Fluent
             // Act - Add repetitions, then set new value  
             message.PID[3].Repetitions.Add("FirstID");
             message.PID[3].Repetitions.Add("SecondID");
-            message.PID[3].Set().Value("NewFirstID"); // This should reset the field
+            message.PID[3].Set("NewFirstID"); // This should reset the field
             
             // Debug: Print current state
             var hasReps = message.PID[3].HasRepetitions;
             var repCount = message.PID[3].RepetitionCount;
             var value = message.PID[3].Value;
             
-            // Assert what actually happens - calling Set().Value() after Repetitions.Add() resets the field
+            // Assert what actually happens - calling Set() after Repetitions.Add() resets the field
             Assert.False(message.PID[3].HasRepetitions, $"HasRepetitions={hasReps}, RepCount={repCount}, Value='{value}'");
             Assert.Equal(1, message.PID[3].RepetitionCount);
             Assert.Equal("NewFirstID", message.PID[3].Value);

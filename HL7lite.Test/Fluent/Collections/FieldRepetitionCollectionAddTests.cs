@@ -43,7 +43,7 @@ namespace HL7lite.Test.Fluent.Collections
         {
             // Arrange
             var message = CreateTestMessage();
-            message.PID[3].Set().Value("MRN001");
+            message.PID[3].Set("MRN001");
             
             // Act
             var result = message.PID[3].Repetitions.Add("ENC123");
@@ -100,7 +100,7 @@ namespace HL7lite.Test.Fluent.Collections
         {
             // Arrange
             var message = CreateTestMessage();
-            message.PID[3].Set().Value("MRN001");
+            message.PID[3].Set("MRN001");
             
             // Act
             var result = message.PID[3].Repetitions.Add();
@@ -146,7 +146,7 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Act
             var emptyRepetition = message.PID[3].Repetitions.Add();
-            emptyRepetition.Set().Components("MRN", "001", "HOSPITAL");
+            emptyRepetition.Set().SetComponents("MRN", "001", "HOSPITAL");
             
             // Assert
             Assert.Equal("MRN^001^HOSPITAL", emptyRepetition.Value);
@@ -202,9 +202,9 @@ namespace HL7lite.Test.Fluent.Collections
             var message = CreateTestMessage();
             
             // Act - Chain operations on the returned accessor
-            message.PID[3].Repetitions.Add("MRN001").Set().Components("MRN", "001", "HOSP");
+            message.PID[3].Repetitions.Add("MRN001").Set().SetComponents("MRN", "001", "HOSP");
             var result2 = message.PID[3].Repetitions.Add("ENC123");
-            result2.Set().Components("ENC", "123", "VISIT");
+            result2.Set().SetComponents("ENC", "123", "VISIT");
             
             // Assert
             Assert.True(message.PID[3].HasRepetitions);
@@ -223,11 +223,11 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Segments: Collection.Add() returns accessor
             var newDG1 = message.Segments("DG1").Add();
-            newDG1[1].Set().Value("1");
+            newDG1[1].Set("1");
             
             // Repetitions: Collection.Add() returns accessor  
             var newRepetition = message.PID[3].Repetitions.Add("MRN001");
-            newRepetition.Set().Components("MRN", "001");
+            newRepetition.Set().SetComponents("MRN", "001");
             
             // Assert - Both patterns work the same way
             Assert.Equal("1", message.Segments("DG1")[0][1].Value);
@@ -256,7 +256,7 @@ namespace HL7lite.Test.Fluent.Collections
         {
             // Arrange
             var message = CreateTestMessage();
-            message.PID[3].Set().Value("Initial");
+            message.PID[3].Set("Initial");
             
             // Access to populate cache
             var initialAccessor = message.PID[3].Repetitions[0];

@@ -78,8 +78,8 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             var fluent = new FluentMessage(message);
             
             // Add some empty fields to create trailing delimiters
-            fluent.PID[20].Set().Value("");
-            fluent.PID[21].Set().Value("");
+            fluent.PID[20].Set("");
+            fluent.PID[21].Set("");
 
             // Act
             var serialized = fluent.Serialize()
@@ -213,8 +213,8 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             var tempFile = CreateTempFile();
 
             // Act - Chain multiple operations  
-            fluent.PID[5].Set().Components("Smith", "Jane", "Marie");
-            fluent.PID[7].Set().Value("19901231");
+            fluent.PID[5].Set().SetComponents("Smith", "Jane", "Marie");
+            fluent.PID[7].Set("19901231");
             fluent
                   .Serialize()
                       .WithValidation()
@@ -262,7 +262,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             var fluent = new FluentMessage(message);
             
             // Add some empty fields
-            fluent.PID[20].Set().Value("");
+            fluent.PID[20].Set("");
 
             // Act
             var serializedAll = fluent.Serialize()

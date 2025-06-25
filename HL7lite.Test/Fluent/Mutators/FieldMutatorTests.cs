@@ -25,7 +25,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            mutator.Value("Smith^Jane");
+            mutator.Set("Smith^Jane");
 
             Assert.Equal("Smith^Jane", message.GetValue("PID.5"));
         }
@@ -36,7 +36,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            var result = mutator.Value("Test");
+            var result = mutator.Set("Test");
 
             Assert.Same(mutator, result);
         }
@@ -47,7 +47,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 20);
 
-            mutator.Value("NewValue");
+            mutator.Set("NewValue");
 
             Assert.Equal("NewValue", message.GetValue("PID.20"));
         }
@@ -58,7 +58,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            mutator.Null();
+            mutator.SetNull();
 
             Assert.Equal(message.Encoding.PresentButNull, message.GetValue("PID.5"));
         }
@@ -69,7 +69,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            var result = mutator.Null();
+            var result = mutator.SetNull();
 
             Assert.Same(mutator, result);
         }
@@ -102,7 +102,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            mutator.Components("Smith", "Jane", "Marie", "Dr.");
+            mutator.SetComponents("Smith", "Jane", "Marie", "Dr.");
 
             Assert.Equal("Smith^Jane^Marie^Dr.", message.GetValue("PID.5"));
         }
@@ -113,7 +113,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            mutator.Components("Smith", null, "Marie");
+            mutator.SetComponents("Smith", null, "Marie");
 
             Assert.Equal("Smith^^Marie", message.GetValue("PID.5"));
         }
@@ -124,7 +124,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            mutator.Components();
+            mutator.SetComponents();
 
             Assert.Equal("", message.GetValue("PID.5"));
         }
@@ -135,7 +135,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            var result = mutator.Components("Test");
+            var result = mutator.SetComponents("Test");
 
             Assert.Same(mutator, result);
         }
@@ -146,7 +146,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            mutator.ValueIf("NewValue", true);
+            mutator.SetIf("NewValue", true);
 
             Assert.Equal("NewValue", message.GetValue("PID.5"));
         }
@@ -158,7 +158,7 @@ PV1|1|I";
             var originalValue = message.GetValue("PID.5");
             var mutator = new FieldMutator(message, "PID", 5);
 
-            mutator.ValueIf("NewValue", false);
+            mutator.SetIf("NewValue", false);
 
             Assert.Equal(originalValue, message.GetValue("PID.5"));
         }
@@ -169,7 +169,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 5);
 
-            var result = mutator.ValueIf("Test", true);
+            var result = mutator.SetIf("Test", true);
 
             Assert.Same(mutator, result);
         }
@@ -183,8 +183,8 @@ PV1|1|I";
 
             mutator
                 .Clear()
-                .Components("Johnson", "Robert")
-                .ValueIf("Override", false);
+                .SetComponents("Johnson", "Robert")
+                .SetIf("Override", false);
 
             Assert.Equal("Johnson^Robert", message.GetValue("PID.5"));
         }
@@ -195,7 +195,7 @@ PV1|1|I";
             var message = CreateTestMessage();
 
             var mutator = new FieldMutator(message, "ZZZ", 1);
-            mutator.Value("Test");
+            mutator.Set("Test");
 
             Assert.Equal("Test", message.GetValue("ZZZ.1"));
         }
@@ -245,7 +245,7 @@ PV1|1|I";
             var fluent = new FluentMessage(message);
             
             // Test that mutator works correctly when accessed through fluent API
-            fluent.PID[5].Set().Value("NewName^Test");
+            fluent.PID[5].Set("NewName^Test");
             
             Assert.Equal("NewName^Test", fluent.PID[5].Value);
             Assert.Equal("NewName^Test", message.GetValue("PID.5"));
@@ -261,7 +261,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 1); // Start with field 1 mutator
             
             // Act
-            mutator.Field(5).Value("Smith^John");
+            mutator.Field(5).Set("Smith^John");
             
             // Assert
             Assert.Equal("Smith^John", message.GetValue("PID.5"));
@@ -291,9 +291,9 @@ PV1|1|I";
             
             // Act
             mutator
-                .Field(5).Value("Smith^John")
-                .Field(7).Value("19850315")
-                .Field(8).Value("M");
+                .Field(5).Set("Smith^John")
+                .Field(7).Set("19850315")
+                .Field(8).Set("M");
             
             // Assert
             Assert.Equal("Smith^John", message.GetValue("PID.5"));
@@ -310,9 +310,9 @@ PV1|1|I";
             
             // Act
             mutator.Clear()
-                .Components("Johnson", "Robert")
-                .Field(5).Value("Smith^John")
-                .Field(7).Value("19900101");
+                .SetComponents("Johnson", "Robert")
+                .Field(5).Set("Smith^John")
+                .Field(7).Set("19900101");
             
             // Assert  
             Assert.Equal("Johnson^Robert", message.GetValue("PID.1")); // Original field was set
@@ -340,7 +340,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 1);
             
             // Act
-            mutator.Field(5).Value(null);
+            mutator.Field(5).Set(null);
             
             // Assert
             Assert.Equal("", message.GetValue("PID.5"));
@@ -355,11 +355,10 @@ PV1|1|I";
             
             // Act - Test the typical use case with segment addition
             var seg = fluent.Segments("OBX").Add();
-            seg[1].Set()
-                .Value("1")
-                .Field(2).Value("NM")
-                .Field(3).Value("GLUCOSE")
-                .Field(5).Value("120");
+            seg[1].Set("1")
+                .Field(2).Set("NM")
+                .Field(3).Set("GLUCOSE")
+                .Field(5).Set("120");
             
             // Assert
             Assert.Equal("1", fluent.Segments("OBX")[0][1].Value);
@@ -381,7 +380,7 @@ PV1|1|I";
             var valueWithDelimiters = "Smith|John^Middle~Name\\Test&Co";
             
             // Act
-            mutator.EncodedValue(valueWithDelimiters);
+            mutator.SetEncoded(valueWithDelimiters);
             
             // Assert
             // GetValue() automatically decodes, so we need to check the raw field value
@@ -410,7 +409,7 @@ PV1|1|I";
             var valueWithFieldSeparator = "Test|Field|Separator";
             
             // Act
-            mutator.EncodedValue(valueWithFieldSeparator);
+            mutator.SetEncoded(valueWithFieldSeparator);
             
             // Assert
             // GetValue() automatically decodes, so we need to check the raw field value
@@ -435,7 +434,7 @@ PV1|1|I";
             var valueWithComponentSeparator = "Test^Component^Separator";
             
             // Act
-            mutator.EncodedValue(valueWithComponentSeparator);
+            mutator.SetEncoded(valueWithComponentSeparator);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -459,7 +458,7 @@ PV1|1|I";
             var valueWithRepetitionSeparator = "Test~Repetition~Separator";
             
             // Act
-            mutator.EncodedValue(valueWithRepetitionSeparator);
+            mutator.SetEncoded(valueWithRepetitionSeparator);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -483,7 +482,7 @@ PV1|1|I";
             var valueWithEscapeCharacter = "Test\\Escape\\Character";
             
             // Act
-            mutator.EncodedValue(valueWithEscapeCharacter);
+            mutator.SetEncoded(valueWithEscapeCharacter);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -506,7 +505,7 @@ PV1|1|I";
             var valueWithSubComponentSeparator = "Test&SubComponent&Separator";
             
             // Act
-            mutator.EncodedValue(valueWithSubComponentSeparator);
+            mutator.SetEncoded(valueWithSubComponentSeparator);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -529,7 +528,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 5);
             
             // Act
-            mutator.EncodedValue(null);
+            mutator.SetEncoded(null);
             
             // Assert
             var storedValue = message.GetValue("PID.5");
@@ -545,7 +544,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 5);
             
             // Act
-            mutator.EncodedValue("");
+            mutator.SetEncoded("");
             
             // Assert
             var storedValue = message.GetValue("PID.5");
@@ -561,7 +560,7 @@ PV1|1|I";
             var normalText = "Smith John Middle";
             
             // Act
-            mutator.EncodedValue(normalText);
+            mutator.SetEncoded(normalText);
             
             // Assert
             var storedValue = message.GetValue("PID.5");
@@ -576,7 +575,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 5);
             
             // Act
-            var result = mutator.EncodedValue("Test|Value");
+            var result = mutator.SetEncoded("Test|Value");
             
             // Assert
             Assert.Same(mutator, result);
@@ -591,9 +590,9 @@ PV1|1|I";
             
             // Act
             mutator
-                .EncodedValue("Smith|John^Middle")
-                .Field(7).Value("19850315")
-                .Field(8).Value("M");
+                .SetEncoded("Smith|John^Middle")
+                .Field(7).Set("19850315")
+                .Field(8).Set("M");
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -615,7 +614,7 @@ PV1|1|I";
             var complexValue = "http://domain.com/resource?Action=1&ID=2|Special^Value~Test\\Path&More";
             
             // Act
-            mutator.EncodedValue(complexValue);
+            mutator.SetEncoded(complexValue);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -649,7 +648,7 @@ PV1|1|I";
             var valueWithDelimiters = "Test|Field^Component~Rep\\Escape&Sub";
             
             // Act - Access through fluent API
-            fluent.PID[5].Set().EncodedValue(valueWithDelimiters);
+            fluent.PID[5].Set().SetEncoded(valueWithDelimiters);
             
             // Assert
             var fluentValue = fluent.PID[5].Value;
@@ -740,7 +739,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 3);
             
             // Act
-            mutator.Field(5).Component(1).Value("Johnson");
+            mutator.Field(5).Component(1).Set("Johnson");
             
             // Assert
             Assert.Equal("Johnson", message.GetValue("PID.5.1"));
@@ -754,7 +753,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 3);
             
             // Act
-            mutator.Field(11).SubComponent(1, 1).Value("123 Main St");
+            mutator.Field(11).SubComponent(1, 1).Set("123 Main St");
             
             // Assert
             Assert.Equal("123 Main St", message.GetValue("PID.11.1"));

@@ -15,20 +15,19 @@ namespace HL7lite.Fluent.Mutators
     /// <example>
     /// <code>
     /// // Set a subcomponent value
-    /// fluent.PID[5][1][1].Set().Value("LastName");
+    /// fluent.PID[5][1][1].Set("LastName");
     /// 
     /// // Chain operations across levels
-    /// fluent.PID[5][1][1].Set()
-    ///     .Value("Smith")
-    ///     .SubComponent(2, "Jr")
-    ///     .Component(2, "John")
-    ///     .Field(7, "19851225");
+    /// fluent.PID[5][1][1].Set("Smith")
+    ///     .SubComponent(2).Set("Jr")
+    ///     .Component(2).Set("John")
+    ///     .Field(7).Set("19851225");
     /// 
     /// // Handle delimiters safely
-    /// fluent.OBX[5][1][1].Set().EncodedValue("Data with | delimiters");
+    /// fluent.OBX[5][1][1].SetEncoded("Data with | delimiters");
     /// 
     /// // Conditional operations
-    /// fluent.PID[5][1][1].Set().ValueIf("DefaultName", condition);
+    /// fluent.PID[5][1][1].SetIf("DefaultName", condition);
     /// </code>
     /// </example>
     public class SubComponentMutator
@@ -85,22 +84,21 @@ namespace HL7lite.Fluent.Mutators
 
         /// <summary>
         /// Sets the subcomponent to the specified value. Creates the segment, field, and component if they don't exist.
-        /// Null values are converted to empty strings. For explicit HL7 null values, use the Null() method.
+        /// Null values are converted to empty strings. For explicit HL7 null values, use the SetNull() method.
         /// </summary>
         /// <param name="value">The value to set. Null values are converted to empty strings.</param>
         /// <returns>The SubComponentMutator for method chaining</returns>
         /// <example>
         /// <code>
         /// // Set subcomponent value
-        /// fluent.PID[5][1][1].Set().Value("Smith");
+        /// fluent.PID[5][1][1].Set("Smith");
         /// 
         /// // Chain multiple operations
-        /// fluent.PID[5][1][1].Set()
-        ///     .Value("Smith")
-        ///     .SubComponent(2, "Jr");
+        /// fluent.PID[5][1][1].Set("Smith")
+        ///     .SubComponent(2).Set("Jr");
         /// </code>
         /// </example>
-        public SubComponentMutator Value(string value)
+        public SubComponentMutator Set(string value)
         {
             // Ensure segment exists
             try
@@ -129,23 +127,43 @@ namespace HL7lite.Fluent.Mutators
         /// </summary>
         /// <param name="value">The value to encode and set</param>
         /// <returns>The SubComponentMutator for method chaining</returns>
-        public SubComponentMutator EncodedValue(string value)
+        /// <example>
+        /// <code>
+        /// // Set subcomponent with special characters
+        /// fluent.PID[5][1][1].SetEncoded("Smith&Jones");
+        /// 
+        /// // Chain with other operations
+        /// fluent.PID[5][1][1].SetEncoded("Complex|Value")
+        ///     .SubComponent(2).Set("Simple");
+        /// </code>
+        /// </example>
+        public SubComponentMutator SetEncoded(string value)
         {
             if (value == null)
             {
-                return Value(null);
+                return Set(null);
             }
 
             var encodedValue = _message.Encoding.Encode(value);
-            return Value(encodedValue);
+            return Set(encodedValue);
         }
 
         /// <summary>
-        /// Sets the subcomponent to an explicit HL7 null value (""). This is different from an empty string
-        /// and represents a field that is present but has no value in HL7 terms.
+        /// Sets the subcomponent to HL7 null value.
+        /// In HL7, null values are represented as empty strings ("").
         /// </summary>
         /// <returns>The SubComponentMutator for method chaining</returns>
-        public SubComponentMutator Null()
+        /// <example>
+        /// <code>
+        /// // Set subcomponent to explicit null
+        /// fluent.PID[5][1][2].SetNull();
+        /// 
+        /// // Chain with other operations
+        /// fluent.PID[5][1][2].SetNull()
+        ///     .SubComponent(3).Set("Value");
+        /// </code>
+        /// </example>
+        public SubComponentMutator SetNull()
         {
             _message.PutValue(_path, _message.Encoding.PresentButNull);
             return this;
@@ -163,23 +181,27 @@ namespace HL7lite.Fluent.Mutators
         }
 
         /// <summary>
-        /// Conditionally sets the subcomponent value based on the provided condition.
-        /// If the condition is false, the subcomponent remains unchanged.
+        /// Sets the subcomponent value conditionally based on a boolean condition.
+        /// If the condition is false, the subcomponent is not modified.
         /// </summary>
-        /// <param name="value">The value to set if the condition is true</param>
-        /// <param name="condition">The condition that determines whether to set the value</param>
+        /// <param name="value">The value to set if condition is true</param>
+        /// <param name="condition">The condition to evaluate</param>
         /// <returns>The SubComponentMutator for method chaining</returns>
         /// <example>
         /// <code>
-        /// // Only set if patient has a suffix
-        /// fluent.PID[5][1][2].Set().ValueIf("Jr", patient.HasSuffix);
+        /// // Set suffix only if provided
+        /// fluent.PID[5][1][2].SetIf("Jr", patient.HasSuffix);
+        /// 
+        /// // Chain with other conditional operations
+        /// fluent.PID[5][1][2].SetIf("Jr", hasSuffix)
+        ///     .SubComponent(3).SetIf("III", hasGenerationSuffix);
         /// </code>
         /// </example>
-        public SubComponentMutator ValueIf(string value, bool condition)
+        public SubComponentMutator SetIf(string value, bool condition)
         {
             if (condition)
             {
-                return Value(value);
+                return Set(value);
             }
             return this;
         }

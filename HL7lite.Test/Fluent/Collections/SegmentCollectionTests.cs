@@ -253,7 +253,7 @@ PV1|1|I";
             var __ = newSegment[3][1].Value; // Should not throw
             
             // Skip mutation testing until issue is resolved
-            // newSegment[1].Set().Value("4");
+            // newSegment[1].Set("4");
             // newSegment[3].Set().Components("V58.69", "Long-term medication use", "I9");
             // Assert.Equal("4", newSegment[1].Value);
             // Assert.Equal("V58.69", newSegment[3][1].Value);
@@ -266,8 +266,8 @@ PV1|1|I";
             var collection = new SegmentCollection(message, "DG1");
 
             var newSegment = collection.Add();
-            newSegment[1].Set().Value("1");
-            newSegment[3].Set().Value("250.00");
+            newSegment[1].Set("1");
+            newSegment[3].Set("250.00");
 
             Assert.Equal(1, collection.Count);
             Assert.Equal("250.00", collection[0][3].Value);
@@ -282,9 +282,9 @@ PV1|1|I";
             
             // Act - Add new DG1 segment and set field values
             var newDG1 = fluent.Segments("DG1").Add();
-            newDG1[1].Set().Value("1");
-            newDG1[3].Set().Value("250.00^Diabetes^I9");
-            newDG1[6].Set().Value("F");
+            newDG1[1].Set("1");
+            newDG1[3].Set("250.00^Diabetes^I9");
+            newDG1[6].Set("F");
             
             // Assert
             Assert.Equal(1, fluent.Segments("DG1").Count);
@@ -308,18 +308,18 @@ PV1|1|I";
             // Act - Add multiple segments with different patterns
             // Pattern 1: Store reference and set values
             var dg1_1 = fluent.Segments("DG1").Add();
-            dg1_1[1].Set().Value("1");
-            dg1_1[3].Set().Components("250.00", "Diabetes", "I9");
+            dg1_1[1].Set("1");
+            dg1_1[3].Set().SetComponents("250.00", "Diabetes", "I9");
             
             // Pattern 2: Add second segment
             var dg1_2 = fluent.Segments("DG1").Add();
-            dg1_2[1].Set().Value("2");
-            dg1_2[3].Set().Value("401.9^Hypertension^I9");
+            dg1_2[1].Set("2");
+            dg1_2[3].Set("401.9^Hypertension^I9");
             
             // Pattern 3: Add custom segment
             var zin = fluent.Segments("ZIN").Add();
-            zin[1].Set().Value("CustomField1");
-            zin[2].Set().Value("CustomField2");
+            zin[1].Set("CustomField1");
+            zin[2].Set("CustomField2");
             
             // Assert
             Assert.Equal(2, fluent.Segments("DG1").Count);
@@ -349,8 +349,8 @@ PV1|1|I";
             
             // Act - Add a 4th DG1 segment
             var newDG1 = fluent.Segments("DG1").Add();
-            newDG1[1].Set().Value("4");
-            newDG1[3].Set().Value("V58.69^Long-term medication^I9");
+            newDG1[1].Set("4");
+            newDG1[3].Set("V58.69^Long-term medication^I9");
             
             // Assert
             Assert.Equal(4, fluent.Segments("DG1").Count);
@@ -372,22 +372,22 @@ PV1|1|I";
             
             // Act - Add multiple segments and set different field values
             var obs1 = fluent.Segments("OBX").Add();
-            obs1[1].Set().Value("1");
-            obs1[2].Set().Value("NM");
-            obs1[3].Set().Value("GLUCOSE");
-            obs1[5].Set().Value("120");
+            obs1[1].Set("1");
+            obs1[2].Set("NM");
+            obs1[3].Set("GLUCOSE");
+            obs1[5].Set("120");
             
             var obs2 = fluent.Segments("OBX").Add();
-            obs2[1].Set().Value("2");
-            obs2[2].Set().Value("ST");
-            obs2[3].Set().Value("COMMENTS");
-            obs2[5].Set().Value("Normal range");
+            obs2[1].Set("2");
+            obs2[2].Set("ST");
+            obs2[3].Set("COMMENTS");
+            obs2[5].Set("Normal range");
             
             var obs3 = fluent.Segments("OBX").Add();
-            obs3[1].Set().Value("3");
-            obs3[2].Set().Value("NM");
-            obs3[3].Set().Value("CHOLESTEROL");
-            obs3[5].Set().Value("180");
+            obs3[1].Set("3");
+            obs3[2].Set("NM");
+            obs3[3].Set("CHOLESTEROL");
+            obs3[5].Set("180");
             
             // Assert - Verify each segment has the correct field values
             Assert.Equal(3, fluent.Segments("OBX").Count);
@@ -647,7 +647,7 @@ PV1|1|I";
             
             // Act
             var copiedSegment = targetCollection.AddCopy(sourceSegment);
-            copiedSegment[3][2].Set().Value("Modified Diagnosis");
+            copiedSegment[3][2].Set("Modified Diagnosis");
             
             // Assert - Original segment unchanged (check via fluent API)
             var sourceFluent = new FluentMessage(sourceMessage);
@@ -668,7 +668,7 @@ PV1|1|I";
             
             // Act - Modify original segment through fluent API
             var sourceFluent = new FluentMessage(sourceMessage);
-            sourceFluent.Segments("DG1")[0][3][2].Set().Value("Changed Original");
+            sourceFluent.Segments("DG1")[0][3][2].Set("Changed Original");
             
             // Assert - Copy unchanged
             Assert.Equal("Diabetes Mellitus", copiedSegment[3][2].Value);
@@ -713,7 +713,7 @@ PV1|1|I";
             
             // Add one segment first
             targetCollection.Add();
-            targetCollection[0][3].Set().Value("First^Diagnosis");
+            targetCollection[0][3].Set("First^Diagnosis");
             
             // Act
             var result = targetCollection.AddCopy(sourceSegment);
@@ -767,7 +767,7 @@ PV1|1|I";
             Assert.Equal("493.90", results[2][3][1].Value);
             
             // Modify one copy and ensure others unchanged
-            results[0][3][2].Set().Value("Modified");
+            results[0][3][2].Set("Modified");
             Assert.Equal("Modified", results[0][3][2].Value);
             Assert.Equal("Hypertension", results[1][3][2].Value); // Unchanged
             Assert.Equal("Asthma", results[2][3][2].Value); // Unchanged
