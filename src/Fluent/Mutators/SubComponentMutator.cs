@@ -185,69 +185,45 @@ namespace HL7lite.Fluent.Mutators
         }
 
         /// <summary>
-        /// Sets a subcomponent within the same component, allowing horizontal navigation.
-        /// Creates a new SubComponentMutator targeting the specified subcomponent index.
+        /// Navigates to a different subcomponent within the same component.
         /// </summary>
-        /// <param name="subComponentIndex">The subcomponent index (1-based)</param>
-        /// <param name="value">The value to set</param>
-        /// <returns>A new SubComponentMutator for the specified subcomponent</returns>
-        /// <example>
-        /// <code>
-        /// // Set multiple subcomponents in sequence
-        /// fluent.PID[5][1][1].Set()
-        ///     .Value("Smith")
-        ///     .SubComponent(2, "Jr")
-        ///     .SubComponent(3, "III");
-        /// </code>
-        /// </example>
-        public SubComponentMutator SubComponent(int subComponentIndex, string value)
+        /// <param name="subComponentIndex">The 1-based subcomponent index to navigate to.</param>
+        /// <returns>A SubComponentMutator for the target subcomponent.</returns>
+        public SubComponentMutator SubComponent(int subComponentIndex)
         {
-            var subComponentMutator = new SubComponentMutator(_message, _segmentCode, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex);
-            return subComponentMutator.Value(value);
+            if (subComponentIndex <= 0)
+                throw new ArgumentException("SubComponent index must be greater than 0", nameof(subComponentIndex));
+
+            // Create and return a new SubComponentMutator for the target subcomponent
+            return new SubComponentMutator(_message, _segmentCode, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex);
         }
 
         /// <summary>
-        /// Sets a component within the same field, allowing upward navigation in the HL7 hierarchy.
-        /// Creates a new ComponentMutator targeting the specified component index.
+        /// Navigates to a different component within the same field.
         /// </summary>
-        /// <param name="componentIndex">The component index (1-based)</param>
-        /// <param name="value">The value to set</param>
-        /// <returns>A new ComponentMutator for the specified component</returns>
-        /// <example>
-        /// <code>
-        /// // Navigate from subcomponent to component level
-        /// fluent.PID[5][1][1].Set()
-        ///     .Value("Smith")
-        ///     .Component(2, "John")  // Move to different component
-        ///     .Component(3, "M");     // Continue at component level
-        /// </code>
-        /// </example>
-        public ComponentMutator Component(int componentIndex, string value)
+        /// <param name="componentIndex">The 1-based component index to navigate to.</param>
+        /// <returns>A ComponentMutator for the target component.</returns>
+        public ComponentMutator Component(int componentIndex)
         {
-            var componentMutator = new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex);
-            return componentMutator.Value(value);
+            if (componentIndex <= 0)
+                throw new ArgumentException("Component index must be greater than 0", nameof(componentIndex));
+
+            // Create and return a new ComponentMutator for the target component
+            return new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex);
         }
 
         /// <summary>
-        /// Sets a field within the same segment, allowing upward navigation to the field level.
-        /// Creates a new FieldMutator targeting the specified field index.
+        /// Navigates to a different field in the same segment.
         /// </summary>
-        /// <param name="fieldIndex">The field index (1-based)</param>
-        /// <param name="value">The value to set</param>
-        /// <returns>A new FieldMutator for the specified field</returns>
-        /// <example>
-        /// <code>
-        /// // Navigate from subcomponent to field level
-        /// fluent.PID[5][1][1].Set()
-        ///     .Value("Smith")
-        ///     .Field(7, "19851225")   // Move to date of birth field
-        ///     .Field(8, "M");         // Continue setting other fields
-        /// </code>
-        /// </example>
-        public FieldMutator Field(int fieldIndex, string value)
+        /// <param name="fieldIndex">The 1-based field index to navigate to.</param>
+        /// <returns>A FieldMutator for the target field.</returns>
+        public FieldMutator Field(int fieldIndex)
         {
-            var fieldMutator = new FieldMutator(_message, _segmentCode, fieldIndex);
-            return fieldMutator.Value(value);
+            if (fieldIndex <= 0)
+                throw new ArgumentException("Field index must be greater than 0", nameof(fieldIndex));
+
+            // Create and return a new FieldMutator for the target field
+            return new FieldMutator(_message, _segmentCode, fieldIndex);
         }
     }
 }

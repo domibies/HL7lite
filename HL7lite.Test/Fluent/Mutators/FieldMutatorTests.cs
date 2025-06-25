@@ -254,31 +254,32 @@ PV1|1|I";
         #region Field() Method Tests
 
         [Fact]
-        public void Field_ShouldSetSpecificFieldOnSegment()
+        public void Field_ShouldNavigateToSpecificFieldOnSegment()
         {
             // Arrange
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 1); // Start with field 1 mutator
             
             // Act
-            mutator.Field(5, "Smith^John");
+            mutator.Field(5).Value("Smith^John");
             
             // Assert
             Assert.Equal("Smith^John", message.GetValue("PID.5"));
         }
 
         [Fact]
-        public void Field_ShouldReturnSelfForChaining()
+        public void Field_ShouldReturnNewMutatorForNavigatedField()
         {
             // Arrange
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 1);
             
             // Act
-            var result = mutator.Field(5, "Test");
+            var result = mutator.Field(5);
             
             // Assert
-            Assert.Same(mutator, result);
+            Assert.NotSame(mutator, result);
+            Assert.IsType<FieldMutator>(result);
         }
 
         [Fact]
@@ -290,9 +291,9 @@ PV1|1|I";
             
             // Act
             mutator
-                .Field(5, "Smith^John")
-                .Field(7, "19850315")
-                .Field(8, "M");
+                .Field(5).Value("Smith^John")
+                .Field(7).Value("19850315")
+                .Field(8).Value("M");
             
             // Assert
             Assert.Equal("Smith^John", message.GetValue("PID.5"));
@@ -301,22 +302,22 @@ PV1|1|I";
         }
 
         [Fact]
-        public void Field_CanBeChainedWithOtherMethods()
+        public void Field_CanNavigateAndSetMultipleFields()
         {
             // Arrange
             var message = CreateTestMessage();
             var mutator = new FieldMutator(message, "PID", 1);
             
             // Act
-            mutator
-                .Field(5, "Smith^John")
-                .Clear()
+            mutator.Clear()
                 .Components("Johnson", "Robert")
-                .Field(7, "19900101");
+                .Field(5).Value("Smith^John")
+                .Field(7).Value("19900101");
             
             // Assert  
-            Assert.Equal("Johnson^Robert", message.GetValue("PID.1")); // Clear and Components worked on original field
-            Assert.Equal("19900101", message.GetValue("PID.7")); // Field method set field 7
+            Assert.Equal("Johnson^Robert", message.GetValue("PID.1")); // Original field was set
+            Assert.Equal("Smith^John", message.GetValue("PID.5")); // Field 5 was set
+            Assert.Equal("19900101", message.GetValue("PID.7")); // Field 7 was set
         }
 
         [Fact]
@@ -327,8 +328,8 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 1);
             
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => mutator.Field(0, "Test"));
-            Assert.Throws<ArgumentException>(() => mutator.Field(-1, "Test"));
+            Assert.Throws<ArgumentException>(() => mutator.Field(0));
+            Assert.Throws<ArgumentException>(() => mutator.Field(-1));
         }
 
         [Fact]
@@ -339,7 +340,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 1);
             
             // Act
-            mutator.Field(5, null);
+            mutator.Field(5).Value(null);
             
             // Assert
             Assert.Equal("", message.GetValue("PID.5"));
@@ -356,9 +357,9 @@ PV1|1|I";
             var seg = fluent.Segments("OBX").Add();
             seg[1].Set()
                 .Value("1")
-                .Field(2, "NM")
-                .Field(3, "GLUCOSE")
-                .Field(5, "120");
+                .Field(2).Value("NM")
+                .Field(3).Value("GLUCOSE")
+                .Field(5).Value("120");
             
             // Assert
             Assert.Equal("1", fluent.Segments("OBX")[0][1].Value);
@@ -591,8 +592,8 @@ PV1|1|I";
             // Act
             mutator
                 .EncodedValue("Smith|John^Middle")
-                .Field(7, "19850315")
-                .Field(8, "M");
+                .Field(7).Value("19850315")
+                .Field(8).Value("M");
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -669,6 +670,94 @@ PV1|1|I";
             // Verify GetValue() returns the decoded value
             var decodedValue = message.GetValue("PID.5");
             Assert.Equal(valueWithDelimiters, decodedValue);
+        }
+
+        #endregion
+
+        #region Navigation Tests
+
+        [Fact]
+        public void Component_ShouldReturnComponentMutator()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            
+            // Act
+            var componentMutator = mutator.Component(1);
+            
+            // Assert
+            Assert.NotNull(componentMutator);
+            Assert.IsType<ComponentMutator>(componentMutator);
+        }
+
+        [Fact]
+        public void Component_WithInvalidIndex_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => mutator.Component(0));
+            Assert.Throws<ArgumentException>(() => mutator.Component(-1));
+        }
+
+        [Fact]
+        public void SubComponent_ShouldReturnSubComponentMutator()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            
+            // Act
+            var subComponentMutator = mutator.SubComponent(1, 1);
+            
+            // Assert
+            Assert.NotNull(subComponentMutator);
+            Assert.IsType<SubComponentMutator>(subComponentMutator);
+        }
+
+        [Fact]
+        public void SubComponent_WithInvalidIndex_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 5);
+            
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => mutator.SubComponent(0, 1));
+            Assert.Throws<ArgumentException>(() => mutator.SubComponent(1, 0));
+            Assert.Throws<ArgumentException>(() => mutator.SubComponent(-1, 1));
+            Assert.Throws<ArgumentException>(() => mutator.SubComponent(1, -1));
+        }
+
+        [Fact]
+        public void NavigationChain_FieldToComponentToValue_ShouldWork()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 3);
+            
+            // Act
+            mutator.Field(5).Component(1).Value("Johnson");
+            
+            // Assert
+            Assert.Equal("Johnson", message.GetValue("PID.5.1"));
+        }
+
+        [Fact]
+        public void NavigationChain_FieldToSubComponentToValue_ShouldWork()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new FieldMutator(message, "PID", 3);
+            
+            // Act
+            mutator.Field(11).SubComponent(1, 1).Value("123 Main St");
+            
+            // Assert
+            Assert.Equal("123 Main St", message.GetValue("PID.11.1"));
         }
 
         #endregion

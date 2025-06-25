@@ -43,7 +43,7 @@ PV1|1|I";
             var fluent = CreateTestMessage();
 
             fluent.PID[7].Set("19900101")
-                .Field(8, "F");
+                .Field(8).Value("F");
 
             Assert.Equal("19900101", fluent.PID[7].Value);
             Assert.Equal("F", fluent.PID[8].Value);
@@ -86,8 +86,8 @@ PV1|1|I";
             var fluent = CreateTestMessage();
 
             fluent.PID[5][2].Set("Jane")
-                .Component(3, "Marie")
-                .Field(7, "19900101");
+                .Component(3).Value("Marie")
+                .Field(7).Value("19900101");
 
             Assert.Equal("Jane", fluent.PID[5][2].Value);
             Assert.Equal("Marie", fluent.PID[5][3].Value);
@@ -149,9 +149,9 @@ PV1|1|I";
             var fluent = CreateTestMessage();
 
             fluent.PID[5][1][1].Set("FirstSub")
-                .SubComponent(2, "SecondSub")
-                .Component(2, "SecondComp")
-                .Field(7, "19900101");
+                .SubComponent(2).Value("SecondSub")
+                .Component(2).Value("SecondComp")
+                .Field(7).Value("19900101");
 
             Assert.Equal("FirstSub", fluent.PID[5][1][1].Value);
             Assert.Equal("SecondSub", fluent.PID[5][1][2].Value);
@@ -176,14 +176,14 @@ PV1|1|I";
 
             // Demonstrate concise message building
             fluent.PID[3].Set("98765")
-                .Field(5, "Johnson^Mary^Elizabeth")
-                .Field(7, "19851225")
-                .Field(8, "F");
+                .Field(5).Value("Johnson^Mary^Elizabeth")
+                .Field(7).Value("19851225")
+                .Field(8).Value("F");
 
             fluent.PID[5][1].Set("Johnson")
-                .Component(2, "Mary")
-                .Component(3, "Elizabeth")
-                .Field(11, "456 Oak Ave^Boston^MA^02101");
+                .Component(2).Value("Mary")
+                .Component(3).Value("Elizabeth")
+                .Field(11).Value("456 Oak Ave^Boston^MA^02101");
 
             Assert.Equal("98765", fluent.PID[3].Value);
             Assert.Equal("Johnson^Mary^Elizabeth", fluent.PID[5].Value);
@@ -220,17 +220,17 @@ PV1|1|I";
 
             // Test complete hierarchy: Field -> Component -> SubComponent shortcuts
             fluent.PID[5].Set("Smith^John^M^Dr^III")
-                .Field(7, "19900101")
-                .Field(8, "M");
+                .Field(7).Value("19900101")
+                .Field(8).Value("M");
 
             fluent.PID[5][1].Set("Johnson")
-                .Component(2, "Jane")
-                .Field(11, "123 Main St");
+                .Component(2).Value("Jane")
+                .Field(11).Value("123 Main St");
 
             fluent.PID[5][1][1].Set("NewLastName")
-                .SubComponent(2, "Suffix")
-                .Component(3, "MiddleName")
-                .Field(13, "555-1234");
+                .SubComponent(2).Value("Suffix")
+                .Component(3).Value("MiddleName")
+                .Field(13).Value("555-1234");
 
             // Check individual subcomponents
             Assert.Equal("NewLastName", fluent.PID[5][1][1].Value);

@@ -1,4 +1,6 @@
+using System;
 using HL7lite.Fluent;
+using HL7lite.Fluent.Mutators;
 using HL7lite.Test;
 using Xunit;
 
@@ -109,7 +111,7 @@ PV1|1|I";
 
             fluent.PID[5][1][1].Set()
                 .Value("First")
-                .SubComponent(2, "Second");
+                .SubComponent(2).Value("Second");
 
             Assert.Equal("First", fluent.PID[5][1][1].Value);
             Assert.Equal("Second", fluent.PID[5][1][2].Value);
@@ -122,7 +124,7 @@ PV1|1|I";
 
             fluent.PID[5][1][1].Set()
                 .Value("FirstSubComp")
-                .Component(2, "SecondComponent");
+                .Component(2).Value("SecondComponent");
 
             Assert.Equal("FirstSubComp", fluent.PID[5][1][1].Value);
             Assert.Equal("SecondComponent", fluent.PID[5][2].Value);
@@ -135,7 +137,7 @@ PV1|1|I";
 
             fluent.PID[5][1][1].Set()
                 .Value("SubCompValue")
-                .Field(7, "19900101");
+                .Field(7).Value("19900101");
 
             Assert.Equal("SubCompValue", fluent.PID[5][1][1].Value);
             Assert.Equal("19900101", fluent.PID[7].Value);
@@ -184,10 +186,10 @@ PV1|1|I";
 
             fluent.PID[5][1][1].Set()
                 .Value("LastName")
-                .SubComponent(2, "FirstName")
-                .Component(2, "GivenName")
-                .Field(7, "19851225")
-                .Field(8, "M");
+                .SubComponent(2).Value("FirstName")
+                .Component(2).Value("GivenName")
+                .Field(7).Value("19851225")
+                .Field(8).Value("M");
 
             Assert.Equal("LastName", fluent.PID[5][1][1].Value);
             Assert.Equal("FirstName", fluent.PID[5][1][2].Value);
@@ -195,5 +197,108 @@ PV1|1|I";
             Assert.Equal("19851225", fluent.PID[7].Value);
             Assert.Equal("M", fluent.PID[8].Value);
         }
+
+        #region Navigation Tests
+
+        [Fact]
+        public void Field_ShouldReturnFieldMutator()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new SubComponentMutator(message.UnderlyingMessage, "PID", 5, 1, 1);
+            
+            // Act
+            var fieldMutator = mutator.Field(7);
+            
+            // Assert
+            Assert.NotNull(fieldMutator);
+            Assert.IsType<FieldMutator>(fieldMutator);
+        }
+
+        [Fact]
+        public void Field_WithInvalidIndex_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new SubComponentMutator(message.UnderlyingMessage, "PID", 5, 1, 1);
+            
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => mutator.Field(0));
+            Assert.Throws<ArgumentException>(() => mutator.Field(-1));
+        }
+
+        [Fact]
+        public void Component_ShouldReturnComponentMutator()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new SubComponentMutator(message.UnderlyingMessage, "PID", 5, 1, 1);
+            
+            // Act
+            var componentMutator = mutator.Component(2);
+            
+            // Assert
+            Assert.NotNull(componentMutator);
+            Assert.IsType<ComponentMutator>(componentMutator);
+        }
+
+        [Fact]
+        public void Component_WithInvalidIndex_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new SubComponentMutator(message.UnderlyingMessage, "PID", 5, 1, 1);
+            
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => mutator.Component(0));
+            Assert.Throws<ArgumentException>(() => mutator.Component(-1));
+        }
+
+        [Fact]
+        public void SubComponent_ShouldReturnSubComponentMutator()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new SubComponentMutator(message.UnderlyingMessage, "PID", 5, 1, 1);
+            
+            // Act
+            var subComponentMutator = mutator.SubComponent(2);
+            
+            // Assert
+            Assert.NotNull(subComponentMutator);
+            Assert.IsType<SubComponentMutator>(subComponentMutator);
+        }
+
+        [Fact]
+        public void SubComponent_WithInvalidIndex_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new SubComponentMutator(message.UnderlyingMessage, "PID", 5, 1, 1);
+            
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => mutator.SubComponent(0));
+            Assert.Throws<ArgumentException>(() => mutator.SubComponent(-1));
+        }
+
+        [Fact]
+        public void NavigationChain_SubComponentToFieldToComponent_ShouldWork()
+        {
+            // Arrange
+            var message = CreateTestMessage();
+            var mutator = new SubComponentMutator(message.UnderlyingMessage, "PID", 5, 1, 1);
+            
+            // Act
+            mutator.SubComponent(2).Value("Jr")
+                .Field(7).Value("19851225")
+                .Field(8).Value("M");
+            
+            // Assert
+            Assert.Equal("Jr", message.UnderlyingMessage.GetValue("PID.5.1.2"));
+            Assert.Equal("19851225", message.UnderlyingMessage.GetValue("PID.7"));
+            Assert.Equal("M", message.UnderlyingMessage.GetValue("PID.8"));
+        }
+
+        #endregion
     }
 }

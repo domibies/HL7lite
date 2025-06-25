@@ -23,10 +23,19 @@
 
 ## Key Features
 
-- ⚡ **Lightning Fast** - Parse HL7 messages without schema validation overhead
-- 🎯 **Modern Fluent API** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Intuitive, chainable methods for message manipulation
-- 🛡️ **Safe Data Access** - Fluent API returns empty values instead of throwing exceptions
-- 🔧 **Auto-creation** - Automatically create missing segments, fields, and components
+### 🎯 Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
+*Complete rewrite with intuitive, modern interface - available in v2.0.0-rc.1*
+
+- 🧭 **Pure Navigation** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Crystal clear navigation with natural language-like syntax: `Field(7).Component(1).Value("text")`
+- ⛓️ **Method Chaining** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Fluent operations across all hierarchy levels with intuitive return types
+- 🛡️ **Safe Data Access** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Returns empty values instead of throwing exceptions
+- 🔧 **Auto-creation** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Automatically creates missing segments, fields, and components
+- 🗂️ **LINQ Collections** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Full LINQ support for segments and field repetitions
+- 🛤️ **Path API** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - String-based access wrapping legacy GetValue/SetValue methods
+- 🔐 **Encoding Support** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Automatic HL7 delimiter character encoding/decoding
+
+### 🏗️ Core Engine
+- ⚡ **Lightning Fast** - Parse HL7 messages without schema validation overhead  
 - 📦 **Lightweight** - Minimal dependencies, small footprint
 - ✅ **Battle-tested** - Key integration component in Belgium's largest hospital group ([ZAS](https://www.zas.be))
 - 🔄 **Always Compatible** - Full backward compatibility with [legacy API](README.Legacy.md)
@@ -113,6 +122,40 @@ var diagnoses = fluent.Segments("DG1")
     .ToList();
 ```
 
+### Pure Navigation Pattern
+
+HL7lite uses a **Pure Navigation Pattern** that separates navigation from setting operations for crystal-clear intent:
+
+```csharp
+// ✅ PURE NAVIGATION: Navigate first, then set
+fluent.PID[5].Set()
+    .Value("Smith")                     // Set current field
+    .Field(7).Value("19850315")         // Navigate to field 7, then set
+    .Field(8).Value("M")                // Navigate to field 8, then set
+    .Field(11).Component(3).Value("Springfield");  // Navigate to field 11, component 3, then set
+
+// ✅ Cross-level navigation reads like natural language
+fluent.PID[5][1][1].Set()
+    .Value("LastName")                  // Set current subcomponent
+    .SubComponent(2).Value("FirstName") // Navigate to subcomponent 2, then set
+    .Component(2).Value("MiddleName")   // Navigate to component 2, then set
+    .Field(7).Value("19850315");        // Navigate to field 7, then set
+
+// ✅ Complex navigation with clear intent
+fluent.Segments("OBX").Add()
+    .Field(1).Value("1")                // Navigate to field 1, set sequence ID
+    .Field(3).Component(1).Value("GLUCOSE")     // Navigate to observation identifier
+    .Field(5).Value("95")               // Navigate to observation value
+    .Field(14).Component(1).Value("20240101120000");  // Navigate to timestamp
+```
+
+**Key Benefits:**
+- **Crystal Clear Intent**: `Field(11).Component(1).Value("text")` is completely unambiguous
+- **Natural Language**: Code reads like step-by-step navigation instructions  
+- **No Parameter Confusion**: Single-parameter methods eliminate ambiguity
+- **Full Navigation Matrix**: Navigate anywhere from any mutator type
+- **Type Safety**: Return types clearly indicate current navigation context
+
 ### Manipulating Data
 
 ```csharp
@@ -127,15 +170,15 @@ fluent.EVN[2].Set().DateTime(DateTime.Now);              // Event timestamp: "20
 fluent.EVN[2].Set().DateTimeNow();                       // Current timestamp
 fluent.PV1[44].Set().DateToday();                        // Today's date: "20240624"
 
-// Cross Chaining - Set multiple fields in one statement
+// Pure Navigation - Crystal clear navigation and setting
 fluent.PID[5].Set()
     .Components("Johnson", "Mary", "Elizabeth")
-    .Field(7, "19901225")              // Date of birth
-    .Field(8, "F")                      // Gender
-    .Field(11, "123 Main St")           // Address
-    .Component(11, 3, "Springfield")    // City
-    .Component(11, 4, "IL")            // State
-    .Component(11, 5, "62701");        // Zip
+    .Field(7).Value("19901225")         // Navigate to field 7, set date of birth
+    .Field(8).Value("F")                // Navigate to field 8, set gender
+    .Field(11).Value("123 Main St")     // Navigate to field 11, set address
+    .Field(11).Component(3).Value("Springfield")  // Navigate to component 3, set city
+    .Field(11).Component(4).Value("IL")           // Navigate to component 4, set state
+    .Field(11).Component(5).Value("62701");       // Navigate to component 5, set zip
 
 // Auto-creation: Set() never throws - creates missing elements automatically
 fluent["Z01"][99][3].Set("CustomValue");  // Creates entire structure
@@ -145,22 +188,22 @@ fluent.Path("Z02.99.99").Set("Value");    // Creates segment, field, component
 fluent.PID[3].Repetitions.Add("MRN001");
 fluent.PID[3].Repetitions.Add("ENC123");
 
-// Work with multiple segments using structured data
+// Work with multiple segments using pure navigation
 fluent.Segments("DG1").Add()
-    .Field(1, "1")                      // Set ID
-    .Field(3).Components("I10", "250.00", "Diabetes mellitus type 2")
-    .Field(6, "F");                    // Type
+    .Field(1).Value("1")                // Navigate to field 1, set ID
+    .Field(3).Components("I10", "250.00", "Diabetes mellitus type 2")  // Set components
+    .Field(6).Value("F");               // Navigate to field 6, set type
 
-// Complex cross-chaining with structured components
+// Complex navigation with clear intent
 fluent.Segments("OBX").Add()
-    .Field(1, "1")                      // Set ID
-    .Field(2, "ST")                    // Value type
-    .Field(3).Components("GLUCOSE", "Glucose Level")
-    .Field(5, "95")                    // Result
-    .Field(6, "mg/dL")                 // Units
-    .Field(7, "70-100")                // Reference range
-    .Field(8, "N")                     // Abnormal flag
-    .Component(14, 1, "20231215120000"); // Observation date/time
+    .Field(1).Value("1")                // Navigate to field 1, set ID
+    .Field(2).Value("ST")               // Navigate to field 2, set value type
+    .Field(3).Components("GLUCOSE", "Glucose Level")  // Set observation components
+    .Field(5).Value("95")               // Navigate to field 5, set result
+    .Field(6).Value("mg/dL")            // Navigate to field 6, set units
+    .Field(7).Value("70-100")           // Navigate to field 7, set reference range
+    .Field(8).Value("N")                // Navigate to field 8, set abnormal flag
+    .Field(14).Component(1).Value("20231215120000");  // Navigate to observation date/time
 
 // Set subcomponents for complex fields
 fluent.PID[11].Set()
@@ -175,8 +218,7 @@ fluent.PID[11].Set()
 
 ```csharp
 // Create a new message from scratch
-var message = new Message();
-var fluent = new FluentMessage(message);
+var fluent = FluentMessage.Create();
 
 // Build MSH segment fluently
 fluent.CreateMSH
@@ -212,13 +254,13 @@ fluent.PID[5].Set().Components("Doe", "John", "Middle");
 fluent.PID[7].Set("19800101");
 fluent.PID[8].Set("M");
 
-// One-step segment creation with multiple fields
+// Segment creation with pure navigation pattern
 fluent.Segments("PV1").Add()
-    .Field(1, "1")
-    .Field(2, "I")                     // Patient class
-    .Field(3).Components("ICU", "001", "A")
-    .Field(7).Components("1234", "Smith", "John", "Dr")
-    .Field(44, "20231215080000");     // Admit date/time
+    .Field(1).Value("1")               // Navigate to field 1, set sequence
+    .Field(2).Value("I")               // Navigate to field 2, set patient class
+    .Field(3).Components("ICU", "001", "A")  // Set location components
+    .Field(7).Components("1234", "Smith", "John", "Dr")  // Set attending doctor
+    .Field(44).Value("20231215080000"); // Navigate to field 44, set admit date/time
 ```
 
 ### Copying Messages and Segments
@@ -234,7 +276,7 @@ copy.PID[5].Set().Components("NewLastName", "NewFirstName");
 
 // Copy specific segments between messages
 var source = sourceHL7.ToFluentMessage();
-var target = new FluentMessage(new Message());
+var target = FluentMessage.Create();
 
 // Copy all DG1 segments from source to target (using AddCopy for independence)
 var sourceDG1Segments = source.UnderlyingMessage.GetSegments("DG1");
@@ -434,8 +476,8 @@ var dob = fluent.PID[7].Value;  // "19850315"
 <summary><b>What's New</b></summary>
 
 ### v2.0.0-rc.1 (June 2025)
+- **Pure Navigation API** - Crystal clear navigation with natural language-like syntax
 - **Modern Fluent API** - Complete rewrite with intuitive, chainable interface
-- **Cross Chaining** - Set multiple fields and components in one statement
 - **Path API** - String-based paths wrapping legacy methods
 - **Enhanced Collections** - Full LINQ support for segments and repetitions
 - **Better Encoding** - Improved EncodedValue methods for delimiter handling
@@ -455,16 +497,20 @@ var dob = fluent.PID[7].Value;  // "19850315"
 The main entry point for the fluent API. Wraps a legacy `Message` object.
 
 ```csharp
-var fluent = new FluentMessage(message);
-var fluent = hl7String.ToFluentMessage();  // Extension method
+var fluent = FluentMessage.Create();        // Create empty message
+var fluent = new FluentMessage(message);    // Wrap existing message
+var fluent = hl7String.ToFluentMessage();  // Parse from string
 ```
+
+**Static Methods:**
+- `Create()` - Create new empty FluentMessage
 
 **Properties:**
 - `MSH`, `PID`, `PV1`, etc. - Direct segment accessors (37 common segments)
 - `UnderlyingMessage` - Access to wrapped Message object
 - `CreateMSH` - MSH segment builder
 
-**Methods:**
+**Instance Methods:**
 - `Segments(string code)` - Get collection of segments by code
 - `Path(string path)` - Path-based accessor
 - `Copy()` - Deep copy the message
@@ -553,59 +599,75 @@ var subcomp = fluent.PID[5][1][2];
 All mutators support method chaining and auto-create missing elements.
 
 #### FieldMutator
-Modify field values.
+Modify field values with pure navigation pattern.
 
 ```csharp
 fluent.PID[3].Set()
     .Value("12345")
-    .Field(5, "Smith^John")
-    .Field(7, "19850315");
+    .Field(5).Value("Smith^John")      // Navigate to field 5, then set
+    .Field(7).Value("19850315");       // Navigate to field 7, then set
 ```
 
-**Methods:**
+**Setting Methods:**
 - `Value(string value)` - Set field value
 - `Null()` - Set HL7 null value ("")
 - `Clear()` - Clear field (empty string)
 - `Components(params string[] values)` - Set multiple components
 - `EncodedValue(string value)` - Set with delimiter encoding
 - `ValueIf(string value, bool condition)` - Conditional set
-- `Field(int index, string value)` - Set different field
 - `Date(DateTime date)` - Set date (YYYYMMDD)
 - `DateTime(DateTime dateTime)` - Set date/time (YYYYMMDDHHMMSS)
 - `DateToday()` / `DateTimeNow()` - Set current date/time
 
+**Navigation Methods:**
+- `Field(int index)` - Navigate to different field (returns FieldMutator)
+- `Component(int index)` - Navigate to component (returns ComponentMutator)
+- `SubComponent(int componentIndex, int subComponentIndex)` - Navigate to subcomponent (returns SubComponentMutator)
+
 #### ComponentMutator
-Modify component values.
+Modify component values with pure navigation pattern.
 
 ```csharp
 fluent.PID[5][1].Set()
     .Value("Smith")
-    .Component(2, "John")
-    .Field(7, "19850315");
+    .Component(2).Value("John")        // Navigate to component 2, then set
+    .Field(7).Value("19850315");       // Navigate to field 7, then set
 ```
 
-**Methods:**
+**Setting Methods:**
 - `Value(string value)` - Set component value
 - `Null()` - Set HL7 null value
 - `Clear()` - Clear component
 - `SubComponents(params string[] values)` - Set subcomponents
 - `EncodedValue(string value)` - Set with encoding
 - `ValueIf(string value, bool condition)` - Conditional set
-- `Component(int index, string value)` - Set different component
-- `Field(int index, string value)` - Set field value
+
+**Navigation Methods:**
+- `Field(int index)` - Navigate to different field (returns FieldMutator)
+- `Component(int index)` - Navigate to different component (returns ComponentMutator)
+- `SubComponent(int index)` - Navigate to subcomponent (returns SubComponentMutator)
 
 #### SubComponentMutator
-Modify subcomponent values.
+Modify subcomponent values with pure navigation pattern.
 
 ```csharp
 fluent.PID[5][1][1].Set()
     .Value("Smith")
-    .SubComponent(2, "Jr")
-    .Component(2, "John");
+    .SubComponent(2).Value("Jr")       // Navigate to subcomponent 2, then set
+    .Component(2).Value("John");       // Navigate to component 2, then set
 ```
 
-**Methods:**
-- Same as ComponentMutator but at subcomponent level
+**Setting Methods:**
+- `Value(string value)` - Set subcomponent value
+- `Null()` - Set HL7 null value
+- `Clear()` - Clear subcomponent
+- `EncodedValue(string value)` - Set with encoding
+- `ValueIf(string value, bool condition)` - Conditional set
+
+**Navigation Methods:**
+- `Field(int index)` - Navigate to different field (returns FieldMutator)
+- `Component(int index)` - Navigate to different component (returns ComponentMutator)
+- `SubComponent(int index)` - Navigate to different subcomponent (returns SubComponentMutator)
 
 ### Collections
 

@@ -26,6 +26,25 @@ namespace HL7lite.Fluent
         }
 
         /// <summary>
+        /// Creates a new, empty FluentMessage ready for building an HL7 message from scratch.
+        /// </summary>
+        /// <returns>A new FluentMessage wrapping an empty Message</returns>
+        /// <example>
+        /// <code>
+        /// var fluent = FluentMessage.Create();
+        /// fluent.CreateMSH
+        ///     .Sender("APP", "FACILITY")
+        ///     .Receiver("DEST", "FACILITY2")
+        ///     .MessageType("ADT^A01")
+        ///     .Build();
+        /// </code>
+        /// </example>
+        public static FluentMessage Create()
+        {
+            return new FluentMessage(new Message());
+        }
+
+        /// <summary>
         /// Gets the underlying Message instance
         /// </summary>
         public Message UnderlyingMessage => _message;

@@ -242,24 +242,48 @@ namespace HL7lite.Fluent.Mutators
 
 
         /// <summary>
-        /// Sets a value on a specific field of the segment (allows setting different fields in a chain).
+        /// Navigates to a different field in the same segment.
         /// </summary>
-        /// <param name="fieldIndex">The 1-based field index to set.</param>
-        /// <param name="value">The value to set.</param>
-        /// <returns>This FieldMutator for chaining.</returns>
-        /// <summary>
-        /// Sets a different field on the same segment.
-        /// </summary>
-        public FieldMutator Field(int fieldIndex, string value)
+        /// <param name="fieldIndex">The 1-based field index to navigate to.</param>
+        /// <returns>A new FieldMutator for the target field.</returns>
+        public FieldMutator Field(int fieldIndex)
         {
             if (fieldIndex <= 0)
                 throw new ArgumentException("Field index must be greater than 0", nameof(fieldIndex));
 
-            // Create a new mutator for the target field and set its value
-            var targetFieldMutator = new FieldMutator(_message, _segmentCode, fieldIndex, null, _segmentInstanceIndex);
-            targetFieldMutator.Value(value ?? string.Empty);
-            
-            return this; // Return self for chaining
+            // Create and return a new mutator for the target field
+            return new FieldMutator(_message, _segmentCode, fieldIndex, null, _segmentInstanceIndex);
+        }
+
+        /// <summary>
+        /// Navigates to a component within the current field.
+        /// </summary>
+        /// <param name="componentIndex">The 1-based component index to navigate to.</param>
+        /// <returns>A ComponentMutator for the target component.</returns>
+        public ComponentMutator Component(int componentIndex)
+        {
+            if (componentIndex <= 0)
+                throw new ArgumentException("Component index must be greater than 0", nameof(componentIndex));
+
+            // Create and return a new ComponentMutator for the target component
+            return new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex ?? 1);
+        }
+
+        /// <summary>
+        /// Navigates to a subcomponent within the current field.
+        /// </summary>
+        /// <param name="componentIndex">The 1-based component index.</param>
+        /// <param name="subComponentIndex">The 1-based subcomponent index to navigate to.</param>
+        /// <returns>A SubComponentMutator for the target subcomponent.</returns>
+        public SubComponentMutator SubComponent(int componentIndex, int subComponentIndex)
+        {
+            if (componentIndex <= 0)
+                throw new ArgumentException("Component index must be greater than 0", nameof(componentIndex));
+            if (subComponentIndex <= 0)
+                throw new ArgumentException("SubComponent index must be greater than 0", nameof(subComponentIndex));
+
+            // Create and return a new SubComponentMutator for the target subcomponent
+            return new SubComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, subComponentIndex, _repetitionIndex ?? 1);
         }
     }
 }
