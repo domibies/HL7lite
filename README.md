@@ -26,7 +26,7 @@
 ### 🎯 Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
 *Complete new API with intuitive, modern interface - available in v2.0.0-rc.1*
 
-- ⛓️ **Fluent Navigation** - Fluent & clear navigation with natural language-like syntax & chaining accross all hierarchy levels
+- ⛓️ **Fluent Navigation** - Fluent navigation accross all hierarchy levels
 - 🛡️ **Safe Data Access** - Returns empty values instead of throwing exceptions
 - 🔧 **Auto-creation** - Automatically creates missing segments, fields, and components
 - 🗂️ **LINQ Collections** - LINQ support for segments and field repetitions
