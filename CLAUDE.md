@@ -290,3 +290,9 @@ fluent.PID[3].Set("FirstID")
     .AddRepetition("SecondID")
     .AddRepetition("ThirdID");
 ```
+
+## XML Documentation Guidelines
+- Keep XML documentation comments concise and focused
+- Avoid excessive examples in XML docs - one simple example is sufficient if needed
+- Remove redundant "equivalent to verbose form" examples
+- Focus on describing what the method does, not how to use it in detail

@@ -322,16 +322,20 @@ foreach (var sourceDG1 in source.Segments("DG1")) {
     target.Segments("DG1").AddCopy(sourceDG1);
 }
 
-// Copy and modify a segment
-var sourcePID = source.Segments("PID")[0];
-var pidAccessor = target.Segments("PID").AddCopy(sourcePID);
-pidAccessor[3].Set("MODIFIED_ID");
+// Copy and modify a segment (if it exists)
+if (source.Segments("PID").Any()) {
+    var sourcePID = source.Segments("PID")[0];
+    var pidAccessor = target.Segments("PID").AddCopy(sourcePID);
+    pidAccessor[3].Set("MODIFIED_ID");
+}
 
 // Copy with selective field updates
-var sourceOBX = source.Segments("OBX")[0];
-var obxAccessor = target.Segments("OBX").AddCopy(sourceOBX);
-obxAccessor[5].Set("Updated Result");
-obxAccessor[14][1].SetDateTime(DateTime.Now);
+if (source.Segments("OBX").Any()) {
+    var sourceOBX = source.Segments("OBX")[0];
+    var obxAccessor = target.Segments("OBX").AddCopy(sourceOBX);
+    obxAccessor[5].Set("Updated Result");
+    obxAccessor[14][1].SetDateTime(DateTime.Now);
+}
 ```
 
 </details>
@@ -341,7 +345,7 @@ obxAccessor[14][1].SetDateTime(DateTime.Now);
 
 The Path API provides string-based access to message elements, wrapping the legacy GetValue/SetValue methods.
 
-**Important**: Unlike the legacy API, Path.Set() behaves like PutValue() - it never throws exceptions and creates missing elements automatically.
+**Important**: Path.Set() behaves like the other setters in the Fluent API - it never throws exceptions and creates missing elements automatically.
 
 ```csharp
 // Basic path access
@@ -357,7 +361,7 @@ fluent.Path("PV1.7[1].1").Set("1234");     // First attending doctor ID
 fluent.Path("PV1.7[1].2").Set("Smith");    // Last name
 fluent.Path("PV1.7[1].3").Set("John");     // First name
 
-// Or better, use structured data
+// A better pattern would be to use structured data like below
 fluent.PV1[7].Repetition(1).SetComponents("1234", "Smith", "John", "Dr");
 
 // Check if path exists
@@ -599,6 +603,12 @@ var component = fluent.PID[5][1];
 - `Repetition(int index)` - Get specific repetition (1-based)
 - `Set()` - Get field mutator
 - `Set(string value)` - Set field value and return mutator
+- `SetComponents(params string[] values)` - Set multiple components and return mutator
+- `SetEncoded(string value)` - Set with delimiter encoding and return mutator
+- `SetNull()` - Set HL7 null value and return mutator
+- `SetIf(string value, bool condition)` - Conditional set and return mutator
+- `SetDate(DateTime date)` - Set date (YYYYMMDD) and return mutator
+- `SetDateTime(DateTime dateTime)` - Set date/time (YYYYMMDDHHMMSS) and return mutator
 - `AsDate(bool throwOnError = false)` - Parse as date
 - `AsDateTime` - Parse as date/time
 
@@ -616,6 +626,10 @@ var component = fluent.PID[5][1];  // Last name
 - `SubComponent(int index)` / `this[int index]` - Get subcomponent
 - `Set()` - Get component mutator
 - `Set(string value)` - Set component value and return mutator
+- `SetSubComponents(params string[] values)` - Set multiple subcomponents and return mutator
+- `SetEncoded(string value)` - Set with delimiter encoding and return mutator
+- `SetNull()` - Set HL7 null value and return mutator
+- `SetIf(string value, bool condition)` - Conditional set and return mutator
 
 #### SubComponentAccessor
 Access to subcomponent-level data.
@@ -630,6 +644,9 @@ var subcomp = fluent.PID[5][1][2];
 **Methods:**
 - `Set()` - Get subcomponent mutator
 - `Set(string value)` - Set subcomponent value and return mutator
+- `SetEncoded(string value)` - Set with delimiter encoding and return mutator
+- `SetNull()` - Set HL7 null value and return mutator
+- `SetIf(string value, bool condition)` - Conditional set and return mutator
 
 ### Mutators (Write Operations)
 
@@ -728,6 +745,7 @@ var count = diagnoses.Count;
 **Methods:**
 - `Add()` - Add new segment, returns accessor
 - `AddCopy(Segment segment)` - Add copy of segment
+- `AddCopy(SegmentAccessor segmentAccessor)` - Add copy from accessor
 - `Clear()` - Remove all segments
 - `Segment(int index)` - Get by 1-based index
 - `RemoveSegment(int index)` - Remove by 1-based index

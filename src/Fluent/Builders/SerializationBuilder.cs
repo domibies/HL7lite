@@ -119,6 +119,7 @@ namespace HL7lite.Fluent.Builders
         /// Validates the message and returns any validation errors without throwing.
         /// </summary>
         /// <param name="serializedMessage">The serialized message output</param>
+        /// <param name="validationError">Validation error message if validation fails</param>
         /// <returns>True if valid, false if validation errors exist</returns>
         public bool TrySerialize(out string serializedMessage, out string validationError)
         {

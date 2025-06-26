@@ -223,20 +223,10 @@ namespace HL7lite.Fluent.Accessors
 
         /// <summary>
         /// Sets the subcomponent value with HL7 delimiter encoding. Shortcut for Set().SetEncoded(value).
-        /// Use this method when your value contains characters like |, ^, ~, \, or &amp;
-        /// that need to be safely stored in the HL7 message.
+        /// Use this method when your value contains HL7 delimiter characters that need to be safely encoded.
         /// </summary>
         /// <param name="value">The value to encode and set</param>
         /// <returns>A SubComponentMutator for method chaining</returns>
-        /// <example>
-        /// <code>
-        /// // Set subcomponent with special characters
-        /// fluent.PID[5][1][1].SetEncoded("Smith&Jones");  // Becomes "Smith\\T\\Jones"
-        /// 
-        /// // Equivalent to the verbose form
-        /// fluent.PID[5][1][1].SetEncoded("Smith&Jones");
-        /// </code>
-        /// </example>
         public SubComponentMutator SetEncoded(string value)
         {
             return Set().SetEncoded(value);

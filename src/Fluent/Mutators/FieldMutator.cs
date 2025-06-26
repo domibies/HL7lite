@@ -227,12 +227,6 @@ namespace HL7lite.Fluent.Mutators
         /// </summary>
 
         /// <summary>
-        /// Sets the field value to an HL7-formatted datetime string.
-        /// Uses the full precision format: yyyyMMddHHmmss.FFFF
-        /// </summary>
-        /// <param name="dateTime">The DateTime to set</param>
-        /// <returns>The FieldMutator for method chaining</returns>
-        /// <summary>
         /// Sets the field to a formatted DateTime value in HL7 format.
         /// Uses the full precision format: yyyyMMddHHmmss.FFFF
         /// </summary>

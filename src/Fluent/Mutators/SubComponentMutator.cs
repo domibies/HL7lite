@@ -130,7 +130,7 @@ namespace HL7lite.Fluent.Mutators
         /// <example>
         /// <code>
         /// // Set subcomponent with special characters
-        /// fluent.PID[5][1][1].SetEncoded("Smith&Jones");
+        /// fluent.PID[5][1][1].SetEncoded("Smith&amp;Jones");
         /// 
         /// // Chain with other operations
         /// fluent.PID[5][1][1].SetEncoded("Complex|Value")
