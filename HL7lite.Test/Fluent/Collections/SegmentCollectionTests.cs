@@ -683,8 +683,9 @@ PV1|1|I";
             var message = CreateEmptyMessage();
             var collection = new SegmentCollection(message, "DG1");
             
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => collection.AddCopy(null));
+            // Act & Assert - Test both overloads
+            Assert.Throws<ArgumentNullException>(() => collection.AddCopy((Segment)null));
+            Assert.Throws<ArgumentNullException>(() => collection.AddCopy((SegmentAccessor)null));
         }
 
         [Fact]
@@ -780,6 +781,107 @@ PV1|1|I";
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var segmentList = (Dictionary<string, List<Segment>>)segmentListProperty.GetValue(message);
             return segmentList[segmentName][index];
+        }
+
+        #endregion
+
+        #region AddCopy(SegmentAccessor) Tests
+
+        [Fact]
+        public void AddCopy_WithSegmentAccessor_AddsDeepCopyToCollection()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceFluent = new FluentMessage(sourceMessage);
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            var sourceAccessor = sourceFluent.Segments("DG1")[0];
+            
+            // Act
+            var result = targetCollection.AddCopy(sourceAccessor);
+            
+            // Assert
+            Assert.Equal(1, targetCollection.Count);
+            Assert.NotNull(result);
+            Assert.Equal("250.00", result[3][1].Value);
+            Assert.Equal("Diabetes Mellitus", result[3][2].Value);
+        }
+
+        [Fact]
+        public void AddCopy_WithSegmentAccessor_CreatesIndependentCopy()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceFluent = new FluentMessage(sourceMessage);
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            var sourceAccessor = sourceFluent.Segments("DG1")[0];
+            
+            // Act
+            var copiedAccessor = targetCollection.AddCopy(sourceAccessor);
+            copiedAccessor[3][2].Set("Modified Diagnosis");
+            
+            // Assert - Original unchanged
+            Assert.Equal("Diabetes Mellitus", sourceAccessor[3][2].Value);
+            // Assert - Copy is modified
+            Assert.Equal("Modified Diagnosis", copiedAccessor[3][2].Value);
+        }
+
+        [Fact]
+        public void AddCopy_WithNonExistentSegmentAccessor_ThrowsInvalidOperationException()
+        {
+            // Arrange
+            var sourceMessage = CreateEmptyMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceFluent = new FluentMessage(sourceMessage);
+            var targetCollection = new SegmentCollection(targetMessage, "DG1");
+            var nonExistentAccessor = sourceFluent.DG1; // This won't exist (no DG1 in empty message)
+            
+            // Act & Assert
+            var exception = Assert.Throws<InvalidOperationException>(() => 
+                targetCollection.AddCopy(nonExistentAccessor));
+            Assert.Contains("doesn't have an existing segment", exception.Message);
+        }
+
+        [Fact]
+        public void AddCopy_WithMismatchedSegmentAccessor_ThrowsArgumentException()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage = CreateEmptyMessage();
+            var sourceFluent = new FluentMessage(sourceMessage);
+            var targetCollection = new SegmentCollection(targetMessage, "OBX"); // OBX collection
+            var dg1Accessor = sourceFluent.Segments("DG1")[0]; // DG1 accessor
+            
+            // Act & Assert
+            var exception = Assert.Throws<ArgumentException>(() => 
+                targetCollection.AddCopy(dg1Accessor));
+            Assert.Contains("DG1", exception.Message);
+            Assert.Contains("OBX", exception.Message);
+        }
+
+        [Fact]
+        public void AddCopy_SegmentAccessorVsSegment_ProduceSameResult()
+        {
+            // Arrange
+            var sourceMessage = CreateTestMessage();
+            var targetMessage1 = CreateEmptyMessage();
+            var targetMessage2 = CreateEmptyMessage();
+            var sourceFluent = new FluentMessage(sourceMessage);
+            var sourceAccessor = sourceFluent.Segments("DG1")[0];
+            var sourceSegment = GetSegmentFromMessage(sourceMessage, "DG1", 0);
+            
+            var collection1 = new SegmentCollection(targetMessage1, "DG1");
+            var collection2 = new SegmentCollection(targetMessage2, "DG1");
+            
+            // Act
+            var result1 = collection1.AddCopy(sourceAccessor);
+            var result2 = collection2.AddCopy(sourceSegment);
+            
+            // Assert - Both copies should have identical content
+            Assert.Equal(result1[3][1].Value, result2[3][1].Value);
+            Assert.Equal(result1[3][2].Value, result2[3][2].Value);
+            Assert.Equal(result1[4].Value, result2[4].Value);
         }
 
         #endregion

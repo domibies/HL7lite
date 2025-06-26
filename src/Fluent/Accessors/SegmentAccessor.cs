@@ -12,7 +12,7 @@ namespace HL7lite.Fluent.Accessors
         protected readonly Message _message;
         /// <summary>The segment code</summary>
         protected readonly string _segmentName;
-        private readonly Segment _segment;
+        internal readonly Segment _segment;
         private readonly Dictionary<int, FieldAccessor> _fieldCache = new Dictionary<int, FieldAccessor>();
 
         /// <summary>

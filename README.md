@@ -24,21 +24,21 @@
 ## Key Features
 
 ### 🎯 Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
-*Complete rewrite with intuitive, modern interface - available in v2.0.0-rc.1*
+*Complete new API with intuitive, modern interface - available in v2.0.0-rc.1*
 
-- 🧭 **Pure Navigation** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Crystal clear navigation with natural language-like syntax: `Field(7).Component(1).Set("text")`
-- ⛓️ **Method Chaining** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Fluent operations across all hierarchy levels with intuitive return types
-- 🛡️ **Safe Data Access** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Returns empty values instead of throwing exceptions
-- 🔧 **Auto-creation** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Automatically creates missing segments, fields, and components
-- 🗂️ **LINQ Collections** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Full LINQ support for segments and field repetitions
-- 🛤️ **Path API** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - String-based access wrapping legacy GetValue/SetValue methods
-- 🔐 **Encoding Support** ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square) - Automatic HL7 delimiter character encoding/decoding
+- ⛓️ **Fluent Navigation** - Fluent & clear navigation with natural language-like syntax & chaining accross all hierarchy levels
+- 🛡️ **Safe Data Access** - Returns empty values instead of throwing exceptions
+- 🔧 **Auto-creation** - Automatically creates missing segments, fields, and components
+- 🗂️ **LINQ Collections** - LINQ support for segments and field repetitions
+- 🛤️ **Path API** - Fluent string-based access patterns
+
 
 ### 🏗️ Core Engine
 - ⚡ **Lightning Fast** - Parse HL7 messages without schema validation overhead  
 - 📦 **Lightweight** - Minimal dependencies, small footprint
 - ✅ **Battle-tested** - Key integration component in Belgium's largest hospital group ([ZAS](https://www.zas.be))
-- 🔄 **Always Compatible** - Full backward compatibility with [legacy API](README.Legacy.md)
+- 🔄 **Always Compatible** - Remains fully backward compatible with 1.x [legacy API](README.Legacy.md)
+- 🔐 **Encoding Support** - Automatic HL7 delimiter character encoding/decoding
 - 🌐 **.NET Standard** - Compatible with .NET Framework, .NET Core, and .NET 5+
 
 ## Quick Start
@@ -81,11 +81,11 @@ message.ParseMessage();
 var fluent = new FluentMessage(message);
 
 // Get patient information
-string patientId = fluent.PID[3].Value;        // Single field value
-string lastName = fluent.PID[5][1].Value;      // First component only
-string firstName = fluent.PID[5][2].Value;     // Second component only
-string fullName = fluent.PID[5].Value;         // Entire field: "Smith^John^M^Jr"
-string dateOfBirth = fluent.PID[7].Value;
+string patientId = fluent.PID[3].Value;           // Single field value
+string lastName = fluent.PID[5][1].Value;         // First component 
+string firstName = fluent.PID[5][2].Value;        // Second component 
+string fullName = fluent.PID[5].Value;            // Entire field: "Smith^John^M^Jr"
+DateTime ? dateOfBirth = fluent.PID[7].AsDate();  // DateTime support
 
 // .Value returns entire structure with HL7 separators:
 // - Field.Value includes all components: "Smith^John^M"
@@ -98,8 +98,8 @@ DateTime? timestamp = fluent.EVN[2].AsDateTime();       // Parse "20240624143022
 DateTime? timestampWithTz = fluent.EVN[2].AsDateTime(out TimeSpan offset); // Include timezone
 
 // Access with safe navigation - never throws
-string gender = fluent.PID[8].Value ?? ""; // Handle null with null-coalescing
-string missing = fluent.PID[99].Value;     // Non-existing field returns "", doesn't throw
+string gender = fluent.PID[8].Value ?? ""; // Handle HL7 null("") with null-coalescing
+string missing = fluent.PID[99].Value;     // Non-existing field returns empty string, doesn't throw
 
 // Use path-based access
 string ssn = fluent.Path("PID.19").Value;
@@ -122,12 +122,12 @@ var diagnoses = fluent.Segments("DG1")
     .ToList();
 ```
 
-### Pure Navigation & Data Manipulation
+### Data Manipulation with Navigation and Setters
 
-HL7lite uses a **Pure Navigation Pattern** that separates navigation from setting operations for crystal-clear intent:
+HL7lite uses a **Navigation Pattern** that separates navigation from setting operations for clear intent:
 
 ```csharp
-// ✅ PURE NAVIGATION: Navigate first, then set
+// ✅ NAVIGATION: Navigate first, then set
 fluent.PID[5].Set("Smith")              // Set current field
     .Field(7).Set("19850315")           // Navigate to field 7, then set
     .Field(8).Set("M")                  // Navigate to field 8, then set
@@ -139,7 +139,7 @@ fluent.PID[5][1][1].Set("LastName")     // Set current subcomponent
     .Component(2).Set("MiddleName")     // Navigate to component 2, then set
     .Field(7).Set("19850315");          // Navigate to field 7, then set
 
-// ✅ Complex navigation with clear intent
+// ✅ Fluent creation of new segments
 fluent.Segments("OBX").Add()
     .Field(1).Set("1")                  // Navigate to field 1, set sequence ID
     .Field(3).Component(1).Set("GLUCOSE")       // Navigate to observation identifier
@@ -191,7 +191,7 @@ fluent.Segments("DG1").Add()
     .Field(3).SetComponents("I10", "250.00", "Diabetes mellitus type 2")  // Set components
     .Field(6).Set("F");                 // Navigate to field 6, set type
 
-// Complex navigation with clear intent
+// Full navigation and setting with clear intent
 fluent.Segments("OBX").Add()
     .Field(1).Set("1")                  // Navigate to field 1, set ID
     .Field(2).Set("ST")                 // Navigate to field 2, set value type
@@ -202,7 +202,7 @@ fluent.Segments("OBX").Add()
     .Field(8).Set("N")                  // Navigate to field 8, set abnormal flag
     .Field(14).Component(1).Set("20231215120000");  // Navigate to observation date/time
 
-// Set subcomponents for complex fields
+// Set subcomponents 
 fluent.PID[11].SetComponents("123 Main St", "Apt 4B", "Springfield", "IL", "62701", "USA")
     .Component(1).SetSubComponents("123 Main St", "Building A", "Suite 100");
 ```
@@ -268,7 +268,7 @@ fluent.CreateMSH
     .AutoControlId()
     .Build();
 
-// Add all segments in a single chained operation
+// Add multiple segments in single chained operations
 fluent.Segments("EVN").Add()
     .Field(1).Set("A01")
     .Field(2).SetDateTime(DateTime.Now)
@@ -317,22 +317,21 @@ copy.PID[5].SetComponents("NewLastName", "NewFirstName");
 var source = sourceHL7.ToFluentMessage();
 var target = FluentMessage.Create();
 
-// Copy all DG1 segments from source to target (using AddCopy for independence)
-var sourceDG1Segments = source.UnderlyingMessage.GetSegments("DG1");
-foreach (var segment in sourceDG1Segments) {
-    target.Segments("DG1").AddCopy(segment);
+// Copy all DG1 segments from source to target using fluent collections
+foreach (var sourceDG1 in source.Segments("DG1")) {
+    target.Segments("DG1").AddCopy(sourceDG1);
 }
 
 // Copy and modify a segment
-var sourcePIDSegment = source.UnderlyingMessage.GetSegments("PID")[0];
-var pidAccessor = target.Segments("PID").AddCopy(sourcePIDSegment);
+var sourcePID = source.Segments("PID")[0];
+var pidAccessor = target.Segments("PID").AddCopy(sourcePID);
 pidAccessor[3].Set("MODIFIED_ID");
 
 // Copy with selective field updates
-var sourceOBXSegment = source.UnderlyingMessage.GetSegments("OBX")[0];
-var obxAccessor = target.Segments("OBX").AddCopy(sourceOBXSegment);
+var sourceOBX = source.Segments("OBX")[0];
+var obxAccessor = target.Segments("OBX").AddCopy(sourceOBX);
 obxAccessor[5].Set("Updated Result");
-obxAccessor[14][1].Set(DateTime.Now.ToString("yyyyMMddHHmmss"));
+obxAccessor[14][1].SetDateTime(DateTime.Now);
 ```
 
 </details>

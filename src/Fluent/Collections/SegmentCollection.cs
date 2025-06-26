@@ -124,6 +124,26 @@ namespace HL7lite.Fluent.Collections
         }
 
         /// <summary>
+        /// Adds a copy of the segment from a SegmentAccessor to this collection.
+        /// The segment is deep copied to ensure independence between messages.
+        /// </summary>
+        /// <param name="segmentAccessor">The SegmentAccessor containing the segment to copy</param>
+        /// <returns>A SegmentAccessor for the added segment copy</returns>
+        /// <exception cref="ArgumentNullException">Thrown when segmentAccessor is null</exception>
+        /// <exception cref="InvalidOperationException">Thrown when the accessor's segment doesn't exist</exception>
+        public SegmentAccessor AddCopy(Accessors.SegmentAccessor segmentAccessor)
+        {
+            if (segmentAccessor == null)
+                throw new ArgumentNullException(nameof(segmentAccessor));
+                
+            if (!segmentAccessor.Exists)
+                throw new InvalidOperationException("Cannot copy from a SegmentAccessor that doesn't have an existing segment");
+            
+            // Access the internal _segment field directly
+            return AddCopy(segmentAccessor._segment);
+        }
+
+        /// <summary>
         /// Removes a segment at the specified one-based segment number
         /// </summary>
         /// <param name="segmentNumber">The 1-based segment number to remove</param>
