@@ -122,21 +122,19 @@ var diagnoses = fluent.Segments("DG1")
     .ToList();
 ```
 
-### Pure Navigation Pattern
+### Pure Navigation & Data Manipulation
 
 HL7lite uses a **Pure Navigation Pattern** that separates navigation from setting operations for crystal-clear intent:
 
 ```csharp
 // ✅ PURE NAVIGATION: Navigate first, then set
-fluent.PID[5].Set()
-    .Value("Smith")                     // Set current field
+fluent.PID[5].Set("Smith")              // Set current field
     .Field(7).Set("19850315")           // Navigate to field 7, then set
     .Field(8).Set("M")                  // Navigate to field 8, then set
     .Field(11).Component(3).Set("Springfield");  // Navigate to field 11, component 3, then set
 
 // ✅ Cross-level navigation reads like natural language
-fluent.PID[5][1][1].Set()
-    .Value("LastName")                  // Set current subcomponent
+fluent.PID[5][1][1].Set("LastName")     // Set current subcomponent
     .SubComponent(2).Set("FirstName")   // Navigate to subcomponent 2, then set
     .Component(2).Set("MiddleName")     // Navigate to component 2, then set
     .Field(7).Set("19850315");          // Navigate to field 7, then set
@@ -156,8 +154,6 @@ fluent.Segments("OBX").Add()
 - **Full Navigation Matrix**: Navigate anywhere from any mutator type
 - **Type Safety**: Return types clearly indicate current navigation context
 
-### Manipulating Data
-
 ```csharp
 // Complete patient demographics in one powerful method chain
 fluent.PID[3].Set("12345")
@@ -171,15 +167,6 @@ fluent.PID[3].Set("12345")
 // DateTime chaining for multiple timestamps
 fluent.EVN[2].SetDateTime(DateTime.Now)          // Event occurred
     .Field(6).SetDateTime(DateTime.Now);               // Event entered
-
-// Pure Navigation - Crystal clear navigation and setting
-fluent.PID[5].SetComponents("Johnson", "Mary", "Elizabeth")
-    .Field(7).Set("19901225")           // Navigate to field 7, set date of birth
-    .Field(8).Set("F")                  // Navigate to field 8, set gender
-    .Field(11).Set("123 Main St")       // Navigate to field 11, set address
-    .Field(11).Component(3).Set("Springfield")  // Navigate to component 3, set city
-    .Field(11).Component(4).Set("IL")           // Navigate to component 4, set state
-    .Field(11).Component(5).Set("62701");       // Navigate to component 5, set zip
 
 // Auto-creation: Set() never throws - creates missing elements automatically
 fluent["Z01"][99][3].Set("CustomValue");  // Creates entire structure
@@ -686,8 +673,7 @@ fluent.PID[3].Set("FirstID")
 Modify component values with pure navigation pattern.
 
 ```csharp
-fluent.PID[5][1].Set()
-    .Value("Smith")
+fluent.PID[5][1].Set("Smith")
     .Component(2).Set("John")          // Navigate to component 2, then set
     .Field(7).Set("19850315");         // Navigate to field 7, then set
 ```
@@ -709,8 +695,7 @@ fluent.PID[5][1].Set()
 Modify subcomponent values with pure navigation pattern.
 
 ```csharp
-fluent.PID[5][1][1].Set()
-    .Value("Smith")
+fluent.PID[5][1][1].Set("Smith")
     .SubComponent(2).Set("Jr")         // Navigate to subcomponent 2, then set
     .Component(2).Set("John");         // Navigate to component 2, then set
 ```
