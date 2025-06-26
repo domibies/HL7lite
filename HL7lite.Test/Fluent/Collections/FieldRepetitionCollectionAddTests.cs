@@ -146,7 +146,7 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Act
             var emptyRepetition = message.PID[3].Repetitions.Add();
-            emptyRepetition.Set().SetComponents("MRN", "001", "HOSPITAL");
+            emptyRepetition.SetComponents("MRN", "001", "HOSPITAL");
             
             // Assert
             Assert.Equal("MRN^001^HOSPITAL", emptyRepetition.Value);
@@ -202,9 +202,9 @@ namespace HL7lite.Test.Fluent.Collections
             var message = CreateTestMessage();
             
             // Act - Chain operations on the returned accessor
-            message.PID[3].Repetitions.Add("MRN001").Set().SetComponents("MRN", "001", "HOSP");
+            message.PID[3].Repetitions.Add("MRN001").SetComponents("MRN", "001", "HOSP");
             var result2 = message.PID[3].Repetitions.Add("ENC123");
-            result2.Set().SetComponents("ENC", "123", "VISIT");
+            result2.SetComponents("ENC", "123", "VISIT");
             
             // Assert
             Assert.True(message.PID[3].HasRepetitions);
@@ -227,7 +227,7 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Repetitions: Collection.Add() returns accessor  
             var newRepetition = message.PID[3].Repetitions.Add("MRN001");
-            newRepetition.Set().SetComponents("MRN", "001");
+            newRepetition.SetComponents("MRN", "001");
             
             // Assert - Both patterns work the same way
             Assert.Equal("1", message.Segments("DG1")[0][1].Value);

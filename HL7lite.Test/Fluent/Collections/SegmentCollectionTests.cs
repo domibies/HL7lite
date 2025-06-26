@@ -309,7 +309,7 @@ PV1|1|I";
             // Pattern 1: Store reference and set values
             var dg1_1 = fluent.Segments("DG1").Add();
             dg1_1[1].Set("1");
-            dg1_1[3].Set().SetComponents("250.00", "Diabetes", "I9");
+            dg1_1[3].SetComponents("250.00", "Diabetes", "I9");
             
             // Pattern 2: Add second segment
             var dg1_2 = fluent.Segments("DG1").Add();

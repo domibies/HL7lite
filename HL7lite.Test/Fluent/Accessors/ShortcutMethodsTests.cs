@@ -134,6 +134,32 @@ PV1|1|I";
         }
 
         [Fact]
+        public void Shortcuts_ShouldBeEquivalentToVerboseForm()
+        {
+            // Test that shortcuts produce identical results to verbose .Set().SetXxx() patterns
+            var fluent1 = CreateTestMessage();
+            var fluent2 = CreateTestMessage();
+
+            // Test SetComponents shortcut vs verbose
+            fluent1.PID[5].SetComponents("Smith", "John", "M");  // Shortcut
+            fluent2.PID[5].Set().SetComponents("Smith", "John", "M");  // Verbose
+
+            Assert.Equal(fluent1.PID[5].Value, fluent2.PID[5].Value);
+
+            // Test SetNull shortcut vs verbose  
+            fluent1.PID[6].SetNull();  // Shortcut
+            fluent2.PID[6].Set().SetNull();  // Verbose
+
+            Assert.Equal(fluent1.PID[6].Value, fluent2.PID[6].Value);
+
+            // Test SetIf shortcut vs verbose
+            fluent1.PID[8].SetIf("M", true);  // Shortcut
+            fluent2.PID[8].Set().SetIf("M", true);  // Verbose
+
+            Assert.Equal(fluent1.PID[8].Value, fluent2.PID[8].Value);
+        }
+
+        [Fact]
         public void SubComponentAccessor_SetStringValue_ShouldReturnSubComponentMutator()
         {
             var fluent = CreateTestMessage();

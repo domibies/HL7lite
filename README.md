@@ -169,8 +169,8 @@ fluent.PID[3].Set("12345")
     .Field(14).SetComponents("555", "098-7654");       // Business phone
 
 // DateTime chaining for multiple timestamps
-fluent.EVN[2].SetDateTimeNow()                   // Event occurred
-    .Field(6).SetDateTimeNow();                        // Event entered
+fluent.EVN[2].SetDateTime(DateTime.Now)          // Event occurred
+    .Field(6).SetDateTime(DateTime.Now);               // Event entered
 
 // Pure Navigation - Crystal clear navigation and setting
 fluent.PID[5].SetComponents("Johnson", "Mary", "Elizabeth")
@@ -185,9 +185,18 @@ fluent.PID[5].SetComponents("Johnson", "Mary", "Elizabeth")
 fluent["Z01"][99][3].Set("CustomValue");  // Creates entire structure
 fluent.Path("Z02.99.99").Set("Value");    // Creates segment, field, component
 
-// Add field repetitions (correct pattern)
-fluent.PID[3].Repetitions.Add("MRN001");
-fluent.PID[3].Repetitions.Add("ENC123");
+// Add field repetitions with fluent chaining
+fluent.PID[3].Set("ID001")
+    .AddRepetition("MRN001")              // Adds repetition, stays in fluent chain
+    .AddRepetition("ENC123")              // Add another repetition
+    .Field(5).SetComponents("Smith", "John");  // Continue with other fields
+
+// Or add repetitions with components
+fluent.PID[3].Set("SimpleID")
+    .AddRepetition()                      // Add empty repetition
+        .SetComponents("MRN", "001", "HOSPITAL")  // Set complex components
+    .AddRepetition()                      // Add another empty repetition
+        .SetComponents("ENC", "123", "VISIT");    // Different components
 
 // Work with multiple segments using pure navigation
 fluent.Segments("DG1").Add()
@@ -251,17 +260,17 @@ fluent.CreateMSH
 fluent.Segments("PID").Add()
     .Field(1).Set("1")
     .Field(3).Set("PAT001")
-    .Field(5).Set().Components("Doe", "John", "Middle")
+    .Field(5).SetComponents("Doe", "John", "Middle")
     .Field(7).Set("19800101")
     .Field(8).Set("M")
-    .Field(11).Set().Components("456 Oak Ave", "", "Boston", "MA", "02101");
+    .Field(11).SetComponents("456 Oak Ave", "", "Boston", "MA", "02101");
 
 // Create admission info with method chaining
 fluent.Segments("PV1").Add()
     .Field(1).Set("1")                         // Set ID
     .Field(2).Set("I")                         // Inpatient
-    .Field(3).Set().Components("ICU", "001", "A")     // Location
-    .Field(7).Set().Components("1234", "Smith", "John", "Dr")  // Attending doctor
+    .Field(3).SetComponents("ICU", "001", "A")     // Location
+    .Field(7).SetComponents("1234", "Smith", "John", "Dr")  // Attending doctor
     .Field(44).Set("20231215080000");          // Admit date/time
 // Power of chaining: Complete ADT message in one flow
 var fluent = FluentMessage.Create();
@@ -275,33 +284,35 @@ fluent.CreateMSH
 // Add all segments in a single chained operation
 fluent.Segments("EVN").Add()
     .Field(1).Set("A01")
-    .Field(2).Set().DateTimeNow()
-    .Field(6).Set().DateTimeNow();
+    .Field(2).SetDateTime(DateTime.Now)
+    .Field(6).SetDateTime(DateTime.Now);
 
 fluent.Segments("PID").Add()
     .Field(1).Set("1")
-    .Field(3).Repetitions.Add("MRN12345").Set().Components("MRN", "12345", "HOSPITAL")
-    .Field(3).Repetitions.Add("SSN987654321")
-    .Field(5).Set().Components("Smith", "John", "Michael", "Jr")
-    .Field(7).Set().Date(new DateTime(1985, 3, 15))
+    .Field(3).Set("MRN12345")
+        .AddRepetition()
+            .SetComponents("MRN", "12345", "HOSPITAL")
+        .AddRepetition("SSN987654321")
+    .Field(5).SetComponents("Smith", "John", "Michael", "Jr")
+    .Field(7).SetDate(new DateTime(1985, 3, 15))
     .Field(8).Set("M")
-    .Field(11).Set().Components("123 Main St", "Apt 4B", "Springfield", "IL", "62701", "USA")
-    .Field(13).Set().Components("555", "123-4567")
-    .Field(14).Set().Components("555", "098-7654");
+    .Field(11).SetComponents("123 Main St", "Apt 4B", "Springfield", "IL", "62701", "USA")
+    .Field(13).SetComponents("555", "123-4567")
+    .Field(14).SetComponents("555", "098-7654");
 
 fluent.Segments("NK1").Add()
     .Field(1).Set("1")
-    .Field(2).Set().Components("Smith", "Jane", "Marie")
-    .Field(3).Set().Components("SPO", "Spouse");
+    .Field(2).SetComponents("Smith", "Jane", "Marie")
+    .Field(3).SetComponents("SPO", "Spouse");
 
 fluent.Segments("PV1").Add()
     .Field(1).Set("1")
     .Field(2).Set("I")
-    .Field(3).Set().Components("ICU", "001", "A", "HOSPITAL")
-    .Field(7).Set().Components("1234", "Johnson", "Robert", "Dr")
+    .Field(3).SetComponents("ICU", "001", "A", "HOSPITAL")
+    .Field(7).SetComponents("1234", "Johnson", "Robert", "Dr")
     .Field(10).Set("MED")
     .Field(19).Set("V" + DateTime.Now.Ticks)
-    .Field(44).Set().DateTimeNow();
+    .Field(44).SetDateTime(DateTime.Now);
 ```
 
 ### Copying Messages and Segments
@@ -313,7 +324,7 @@ var copy = original.Copy();
 
 // Modify the copy without affecting the original
 copy.PID[3].Set("NEW_ID");
-copy.PID[5].Set().Components("NewLastName", "NewFirstName");
+copy.PID[5].SetComponents("NewLastName", "NewFirstName");
 
 // Copy specific segments between messages
 var source = sourceHL7.ToFluentMessage();
@@ -361,7 +372,7 @@ fluent.Path("PV1.7[1].2").Set("Smith");    // Last name
 fluent.Path("PV1.7[1].3").Set("John");     // First name
 
 // Or better, use structured data
-fluent.PV1[7].Repetition(1).Set().Components("1234", "Smith", "John", "Dr");
+fluent.PV1[7].Repetition(1).SetComponents("1234", "Smith", "John", "Dr");
 
 // Check if path exists
 bool hasAllergies = fluent.Path("AL1.3").Exists;
@@ -406,8 +417,8 @@ fluent.OBX[5].SetEncoded("https://lab.hospital.com/results?id=123&type=CBC");
 fluent.NTE[3].SetEncoded("Blood pressure: 120/80 | Temp: 98.6°F");
 
 // Complex addresses using structured data (preferred)
-fluent.PID[11].SetComponents("123 Main St", "Suite A&B", "Boston", "MA", "02101")
-    .Component(2).SetSubComponents("Suite A&B", "Building 5", "East Wing");
+fluent.PID[11].SetComponents("123 Main St", "Suite A&B", "Boston", "MA", "02101");
+fluent.PID[11][2].SetSubComponents("Suite A&B", "Building 5", "East Wing");
 
 // Lab results with ranges - use structured components when possible
 fluent.OBX[5].SetComponents("95", "mg/dL");
@@ -642,10 +653,16 @@ All mutators support method chaining and auto-create missing elements.
 Modify field values with pure navigation pattern.
 
 ```csharp
-fluent.PID[3].Set()
-    .Value("12345")
+fluent.PID[3].Set("12345")
     .Field(5).Set("Smith^John")        // Navigate to field 5, then set
     .Field(7).Set("19850315");         // Navigate to field 7, then set
+
+// Add field repetitions fluently
+fluent.PID[3].Set("FirstID")
+    .AddRepetition("MRN001")           // Add repetition, stay in chain
+    .AddRepetition()                   // Add empty repetition
+        .SetComponents("ENC", "123", "VISIT") // Set components on new repetition
+    .Field(7).Set("19850315");         // Continue with other fields
 ```
 
 **Setting Methods:**
@@ -657,7 +674,8 @@ fluent.PID[3].Set()
 - `SetIf(string value, bool condition)` - Conditional set
 - `SetDate(DateTime date)` - Set date (YYYYMMDD)
 - `SetDateTime(DateTime dateTime)` - Set date/time (YYYYMMDDHHMMSS)
-- `SetDateToday()` / `SetDateTimeNow()` - Set current date/time
+- `AddRepetition(string value)` - Add field repetition with value
+- `AddRepetition()` - Add empty field repetition for component setting
 
 **Navigation Methods:**
 - `Field(int index)` - Navigate to different field (returns FieldMutator)

@@ -336,5 +336,44 @@ namespace HL7lite.Fluent.Accessors
         {
             return Set().SetEncoded(value);
         }
+
+        /// <summary>Sets multiple field components. Shortcut for Set().SetComponents().</summary>
+        public FieldMutator SetComponents(params string[] values)
+        {
+            return Set().SetComponents(values);
+        }
+
+        /// <summary>Sets the field to HL7 null (""). Shortcut for Set().SetNull().</summary>
+        public FieldMutator SetNull()
+        {
+            return Set().SetNull();
+        }
+
+        /// <summary>Sets the field value conditionally. Shortcut for Set().SetIf().</summary>
+        public FieldMutator SetIf(string value, bool condition)
+        {
+            return Set().SetIf(value, condition);
+        }
+
+        /// <summary>Sets the field to a formatted date (YYYYMMDD). Shortcut for Set().SetDate().</summary>
+        public FieldMutator SetDate(DateTime date)
+        {
+            return Set().SetDate(date);
+        }
+
+        /// <summary>Sets the field to a formatted date/time (YYYYMMDDHHMMSS). Shortcut for Set().SetDateTime().</summary>
+        public FieldMutator SetDateTime(DateTime dateTime)
+        {
+            return Set().SetDateTime(dateTime);
+        }
+
+        /// <summary>
+        /// Gets the repetition index for this field accessor (1-based).
+        /// Used internally by mutators to maintain repetition context.
+        /// </summary>
+        internal int GetRepetitionIndex()
+        {
+            return _repetitionIndex;
+        }
     }
 }

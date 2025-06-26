@@ -248,12 +248,30 @@ namespace HL7lite.Fluent.Accessors
         /// fluent.PID[5][1].SetEncoded("Smith^Jones");  // Becomes "Smith\\S\\Jones"
         /// 
         /// // Equivalent to the verbose form
-        /// fluent.PID[5][1].Set().SetEncoded("Smith^Jones");
+        /// fluent.PID[5][1].SetEncoded("Smith^Jones");
         /// </code>
         /// </example>
         public ComponentMutator SetEncoded(string value)
         {
             return Set().SetEncoded(value);
+        }
+
+        /// <summary>Sets multiple subcomponents. Shortcut for Set().SetSubComponents().</summary>
+        public ComponentMutator SetSubComponents(params string[] values)
+        {
+            return Set().SetSubComponents(values);
+        }
+
+        /// <summary>Sets the component to HL7 null (""). Shortcut for Set().SetNull().</summary>
+        public ComponentMutator SetNull()
+        {
+            return Set().SetNull();
+        }
+
+        /// <summary>Sets the component value conditionally. Shortcut for Set().SetIf().</summary>
+        public ComponentMutator SetIf(string value, bool condition)
+        {
+            return Set().SetIf(value, condition);
         }
     }
 }

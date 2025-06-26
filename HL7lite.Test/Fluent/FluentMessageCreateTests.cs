@@ -58,7 +58,7 @@ namespace HL7lite.Test.Fluent
             var pid = fluent.Segments("PID").Add();
             pid[1].Set("1");
             pid[3].Set("PAT001");
-            pid[5].Set().SetComponents("Doe", "John", "M");
+            pid[5].SetComponents("Doe", "John", "M");
             pid[7].Set("19800101");
             pid[8].Set("M");
 
@@ -66,7 +66,7 @@ namespace HL7lite.Test.Fluent
             var pv1 = fluent.Segments("PV1").Add();
             pv1[1].Set("1");
             pv1[2].Set("I");
-            pv1[3].Set().SetComponents("ICU", "001", "A");
+            pv1[3].SetComponents("ICU", "001", "A");
 
             // Assert
             Assert.Equal(3, fluent.UnderlyingMessage.Segments().Count);
@@ -127,7 +127,7 @@ namespace HL7lite.Test.Fluent
                 .Build();
 
             fluent.PID[3].Set("12345");
-            fluent.PID[5].Set().SetComponents("Smith", "John");
+            fluent.PID[5].SetComponents("Smith", "John");
 
             // Act
             var serialized = fluent.Serialize().ToString();

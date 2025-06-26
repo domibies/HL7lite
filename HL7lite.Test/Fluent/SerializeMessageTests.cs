@@ -60,7 +60,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             var fluent = new FluentMessage(message);
 
             // Act - Modify message
-            fluent.PID[5].Set().SetComponents("Smith", "Jane", "Marie");
+            fluent.PID[5].SetComponents("Smith", "Jane", "Marie");
             fluent.PID[7].Set("19901231");
             
             var serialized = fluent.Serialize().ToString();

@@ -44,7 +44,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().SetEncoded("Test|With^Delimiters");
+            fluent.PID[5][1][1].SetEncoded("Test|With^Delimiters");
 
             var expectedEncoded = fluent.UnderlyingMessage.Encoding.Encode("Test|With^Delimiters");
             Assert.Equal(expectedEncoded, fluent.PID[5][1][1].Value);
@@ -55,7 +55,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().SetEncoded(null);
+            fluent.PID[5][1][1].SetEncoded(null);
 
             Assert.Equal("", fluent.PID[5][1][1].Value);
         }
@@ -65,7 +65,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().SetNull();
+            fluent.PID[5][1][1].SetNull();
 
             var expectedNull = fluent.UnderlyingMessage.Encoding.PresentButNull;
             Assert.Equal(expectedNull, fluent.UnderlyingMessage.GetValue("PID.5.1.1"));
@@ -88,7 +88,7 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].Set().SetIf("ConditionalValue", true);
+            fluent.PID[5][1][1].SetIf("ConditionalValue", true);
 
             Assert.Equal("ConditionalValue", fluent.PID[5][1][1].Value);
         }
@@ -99,7 +99,7 @@ PV1|1|I";
             var fluent = CreateTestMessage();
             var originalValue = fluent.PID[5][1][1].Value;
 
-            fluent.PID[5][1][1].Set().SetIf("ConditionalValue", false);
+            fluent.PID[5][1][1].SetIf("ConditionalValue", false);
 
             Assert.Equal(originalValue, fluent.PID[5][1][1].Value);
         }

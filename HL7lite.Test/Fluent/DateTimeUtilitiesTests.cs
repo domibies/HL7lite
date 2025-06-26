@@ -23,7 +23,7 @@ namespace HL7lite.Test.Fluent
 
             // Act
             fluent.Segments("OBX").Add();
-            fluent.OBX[14].Set().DateTime(testDateTime);
+            fluent.OBX[14].SetDateTime(testDateTime);  // Using shortcut
 
             // Assert
             var expectedFormat = MessageHelper.LongDateWithFractionOfSecond(testDateTime);
@@ -48,7 +48,7 @@ namespace HL7lite.Test.Fluent
 
             // Act
             fluent.Segments("OBX").Add();
-            fluent.OBX[14].Set().DateTimeNow();
+            fluent.OBX[14].Set().SetDateTime(DateTime.Now);
 
             var afterTime = DateTime.Now.AddSeconds(1);
 
@@ -76,7 +76,7 @@ namespace HL7lite.Test.Fluent
 
             // Act
             fluent.Segments("PID").Add();
-            fluent.PID[7].Set().Date(testDate); // Date of birth
+            fluent.PID[7].SetDate(testDate); // Using shortcut for date of birth
 
             // Assert
             Assert.Equal("20231219", fluent.PID[7].Value);
@@ -99,7 +99,7 @@ namespace HL7lite.Test.Fluent
 
             // Act
             fluent.Segments("PID").Add();
-            fluent.PID[7].Set().DateToday();
+            fluent.PID[7].Set().SetDate(DateTime.Today);
 
             // Assert
             Assert.Equal(expectedDate, fluent.PID[7].Value);
@@ -276,7 +276,7 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||NOT_A_DATE||";
             fluent.OBX[1].Set("1");
             fluent.OBX[2].Set("NM");
             fluent.OBX[3].Set("GLUCOSE");
-            fluent.OBX[14].Set().DateTime(testDateTime);
+            fluent.OBX[14].Set().SetDateTime(testDateTime);
 
             // Assert
             Assert.Equal("1", fluent.OBX[1].Value);

@@ -250,50 +250,10 @@ namespace HL7lite.Fluent.Mutators
         /// </example>
         public FieldMutator SetDateTime(DateTime dateTime)
         {
-            return DateTime(dateTime);
-        }
-
-        /// <summary>
-        /// Sets the field to a formatted DateTime value.
-        /// </summary>
-        public FieldMutator DateTime(DateTime dateTime)
-        {
             var hl7DateTime = MessageHelper.LongDateWithFractionOfSecond(dateTime);
             return Set(hl7DateTime);
         }
 
-        /// <summary>
-        /// Sets the field value to an HL7-formatted datetime string for the current date and time.
-        /// Uses the full precision format: yyyyMMddHHmmss.FFFF
-        /// </summary>
-        /// <returns>The FieldMutator for method chaining</returns>
-        /// <summary>
-        /// Sets the field to the current DateTime in HL7 format.
-        /// Convenience method that uses the current date and time.
-        /// </summary>
-        /// <returns>The FieldMutator for method chaining</returns>
-        /// <example>
-        /// <code>
-        /// // Set current timestamp
-        /// fluent.EVN[2].SetDateTimeNow();
-        /// 
-        /// // Chain with other operations
-        /// fluent.EVN[2].SetDateTimeNow()
-        ///     .Field(6).SetDateTimeNow();
-        /// </code>
-        /// </example>
-        public FieldMutator SetDateTimeNow()
-        {
-            return DateTimeNow();
-        }
-
-        /// <summary>
-        /// Sets the field to the current DateTime.
-        /// </summary>
-        public FieldMutator DateTimeNow()
-        {
-            return DateTime(System.DateTime.Now);
-        }
 
         /// <summary>
         /// Sets the field to an HL7 date in YYYYMMDD format.
@@ -313,56 +273,10 @@ namespace HL7lite.Fluent.Mutators
         /// </example>
         public FieldMutator SetDate(DateTime date)
         {
-            return Date(date);
-        }
-
-        /// <summary>
-        /// Sets the field value to an HL7-formatted date string (date only, no time).
-        /// Uses the format: yyyyMMdd
-        /// </summary>
-        /// <param name="date">The DateTime to extract date from</param>
-        /// <returns>The FieldMutator for method chaining</returns>
-        /// <summary>
-        /// Sets the field to a formatted date value.
-        /// </summary>
-        public FieldMutator Date(DateTime date)
-        {
             var hl7Date = date.ToString("yyyyMMdd");
             return Set(hl7Date);
         }
 
-        /// <summary>
-        /// Sets the field to today's date in HL7 format (YYYYMMDD).
-        /// Convenience method that uses the current date.
-        /// </summary>
-        /// <returns>The FieldMutator for method chaining</returns>
-        /// <example>
-        /// <code>
-        /// // Set service date to today
-        /// fluent.DG1[5].SetDateToday();
-        /// 
-        /// // Chain with other operations
-        /// fluent.DG1[5].SetDateToday()
-        ///     .Field(6).Set("F");
-        /// </code>
-        /// </example>
-        public FieldMutator SetDateToday()
-        {
-            return DateToday();
-        }
-
-        /// <summary>
-        /// Sets the field value to an HL7-formatted date string for today's date.
-        /// Uses the format: yyyyMMdd
-        /// </summary>
-        /// <returns>The FieldMutator for method chaining</returns>
-        /// <summary>
-        /// Sets the field to today's date.
-        /// </summary>
-        public FieldMutator DateToday()
-        {
-            return Date(System.DateTime.Today);
-        }
 
         /// <summary>
         /// Sets the field value conditionally based on a boolean condition.
@@ -434,6 +348,53 @@ namespace HL7lite.Fluent.Mutators
 
             // Create and return a new SubComponentMutator for the target subcomponent
             return new SubComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, subComponentIndex, _repetitionIndex ?? 1);
+        }
+
+        /// <summary>
+        /// Adds a new repetition with the specified value to this field.
+        /// Returns a FieldMutator pointing to the newly created repetition, enabling immediate component setting.
+        /// </summary>
+        /// <param name="value">The value for the new repetition</param>
+        /// <returns>A FieldMutator for the newly added repetition</returns>
+        /// <example>
+        /// <code>
+        /// // Add repetitions with immediate component setting
+        /// fluent.PID[3].Set("FirstID")
+        ///     .AddRepetition("MRN001")                    // Returns mutator for repetition 2
+        ///         .SetComponents("MRN", "001", "HOSPITAL") // Set components on repetition 2
+        ///     .AddRepetition("ENC123")                    // Add simple value as repetition 3
+        ///     .Field(7).Set("19850315");                  // Continue with other fields
+        /// </code>
+        /// </example>
+        public FieldMutator AddRepetition(string value)
+        {
+            var collections = new Collections.FieldRepetitionCollection(_message, _segmentCode, _fieldIndex, _segmentInstanceIndex);
+            var newRepetitionAccessor = collections.Add(value);
+            
+            // Return a FieldMutator pointing to the newly created repetition
+            return new FieldMutator(_message, _segmentCode, _fieldIndex, 
+                newRepetitionAccessor.GetRepetitionIndex(), _segmentInstanceIndex);
+        }
+
+        /// <summary>
+        /// Adds a new empty repetition to this field that can be populated with components.
+        /// Returns a FieldMutator pointing to the newly created repetition.
+        /// </summary>
+        /// <returns>A FieldMutator for the newly added repetition</returns>
+        /// <example>
+        /// <code>
+        /// // Add empty repetition and set components
+        /// fluent.PID[3].Set("FirstID")
+        ///     .AddRepetition()                            // Add empty repetition 2
+        ///         .SetComponents("MRN", "001", "HOSPITAL") // Set complex components
+        ///     .AddRepetition()                            // Add empty repetition 3
+        ///         .SetComponents("ENC", "123", "VISIT")    // Set different components
+        ///     .Field(7).Set("19850315");                  // Continue fluent chain
+        /// </code>
+        /// </example>
+        public FieldMutator AddRepetition()
+        {
+            return AddRepetition(string.Empty);
         }
     }
 }

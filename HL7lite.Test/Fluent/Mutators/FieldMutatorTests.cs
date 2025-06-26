@@ -648,7 +648,7 @@ PV1|1|I";
             var valueWithDelimiters = "Test|Field^Component~Rep\\Escape&Sub";
             
             // Act - Access through fluent API
-            fluent.PID[5].Set().SetEncoded(valueWithDelimiters);
+            fluent.PID[5].SetEncoded(valueWithDelimiters);
             
             // Assert
             var fluentValue = fluent.PID[5].Value;

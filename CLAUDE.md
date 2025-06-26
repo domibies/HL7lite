@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation Principles
+
+- **Keep XML documentation concise**: Focus on what the method does, not extensive examples
+- **Avoid verbose examples in XML comments**: Save detailed examples for README/documentation files
+- **One-line summary when possible**: Most methods should have a brief single-line summary
+- **Parameters only when non-obvious**: Don't document obvious parameters like "value" in SetValue(value)
+- **IntelliSense-friendly**: Write for developers using autocomplete, not reading source files
+
 ## Build Commands
 
 ```bash
@@ -153,9 +161,9 @@ All mutators support automatic encoding of HL7 delimiter characters:
 **Usage**:
 ```csharp
 // Automatic encoding
-fluent.PID[5].Set().EncodedValue("Smith|John^Medical^Center");
-fluent.PID[5][1].Set().EncodedValue("Name|With^Delimiters");
-fluent.PID[5][1][1].Set().EncodedValue("Value|With^Special&Characters");
+fluent.PID[5].SetEncoded("Smith|John^Medical^Center");
+fluent.PID[5][1].SetEncoded("Name|With^Delimiters");
+fluent.PID[5][1][1].SetEncoded("Value|With^Special&Characters");
 fluent.Path("PID.5.1").SetEncoded("Complex|Value^With~Delimiters");
 ```
 
@@ -227,9 +235,9 @@ string suffix = fluent.PID[5][1][2].Value ?? "";
 
 **Setting Values**:
 ```csharp
-fluent.PID[3].Set().Value("12345");
-fluent.PID[5].Set().Components("Smith", "John", "M");
-fluent.PID[5][1][2].Set().Value("Jr");
+fluent.PID[3].Set("12345");
+fluent.PID[5].SetComponents("Smith", "John", "M");
+fluent.PID[5][1][2].Set("Jr");
 ```
 
 **Method Chaining**:
@@ -255,24 +263,30 @@ fluent.Path("PID.5.2").Set("John");
 string name = fluent.Path("PID.5").Value;
 ```
 
-**Field Repetitions - Consistent API Pattern**:
+**Field Repetitions - Fluent API Pattern**:
 ```csharp
-// CONSISTENT PATTERN: Use collection.Add() (matches Segments pattern)
-fluent.PID[3].Repetitions.Add("MRN001");
-fluent.PID[3].Repetitions.Add("ENC123");
-fluent.PID[3].Repetitions.Add("SSN456");
+// FLUENT PATTERN: AddRepetition maintains chain flow
+fluent.PID[3].Set("FirstID")
+    .AddRepetition("MRN001")                    // Adds repetition, returns mutator for new repetition
+        .SetComponents("MRN", "001", "HOSPITAL") // Set components on new repetition
+    .AddRepetition("ENC123")                    // Add another repetition
+        .SetComponents("ENC", "123", "VISIT")    // Set components on this repetition
+    .Field(7).Set("19850315");                  // Continue fluent chain to other fields
 
-// Chain operations on returned accessor
-fluent.PID[3].Repetitions.Add("MRN001").Set().Components("MRN", "001", "HOSPITAL");
-fluent.PID[3].Repetitions.Add("ENC123").Set().Components("ENC", "123", "VISIT");
+// Pattern variations
+fluent.PID[3].Set("ID1")
+    .AddRepetition("SimpleID2")                 // Simple value
+    .AddRepetition()                            // Empty for components
+        .SetComponents("MRN", "789", "LAB")     // Complex structure
+    .AddRepetition("SimpleID4");                // Back to simple
 
-// IMPORTANT: Set().Value() resets the entire field, losing all repetitions
-fluent.PID[3].Repetitions.Add("FirstID");
-fluent.PID[3].Repetitions.Add("SecondID"); // Now has 2 repetitions
-fluent.PID[3].Set().Value("NewID"); // ❌ Resets field, loses all repetitions!
+// IMPORTANT: Set() resets the entire field, losing all repetitions
+fluent.PID[3].AddRepetition("FirstID");
+fluent.PID[3].AddRepetition("SecondID");        // Now has 2 repetitions
+fluent.PID[3].Set("NewID");                     // ❌ Resets field, loses all repetitions!
 
-// CORRECT: Use only the collection approach for repetitions
-fluent.PID[3].Repetitions.Add("MRN001");
-fluent.PID[3].Repetitions.Add("ENC123");
-fluent.PID[3].Repetitions.Add("SSN456");
+// CORRECT: Use AddRepetition to maintain existing repetitions
+fluent.PID[3].Set("FirstID")
+    .AddRepetition("SecondID")
+    .AddRepetition("ThirdID");
 ```
