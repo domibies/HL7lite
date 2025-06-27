@@ -9,8 +9,14 @@ using HL7lite;
 using HL7lite.Fluent;
 
 // Parse a message
-var message = @"MSH|^~\&|SENDER|FACILITY|RECEIVER|FACILITY|20240101120000||ADT^A01|123456|P|2.5
-PID|||12345||Doe^John^Middle||19800315|M|||123 Main St^Apt 4B^City^ST^12345".ToFluentMessage();
+var hl7String = @"MSH|^~\&|SENDER|FACILITY|RECEIVER|FACILITY|20240101120000||ADT^A01|123456|P|2.5
+PID|||12345||Doe^John^Middle||19800315|M|||123 Main St^Apt 4B^City^ST^12345";
+var result = hl7String.TryParse();
+if (!result.IsSuccess) {
+    Console.WriteLine($"Parse failed: {result.ErrorMessage}");
+    return;
+}
+var message = result.Message;
 
 // Access fields using the Fluent API
 var patientName = message.PID[5][1].Value;        // "Doe"
@@ -91,15 +97,15 @@ var diagnoses = message.Segments("DG1")
     .Select(d => d[3][2].Value);
 
 // Create complete message from scratch
-var fluent = FluentMessage.Create();
-fluent.CreateMSH
+var newMessage = FluentMessage.Create();
+newMessage.CreateMSH
     .Sender("HIS", "HOSPITAL")
     .Receiver("LAB", "LABORATORY")
     .MessageType("ADT^A01")
     .AutoControlId()
     .Build();
 
-fluent.Segments("PID").Add()
+newMessage.Segments("PID").Add()
     .Field(3).Set("12345")
     .Field(5).SetComponents("Smith", "John", "M")
     .Field(7).Set("19850315");

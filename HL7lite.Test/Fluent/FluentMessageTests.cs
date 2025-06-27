@@ -367,7 +367,9 @@ PID|1||12345|||DOE^JOHN^M||||||||||||||||||||||||";
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluentMessage = result.Message;
 
             // Act
             var ackMessage = fluentMessage.GetAck();
@@ -395,7 +397,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluentMessage = result.Message;
 
             // Act
             var nackMessage = fluentMessage.GetNack("AR", "Invalid patient ID");
@@ -424,7 +428,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             const string originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var originalMessage = originalHl7.ToFluentMessage();
+            var originalResult = originalHl7.TryParse();
+            Assert.True(originalResult.IsSuccess);
+            var originalMessage = originalResult.Message;
             var ackMessage = originalMessage.GetAck();
 
             // Act - Try to get ACK from an existing ACK
@@ -441,7 +447,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             const string originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var originalMessage = originalHl7.ToFluentMessage();
+            var originalResult = originalHl7.TryParse();
+            Assert.True(originalResult.IsSuccess);
+            var originalMessage = originalResult.Message;
             var ackMessage = originalMessage.GetAck();
 
             // Act - Try to get NACK from an existing ACK
@@ -459,7 +467,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
 OBR|1|ORDER123|RESULT456|CBC^COMPLETE BLOOD COUNT^L|||20210330110000|||||||||||||||||||F||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||";
             
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluentMessage = result.Message;
 
             // Act
             var ackMessage = fluentMessage.GetAck();
@@ -476,7 +486,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||";
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluentMessage = result.Message;
 
             // Act
             var arNack = fluentMessage.GetNack("AR", "Application Reject");

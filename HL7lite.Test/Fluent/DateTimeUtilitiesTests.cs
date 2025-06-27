@@ -112,7 +112,9 @@ namespace HL7lite.Test.Fluent
             var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.1234||";
             
-            var fluent = hl7String.ToFluentMessage();
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluent = result.Message;
 
             // Act
             var parsedDateTime = fluent.OBX[14].AsDateTime();
@@ -135,7 +137,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.12
             var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.1234-0500||";
             
-            var fluent = hl7String.ToFluentMessage();
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluent = result.Message;
 
             // Act
             TimeSpan offset;
@@ -157,7 +161,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.12
             var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||20231219|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var fluent = hl7String.ToFluentMessage();
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluent = result.Message;
 
             // Act
             var parsedDateTime = fluent.PID[7].AsDateTime(); // Date of birth
@@ -179,7 +185,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||20231219|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.1234||";
             
-            var fluent = hl7String.ToFluentMessage();
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluent = result.Message;
 
             // Act
             var parsedDate = fluent.OBX[14].AsDate();
@@ -202,7 +210,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.12
             var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||||";
             
-            var fluent = hl7String.ToFluentMessage();
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluent = result.Message;
 
             // Act
             var parsedDateTime = fluent.OBX[14].AsDateTime();
@@ -218,7 +228,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||||";
             var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||";
             
-            var fluent = hl7String.ToFluentMessage();
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluent = result.Message;
 
             // Act
             var parsedDateTime = fluent.OBX[20].AsDateTime(); // Field doesn't exist
@@ -234,7 +246,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||";
             var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||NOT_A_DATE||";
             
-            var fluent = hl7String.ToFluentMessage();
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluent = result.Message;
 
             // Act
             var parsedDateTime = fluent.OBX[14].AsDateTime();
@@ -250,7 +264,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||NOT_A_DATE||";
             var hl7String = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||NOT_A_DATE||";
             
-            var fluent = hl7String.ToFluentMessage();
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var fluent = result.Message;
 
             // Act & Assert
             Assert.Throws<FormatException>(() => fluent.OBX[14].AsDateTime(throwOnError: true));

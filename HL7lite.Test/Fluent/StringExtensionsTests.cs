@@ -6,86 +6,110 @@ namespace HL7lite.Test.Fluent
 {
     public class StringExtensionsTests
     {
-        // Helper methods for common assertion patterns (following existing test conventions)
-        private static void AssertThrowsHL7Exception(Action action, string expectedErrorCode)
-        {
-            var ex = Assert.Throws<HL7Exception>(action);
-            Assert.Equal(expectedErrorCode, ex.ErrorCode);
-        }
-
-        private static void AssertThrowsHL7Exception(Action action)
-        {
-            Assert.Throws<HL7Exception>(action);
-        }
-
         [Fact]
-        public void ToFluentMessage_WithValidHL7String_ShouldReturnFluentMessage()
+        public void TryParse_WithValidHL7String_ShouldReturnSuccessResult()
         {
             // Arrange
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
 
             // Act
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
 
             // Assert
-            Assert.NotNull(fluentMessage);
-            Assert.NotNull(fluentMessage.UnderlyingMessage);
-            Assert.True(fluentMessage.MSH.Exists);
-            Assert.True(fluentMessage.PID.Exists);
-            Assert.Equal("DOE^JOHN^M", fluentMessage.PID[5].Value);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Message);
+            Assert.Null(result.ErrorMessage);
+            Assert.Null(result.ErrorCode);
+            Assert.True(result.Message.MSH.Exists);
+            Assert.True(result.Message.PID.Exists);
+            Assert.Equal("DOE^JOHN^M", result.Message.PID[5].Value);
         }
 
         [Fact]
-        public void ToFluentMessage_WithValidHL7StringAndValidationDisabled_ShouldReturnFluentMessage()
+        public void TryParse_WithValidHL7StringAndValidationDisabled_ShouldReturnSuccessResult()
         {
             // Arrange
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
 
             // Act
-            var fluentMessage = hl7.ToFluentMessage(validate: false);
+            var result = hl7.TryParse(validate: false);
 
             // Assert
-            Assert.NotNull(fluentMessage);
-            Assert.NotNull(fluentMessage.UnderlyingMessage);
-            Assert.True(fluentMessage.MSH.Exists);
-            Assert.True(fluentMessage.PID.Exists);
-            Assert.Equal("DOE^JOHN^M", fluentMessage.PID[5].Value);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Message);
+            Assert.Null(result.ErrorMessage);
+            Assert.True(result.Message.MSH.Exists);
+            Assert.True(result.Message.PID.Exists);
+            Assert.Equal("DOE^JOHN^M", result.Message.PID[5].Value);
         }
 
         [Fact]
-        public void ToFluentMessage_WithNullString_ShouldThrowArgumentNullException()
+        public void TryParse_WithNullString_ShouldReturnFailureResult()
         {
             // Arrange
             string hl7 = null;
 
-            // Act & Assert
-            Assert.Throws<ArgumentNullException>(() => hl7.ToFluentMessage());
+            // Act
+            var result = hl7.TryParse();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Message);
+            Assert.NotNull(result.ErrorMessage);
+            Assert.Equal("HL7 message cannot be null", result.ErrorMessage);
         }
 
         [Fact]
-        public void ToFluentMessage_WithInvalidHL7String_ShouldThrowHL7Exception()
-        {
-            // Arrange
-            const string invalidHl7 = "This is not a valid HL7 message";
-
-            // Act & Assert
-            AssertThrowsHL7Exception(() => invalidHl7.ToFluentMessage());
-        }
-
-        [Fact]
-        public void ToFluentMessage_WithEmptyString_ShouldThrowHL7Exception()
+        public void TryParse_WithEmptyString_ShouldReturnFailureResult()
         {
             // Arrange
             const string emptyHl7 = "";
 
-            // Act & Assert
-            AssertThrowsHL7Exception(() => emptyHl7.ToFluentMessage());
+            // Act
+            var result = emptyHl7.TryParse();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Message);
+            Assert.NotNull(result.ErrorMessage);
+            Assert.Equal("HL7 message cannot be empty", result.ErrorMessage);
         }
 
         [Fact]
-        public void ToFluentMessage_WithComplexMessage_ShouldParseCorrectly()
+        public void TryParse_WithWhitespaceString_ShouldReturnFailureResult()
+        {
+            // Arrange
+            const string whitespaceHl7 = "   \t\n  ";
+
+            // Act
+            var result = whitespaceHl7.TryParse();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Message);
+            Assert.NotNull(result.ErrorMessage);
+            Assert.Equal("HL7 message cannot be empty", result.ErrorMessage);
+        }
+
+        [Fact]
+        public void TryParse_WithInvalidHL7String_ShouldReturnFailureResult()
+        {
+            // Arrange
+            const string invalidHl7 = "This is not a valid HL7 message";
+
+            // Act
+            var result = invalidHl7.TryParse();
+
+            // Assert
+            Assert.False(result.IsSuccess);
+            Assert.Null(result.Message);
+            Assert.NotNull(result.ErrorMessage);
+        }
+
+        [Fact]
+        public void TryParse_WithComplexMessage_ShouldParseCorrectly()
         {
             // Arrange
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
@@ -95,84 +119,93 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||
 OBX|2|NM|RBC^RED BLOOD COUNT^L||4.2|10*6/uL|4.2-5.8|N|||F||";
 
             // Act
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
 
             // Assert
-            Assert.NotNull(fluentMessage);
-            Assert.True(fluentMessage.MSH.Exists);
-            Assert.True(fluentMessage.PID.Exists);
-            Assert.True(fluentMessage.OBR.Exists);
-            Assert.True(fluentMessage.OBX.Exists);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Message);
+            var message = result.Message;
+            Assert.True(message.MSH.Exists);
+            Assert.True(message.PID.Exists);
+            Assert.True(message.OBR.Exists);
+            Assert.True(message.OBX.Exists);
             
             // Verify specific field values
-            Assert.Equal("DOE^JOHN^M", fluentMessage.PID[5].Value);
-            Assert.Equal("CBC^COMPLETE BLOOD COUNT^L", fluentMessage.OBR[4].Value);
-            Assert.Equal("7.5", fluentMessage.OBX[5].Value);
+            Assert.Equal("DOE^JOHN^M", message.PID[5].Value);
+            Assert.Equal("CBC^COMPLETE BLOOD COUNT^L", message.OBR[4].Value);
+            Assert.Equal("7.5", message.OBX[5].Value);
             
             // Verify segments collection works
-            var obxSegments = fluentMessage.Segments("OBX");
+            var obxSegments = message.Segments("OBX");
             Assert.Equal(2, obxSegments.Count);
             Assert.Equal("WBC^WHITE BLOOD COUNT^L", obxSegments[0][3].Value);
             Assert.Equal("RBC^RED BLOOD COUNT^L", obxSegments[1][3].Value);
         }
 
         [Fact]
-        public void ToFluentMessage_WithSpecialCharacters_ShouldHandleEncoding()
+        public void TryParse_WithSpecialCharacters_ShouldHandleEncoding()
         {
             // Arrange - Message with special HL7 characters (repetition separator ~)
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M~JOHNNY^J^M||19800101|M|||123 MAIN ST\S\APARTMENT 2^^CITY^ST^12345||5551234567|||||||||||||||||";
 
             // Act
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
 
             // Assert
-            Assert.NotNull(fluentMessage);
+            Assert.True(result.IsSuccess);
+            Assert.NotNull(result.Message);
+            var message = result.Message;
             // First repetition should be the first part
-            Assert.Equal("DOE^JOHN^M", fluentMessage.PID[5].Repetition(1).Value);
-            Assert.Contains("APARTMENT 2", fluentMessage.PID[11].Value);
+            Assert.Equal("DOE^JOHN^M", message.PID[5].Repetition(1).Value);
+            Assert.Contains("APARTMENT 2", message.PID[11].Value);
         }
 
         [Fact]
-        public void ToFluentMessage_ResultCanBeManipulated_ShouldWorkCorrectly()
+        public void TryParse_ResultCanBeManipulated_ShouldWorkCorrectly()
         {
             // Arrange
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
 
             // Act
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var message = result.Message;
             
             // Manipulate the message
-            fluentMessage.PID[5].Set("SMITH^JANE^F");
-            fluentMessage.PID[8].Set("F");
+            message.PID[5].Set("SMITH^JANE^F");
+            message.PID[8].Set("F");
 
             // Assert
-            Assert.Equal("SMITH^JANE^F", fluentMessage.PID[5].Value);
-            Assert.Equal("F", fluentMessage.PID[8].Value);
+            Assert.Equal("SMITH^JANE^F", message.PID[5].Value);
+            Assert.Equal("F", message.PID[8].Value);
         }
 
         [Fact]
-        public void ToFluentMessage_CanAddSegmentsAndFields_ShouldWorkCorrectly()
+        public void TryParse_CanAddSegmentsAndFields_ShouldWorkCorrectly()
         {
             // Arrange
             const string hl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
 
             // Act
-            var fluentMessage = hl7.ToFluentMessage();
+            var result = hl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var message = result.Message;
             
             // Add new segment via fluent API
-            fluentMessage.Segments("OBX").Add();
-            fluentMessage.OBX[1].Set("1");
-            fluentMessage.OBX[2].Set("NM");
-            fluentMessage.OBX[3].Set("GLUCOSE");
+            message.Segments("OBX").Add();
+            message.OBX[1].Set("1");
+            message.OBX[2].Set("NM");
+            message.OBX[3].Set("GLUCOSE");
 
             // Assert
-            Assert.True(fluentMessage.OBX.Exists);
-            Assert.Equal("1", fluentMessage.OBX[1].Value);
-            Assert.Equal("NM", fluentMessage.OBX[2].Value);
-            Assert.Equal("GLUCOSE", fluentMessage.OBX[3].Value);
+            Assert.True(message.OBX.Exists);
+            Assert.Equal("1", message.OBX[1].Value);
+            Assert.Equal("NM", message.OBX[2].Value);
+            Assert.Equal("GLUCOSE", message.OBX[3].Value);
         }
+
     }
 }

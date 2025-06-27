@@ -26,7 +26,7 @@
 ### 🎯 Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
 *Complete new API with intuitive, modern interface - available in v2.0.0-rc.1*
 
-- ⛓️ **Fluent Navigation** - Fluent navigation accross all hierarchy levels
+- ⛓️ **Fluent Navigation** - Fluently set data accross all hierarchy levels
 - 🛡️ **Safe Data Access** - Returns empty values instead of throwing exceptions
 - 🔧 **Auto-creation** - Automatically creates missing segments, fields, and components
 - 🗂️ **LINQ Collections** - LINQ support for segments and field repetitions
@@ -73,19 +73,21 @@ Install-Package HL7lite
 using HL7lite;
 using HL7lite.Fluent;
 
-// Parse an HL7 message
-var message = new Message(hl7String);
-message.ParseMessage();
-
-// Create fluent wrapper
-var fluent = new FluentMessage(message);
+// Parse HL7 message (safe, returns result)
+var result = hl7String.TryParse();
+if (!result.IsSuccess)
+{
+    Console.WriteLine($"Parse failed: {result.ErrorMessage}");
+    return;
+}
+var message = result.Message;
 
 // Get patient information
-string patientId = fluent.PID[3].Value;           // Single field value
-string lastName = fluent.PID[5][1].Value;         // First component 
-string firstName = fluent.PID[5][2].Value;        // Second component 
-string fullName = fluent.PID[5].Value;            // Entire field: "Smith^John^M^Jr"
-DateTime ? dateOfBirth = fluent.PID[7].AsDate();  // DateTime support
+string patientId = message.PID[3].Value;           // Single field value
+string lastName = message.PID[5][1].Value;         // First component 
+string firstName = message.PID[5][2].Value;        // Second component 
+string fullName = message.PID[5].Value;            // Entire field: "Smith^John^M^Jr"
+DateTime? dateOfBirth = message.PID[7].AsDate();   // DateTime support
 
 // .Value returns entire structure with HL7 separators:
 // - Field.Value includes all components: "Smith^John^M"
@@ -93,27 +95,27 @@ DateTime ? dateOfBirth = fluent.PID[7].AsDate();  // DateTime support
 // - Component.Value includes subcomponents: "Home&555-1234"
 
 // Parse dates and timestamps
-DateTime? birthDate = fluent.PID[7].AsDate();           // Parse "19850315" -> DateTime
-DateTime? timestamp = fluent.EVN[2].AsDateTime();       // Parse "20240624143022" -> DateTime
-DateTime? timestampWithTz = fluent.EVN[2].AsDateTime(out TimeSpan offset); // Include timezone
+DateTime? birthDate = message.PID[7].AsDate();           // Parse "19850315" -> DateTime
+DateTime? timestamp = message.EVN[2].AsDateTime();       // Parse "20240624143022" -> DateTime
+DateTime? timestampWithTz = message.EVN[2].AsDateTime(out TimeSpan offset); // Include timezone
 
 // Access with safe navigation - never throws
-string gender = fluent.PID[8].Value ?? ""; // Handle HL7 null("") with null-coalescing
-string missing = fluent.PID[99].Value;     // Non-existing field returns empty string, doesn't throw
+string gender = message.PID[8].Value ?? ""; // Handle HL7 null("") with null-coalescing
+string missing = message.PID[99].Value;     // Non-existing field returns empty string, doesn't throw
 
 // Use path-based access
-string ssn = fluent.Path("PID.19").Value;
-string phone = fluent.Path("PID.13[1].1").Value;
+string ssn = message.Path("PID.19").Value;
+string phone = message.Path("PID.13[1].1").Value;
 
 // Check field repetitions
-if (fluent.PID[3].HasRepetitions) {
-    var ids = fluent.PID[3].Repetitions
+if (message.PID[3].HasRepetitions) {
+    var ids = message.PID[3].Repetitions
         .Select(r => r.Value)
         .ToList();
 }
 
 // Query multiple segments
-var diagnoses = fluent.Segments("DG1")
+var diagnoses = message.Segments("DG1")
     .Select(dg1 => new {
         Code = dg1[3][1].Value,
         Description = dg1[3][2].Value,
@@ -128,19 +130,19 @@ HL7lite uses a **Navigation Pattern** that separates navigation from setting ope
 
 ```csharp
 // ✅ NAVIGATION: Navigate first, then set
-fluent.PID[5].Set("Smith")              // Set current field
+message.PID[5].Set("Smith")              // Set current field
     .Field(7).Set("19850315")           // Navigate to field 7, then set
     .Field(8).Set("M")                  // Navigate to field 8, then set
     .Field(11).Component(3).Set("Springfield");  // Navigate to field 11, component 3, then set
 
 // ✅ Cross-level navigation reads like natural language
-fluent.PID[5][1][1].Set("LastName")     // Set current subcomponent
+message.PID[5][1][1].Set("LastName")     // Set current subcomponent
     .SubComponent(2).Set("FirstName")   // Navigate to subcomponent 2, then set
     .Component(2).Set("MiddleName")     // Navigate to component 2, then set
     .Field(7).Set("19850315");          // Navigate to field 7, then set
 
 // ✅ Fluent creation of new segments
-fluent.Segments("OBX").Add()
+message.Segments("OBX").Add()
     .Field(1).Set("1")                  // Navigate to field 1, set sequence ID
     .Field(3).Component(1).Set("GLUCOSE")       // Navigate to observation identifier
     .Field(5).Set("95")                 // Navigate to observation value
@@ -156,7 +158,7 @@ fluent.Segments("OBX").Add()
 
 ```csharp
 // Complete patient demographics in one powerful method chain
-fluent.PID[3].Set("12345")
+message.PID[3].Set("12345")
     .Field(5).SetComponents("Smith", "John", "M", "Jr", "Dr")
     .Field(7).SetDate(new DateTime(1985, 3, 15))
     .Field(8).Set("M")
@@ -165,34 +167,34 @@ fluent.PID[3].Set("12345")
     .Field(14).SetComponents("555", "098-7654");       // Business phone
 
 // DateTime chaining for multiple timestamps
-fluent.EVN[2].SetDateTime(DateTime.Now)          // Event occurred
+message.EVN[2].SetDateTime(DateTime.Now)          // Event occurred
     .Field(6).SetDateTime(DateTime.Now);               // Event entered
 
 // Auto-creation: Set() never throws - creates missing elements automatically
-fluent["Z01"][99][3].Set("CustomValue");  // Creates entire structure
-fluent.Path("Z02.99.99").Set("Value");    // Creates segment, field, component
+message["Z01"][99][3].Set("CustomValue");  // Creates entire structure
+message.Path("Z02.99.99").Set("Value");    // Creates segment, field, component
 
 // Add field repetitions with fluent chaining
-fluent.PID[3].Set("ID001")
+message.PID[3].Set("ID001")
     .AddRepetition("MRN001")              // Adds repetition, stays in fluent chain
     .AddRepetition("ENC123")              // Add another repetition
     .Field(5).SetComponents("Smith", "John");  // Continue with other fields
 
 // Or add repetitions with components
-fluent.PID[3].Set("SimpleID")
+message.PID[3].Set("SimpleID")
     .AddRepetition()                      // Add empty repetition
         .SetComponents("MRN", "001", "HOSPITAL")  // Set complex components
     .AddRepetition()                      // Add another empty repetition
         .SetComponents("ENC", "123", "VISIT");    // Different components
 
 // Work with multiple segments using pure navigation
-fluent.Segments("DG1").Add()
+message.Segments("DG1").Add()
     .Field(1).Set("1")                  // Navigate to field 1, set ID
     .Field(3).SetComponents("I10", "250.00", "Diabetes mellitus type 2")  // Set components
     .Field(6).Set("F");                 // Navigate to field 6, set type
 
 // Full navigation and setting with clear intent
-fluent.Segments("OBX").Add()
+message.Segments("OBX").Add()
     .Field(1).Set("1")                  // Navigate to field 1, set ID
     .Field(2).Set("ST")                 // Navigate to field 2, set value type
     .Field(3).SetComponents("GLUCOSE", "Glucose Level")  // Set observation components
@@ -203,7 +205,7 @@ fluent.Segments("OBX").Add()
     .Field(14).Component(1).Set("20231215120000");  // Navigate to observation date/time
 
 // Set subcomponents 
-fluent.PID[11].SetComponents("123 Main St", "Apt 4B", "Springfield", "IL", "62701", "USA")
+message.PID[11].SetComponents("123 Main St", "Apt 4B", "Springfield", "IL", "62701", "USA")
     .Component(1).SetSubComponents("123 Main St", "Building A", "Suite 100");
 ```
 
@@ -214,10 +216,10 @@ fluent.PID[11].SetComponents("123 Main St", "Apt 4B", "Springfield", "IL", "6270
 
 ```csharp
 // Create a new message from scratch
-var fluent = FluentMessage.Create();
+var message = FluentMessage.Create();
 
 // Build MSH segment fluently
-fluent.CreateMSH
+message.CreateMSH
     .Sender("SENDING_APP", "FACILITY_A")
     .Receiver("RECEIVING_APP", "FACILITY_B")
     .MessageType("ADT^A01")
@@ -227,7 +229,7 @@ fluent.CreateMSH
     .Build();
 
 // Or use convenient defaults
-fluent.CreateMSH
+message.CreateMSH
     .Sender("APP", "FAC")
     .Receiver("DEST", "FAC2") 
     .MessageType("ORU^R01")
@@ -236,7 +238,7 @@ fluent.CreateMSH
     .Build();                  // MessageTime is automatically set to current timestamp
 
 // Even simpler - minimal required fields only
-fluent.CreateMSH
+message.CreateMSH
     .Sender("APP", "FAC")
     .Receiver("DEST", "FAC2")
     .MessageType("ADT^A08")
@@ -244,7 +246,7 @@ fluent.CreateMSH
     .Build();                  // Uses defaults: Version="2.5", ProcessingId="P", MessageTime=now
 
 // Build complete patient segment with powerful method chaining
-fluent.Segments("PID").Add()
+message.Segments("PID").Add()
     .Field(1).Set("1")
     .Field(3).Set("PAT001")
     .Field(5).SetComponents("Doe", "John", "Middle")
@@ -253,15 +255,15 @@ fluent.Segments("PID").Add()
     .Field(11).SetComponents("456 Oak Ave", "", "Boston", "MA", "02101");
 
 // Create admission info with method chaining
-fluent.Segments("PV1").Add()
+message.Segments("PV1").Add()
     .Field(1).Set("1")                         // Set ID
     .Field(2).Set("I")                         // Inpatient
     .Field(3).SetComponents("ICU", "001", "A")     // Location
     .Field(7).SetComponents("1234", "Smith", "John", "Dr")  // Attending doctor
     .Field(44).Set("20231215080000");          // Admit date/time
 // Power of chaining: Complete ADT message in one flow
-var fluent = FluentMessage.Create();
-fluent.CreateMSH
+var message = FluentMessage.Create();
+message.CreateMSH
     .Sender("HIS", "HOSPITAL")
     .Receiver("LAB", "LABORATORY")
     .MessageType("ADT^A01")
@@ -269,12 +271,12 @@ fluent.CreateMSH
     .Build();
 
 // Add multiple segments in single chained operations
-fluent.Segments("EVN").Add()
+message.Segments("EVN").Add()
     .Field(1).Set("A01")
     .Field(2).SetDateTime(DateTime.Now)
     .Field(6).SetDateTime(DateTime.Now);
 
-fluent.Segments("PID").Add()
+message.Segments("PID").Add()
     .Field(1).Set("1")
     .Field(3).Set("MRN12345")
         .AddRepetition()
@@ -287,12 +289,12 @@ fluent.Segments("PID").Add()
     .Field(13).SetComponents("555", "123-4567")
     .Field(14).SetComponents("555", "098-7654");
 
-fluent.Segments("NK1").Add()
+message.Segments("NK1").Add()
     .Field(1).Set("1")
     .Field(2).SetComponents("Smith", "Jane", "Marie")
     .Field(3).SetComponents("SPO", "Spouse");
 
-fluent.Segments("PV1").Add()
+message.Segments("PV1").Add()
     .Field(1).Set("1")
     .Field(2).Set("I")
     .Field(3).SetComponents("ICU", "001", "A", "HOSPITAL")
@@ -306,7 +308,9 @@ fluent.Segments("PV1").Add()
 
 ```csharp
 // Deep copy entire message with fluent API
-var original = hl7String.ToFluentMessage();
+var result = hl7String.TryParse();
+if (!result.IsSuccess) return;
+var original = result.Message;
 var copy = original.Copy();
 
 // Modify the copy without affecting the original
@@ -314,7 +318,9 @@ copy.PID[3].Set("NEW_ID");
 copy.PID[5].SetComponents("NewLastName", "NewFirstName");
 
 // Copy specific segments between messages
-var source = sourceHL7.ToFluentMessage();
+var sourceResult = sourceHL7.TryParse();
+if (!sourceResult.IsSuccess) return;
+var source = sourceResult.Message;
 var target = FluentMessage.Create();
 
 // Copy all DG1 segments from source to target using fluent collections
@@ -349,30 +355,30 @@ The Path API provides string-based access to message elements, wrapping the lega
 
 ```csharp
 // Basic path access
-string patientName = fluent.Path("PID.5.1").Value;
-fluent.Path("PID.5.1").Set("NewLastName");
+string patientName = message.Path("PID.5.1").Value;
+message.Path("PID.5.1").Set("NewLastName");
 
 // Access repetitions using array notation
-string firstId = fluent.Path("PID.3[1]").Value;
-string secondId = fluent.Path("PID.3[2]").Value;
+string firstId = message.Path("PID.3[1]").Value;
+string secondId = message.Path("PID.3[2]").Value;
 
 // Create complex paths
-fluent.Path("PV1.7[1].1").Set("1234");     // First attending doctor ID
-fluent.Path("PV1.7[1].2").Set("Smith");    // Last name
-fluent.Path("PV1.7[1].3").Set("John");     // First name
+message.Path("PV1.7[1].1").Set("1234");     // First attending doctor ID
+message.Path("PV1.7[1].2").Set("Smith");    // Last name
+message.Path("PV1.7[1].3").Set("John");     // First name
 
 // A better pattern would be to use structured data like below
-fluent.PV1[7].Repetition(1).SetComponents("1234", "Smith", "John", "Dr");
+message.PV1[7].Repetition(1).SetComponents("1234", "Smith", "John", "Dr");
 
 // Check if path exists
-bool hasAllergies = fluent.Path("AL1.3").Exists;
+bool hasAllergies = message.Path("AL1.3").Exists;
 
 // Conditional operations
-fluent.Path("PID.6.1").SetIf("MAIDEN", patient.HasMaidenName);
+message.Path("PID.6.1").SetIf("MAIDEN", patient.HasMaidenName);
 
 // Auto-creation: Set() never throws exceptions
-fluent.Path("ZZ1.5.3").Set("CustomValue"); // Creates entire path if missing
-fluent.Path("NEW.99.99").Set("Value");     // Creates segment, field, component
+message.Path("ZZ1.5.3").Set("CustomValue"); // Creates entire path if missing
+message.Path("NEW.99.99").Set("Value");     // Creates segment, field, component
 ```
 
 </details>
@@ -388,34 +394,34 @@ When field values contain HL7 delimiter characters (`|`, `^`, `~`, `\`, `&`), th
 
 ```csharp
 // WITHOUT encoding - corrupts the message structure
-fluent.PID[5].SetComponents("Smith|Jones", "Mary");  // ❌ The | breaks field separation
+message.PID[5].SetComponents("Smith|Jones", "Mary");  // ❌ The | breaks field separation
 
 // WITH encoding - properly escaped
-fluent.PID[5][1].SetEncoded("Smith|Jones");  // ✅ Becomes "Smith\F\Jones"
+message.PID[5][1].SetEncoded("Smith|Jones");  // ✅ Becomes "Smith\F\Jones"
 
 // Best practice: Use structured data when possible
-fluent.PID[5].SetComponents("Smith-Jones", "Mary");  // ✅ No delimiters needed
+message.PID[5].SetComponents("Smith-Jones", "Mary");  // ✅ No delimiters needed
 ```
 
 ### Real-World Examples
 
 ```csharp
 // URLs with query parameters
-fluent.OBX[5].SetEncoded("https://lab.hospital.com/results?id=123&type=CBC");
+message.OBX[5].SetEncoded("https://lab.hospital.com/results?id=123&type=CBC");
 
 // Medical notes with special characters
-fluent.NTE[3].SetEncoded("Blood pressure: 120/80 | Temp: 98.6°F");
+message.NTE[3].SetEncoded("Blood pressure: 120/80 | Temp: 98.6°F");
 
 // Complex addresses using structured data (preferred)
-fluent.PID[11].SetComponents("123 Main St", "Suite A&B", "Boston", "MA", "02101");
-fluent.PID[11][2].SetSubComponents("Suite A&B", "Building 5", "East Wing");
+message.PID[11].SetComponents("123 Main St", "Suite A&B", "Boston", "MA", "02101");
+message.PID[11][2].SetSubComponents("Suite A&B", "Building 5", "East Wing");
 
 // Lab results with ranges - use structured components when possible
-fluent.OBX[5].SetComponents("95", "mg/dL");
-fluent.OBX[7].Set("70-100");  // Reference range in separate field
+message.OBX[5].SetComponents("95", "mg/dL");
+message.OBX[7].Set("70-100");  // Reference range in separate field
 
 // File paths
-fluent.OBX[5].SetEncoded("\\\\server\\lab\\results\\patient123.pdf");
+message.OBX[5].SetEncoded("\\\\server\\lab\\results\\patient123.pdf");
 ```
 
 ### Automatic Decoding
@@ -424,10 +430,10 @@ When reading values, delimiters are automatically decoded:
 
 ```csharp
 // Set encoded value
-fluent.PID[5][1].SetEncoded("Smith|Jones");
+message.PID[5][1].SetEncoded("Smith|Jones");
 
 // Read value - automatically decoded
-string name = fluent.PID[5][1].Value;  // Returns: "Smith|Jones"
+string name = message.PID[5][1].Value;  // Returns: "Smith|Jones"
 ```
 
 </details>
@@ -448,12 +454,12 @@ Collections use 0-based indexing for LINQ compatibility:
 
 ```csharp
 // Segment collection access
-var segments = fluent.Segments("DG1");
+var segments = message.Segments("DG1");
 var firstDiagnosis = segments[0];          // 0-based for LINQ
 var filtered = segments.Where((s, i) => i > 0);
 
 // But methods remain 1-based
-fluent.PID[3].Repetitions.RemoveRepetition(1);  // Removes first repetition
+message.PID[3].Repetitions.RemoveRepetition(1);  // Removes first repetition
 segments.RemoveSegment(1);                       // Removes first segment
 ```
 
@@ -498,17 +504,17 @@ The Fluent API wraps the legacy API, so you can migrate incrementally:
 
 ```csharp
 // Legacy code continues to work
-var message = new Message(hl7String);
-message.ParseMessage();
-string id = message.GetValue("PID.3");
+var legacyMessage = new Message(hl7String);
+legacyMessage.ParseMessage();
+string id = legacyMessage.GetValue("PID.3");
 
 // Add fluent wrapper when convenient
-var fluent = new FluentMessage(message);
-string name = fluent.PID[5][1].Value;
+var fluentWrapper = new FluentMessage(legacyMessage);
+string name = fluentWrapper.PID[5][1].Value;
 
 // Both APIs work on the same message
-message.SetValue("PID.7", "19850315");
-var dob = fluent.PID[7].Value;  // "19850315"
+legacyMessage.SetValue("PID.7", "19850315");
+var dob = fluentWrapper.PID[7].Value;  // "19850315"
 ```
 
 </details>
@@ -538,9 +544,9 @@ var dob = fluent.PID[7].Value;  // "19850315"
 The main entry point for the fluent API. Wraps a legacy `Message` object.
 
 ```csharp
-var fluent = FluentMessage.Create();        // Create empty message
-var fluent = new FluentMessage(message);    // Wrap existing message
-var fluent = hl7String.ToFluentMessage();  // Parse from string
+var message = FluentMessage.Create();        // Create empty message
+var fluentWrapper = new FluentMessage(message);    // Wrap existing message
+var result = hl7String.TryParse();         // Parse from string
 ```
 
 **Static Methods:**
@@ -566,8 +572,8 @@ var fluent = hl7String.ToFluentMessage();  // Parse from string
 Access to segment-level data.
 
 ```csharp
-var pid = fluent.PID;
-var custom = fluent["ZZ1"];
+var pid = message.PID;
+var custom = message["ZZ1"];
 ```
 
 **Properties:**
@@ -584,8 +590,8 @@ var custom = fluent["ZZ1"];
 Access to field-level data with repetition support.
 
 ```csharp
-var field = fluent.PID[3];
-var component = fluent.PID[5][1];
+var field = message.PID[3];
+var component = message.PID[5][1];
 ```
 
 **Properties:**
@@ -616,7 +622,7 @@ var component = fluent.PID[5][1];
 Access to component-level data.
 
 ```csharp
-var component = fluent.PID[5][1];  // Last name
+var component = message.PID[5][1];  // Last name
 ```
 
 **Properties:**
@@ -635,7 +641,7 @@ var component = fluent.PID[5][1];  // Last name
 Access to subcomponent-level data.
 
 ```csharp
-var subcomp = fluent.PID[5][1][2];
+var subcomp = message.PID[5][1][2];
 ```
 
 **Properties:**
@@ -656,12 +662,12 @@ All mutators support method chaining and auto-create missing elements.
 Modify field values with pure navigation pattern.
 
 ```csharp
-fluent.PID[3].Set("12345")
+message.PID[3].Set("12345")
     .Field(5).Set("Smith^John")        // Navigate to field 5, then set
     .Field(7).Set("19850315");         // Navigate to field 7, then set
 
 // Add field repetitions fluently
-fluent.PID[3].Set("FirstID")
+message.PID[3].Set("FirstID")
     .AddRepetition("MRN001")           // Add repetition, stay in chain
     .AddRepetition()                   // Add empty repetition
         .SetComponents("ENC", "123", "VISIT") // Set components on new repetition
@@ -689,7 +695,7 @@ fluent.PID[3].Set("FirstID")
 Modify component values with pure navigation pattern.
 
 ```csharp
-fluent.PID[5][1].Set("Smith")
+message.PID[5][1].Set("Smith")
     .Component(2).Set("John")          // Navigate to component 2, then set
     .Field(7).Set("19850315");         // Navigate to field 7, then set
 ```
@@ -711,7 +717,7 @@ fluent.PID[5][1].Set("Smith")
 Modify subcomponent values with pure navigation pattern.
 
 ```csharp
-fluent.PID[5][1][1].Set("Smith")
+message.PID[5][1][1].Set("Smith")
     .SubComponent(2).Set("Jr")         // Navigate to subcomponent 2, then set
     .Component(2).Set("John");         // Navigate to component 2, then set
 ```
@@ -734,7 +740,7 @@ fluent.PID[5][1][1].Set("Smith")
 LINQ-compatible collection of segments.
 
 ```csharp
-var diagnoses = fluent.Segments("DG1");
+var diagnoses = message.Segments("DG1");
 var primary = diagnoses[0];  // 0-based indexer
 var count = diagnoses.Count;
 ```
@@ -756,7 +762,7 @@ var count = diagnoses.Count;
 Collection of field repetitions.
 
 ```csharp
-var ids = fluent.PID[3].Repetitions;
+var ids = message.PID[3].Repetitions;
 ids.Add("MRN001");
 ids.Add("SSN123");
 ```
@@ -778,7 +784,7 @@ ids.Add("SSN123");
 String-based access using HL7 path notation.
 
 ```csharp
-var path = fluent.Path("PID.5.1");
+var path = message.Path("PID.5.1");
 ```
 
 **Properties:**
@@ -799,7 +805,7 @@ var path = fluent.Path("PID.5.1");
 Fluent builder for MSH segments with intelligent defaults.
 
 ```csharp
-fluent.CreateMSH
+message.CreateMSH
     .Sender("APP", "FACILITY")
     .Receiver("DEST", "FACILITY2")
     .MessageType("ADT^A01")
@@ -833,7 +839,7 @@ fluent.CreateMSH
 Fluent builder for message serialization.
 
 ```csharp
-string hl7 = fluent.Serialize()
+string hl7 = message.Serialize()
     .WithoutTrailingDelimiters()
     .WithValidation()
     .ToString();
@@ -853,10 +859,11 @@ string hl7 = fluent.Serialize()
 
 ```csharp
 // String to FluentMessage
-var fluent = hl7String.ToFluentMessage();
+var result = hl7String.TryParse();
+if (result.IsSuccess) { var message = result.Message; }
 
 // Legacy Message to FluentMessage
-var fluent = message.ToFluentMessage();
+var fluentWrapper = message.ToFluentMessage();
 ```
 
 ### Utility Methods

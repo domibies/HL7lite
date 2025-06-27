@@ -14,7 +14,9 @@ namespace HL7lite.Test.Fluent
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.1234||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
 
             // Act
             var copy = original.Copy();
@@ -32,7 +34,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.12
             var originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
             var copy = original.Copy();
 
             // Act - Modify copy
@@ -55,7 +59,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
             var copy = original.Copy();
 
             // Act - Modify original
@@ -81,7 +87,9 @@ OBR|1|ORDER123|RESULT456|CBC^COMPLETE BLOOD COUNT^L|||20210330110000||||||||||||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.1234||
 OBX|2|NM|RBC^RED BLOOD COUNT^L||4.2|10*6/uL|4.2-5.8|N|||F|||20231219145530.1234||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
 
             // Act
             var copy = original.Copy();
@@ -105,7 +113,9 @@ OBX|2|NM|RBC^RED BLOOD COUNT^L||4.2|10*6/uL|4.2-5.8|N|||F|||20231219145530.1234|
             var originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN~67890^^^SSN||DOE^JOHN^M^JR~SMITH^J^M||19800101|M|||123 MAIN ST\S\APT 2^SUITE 100^CITY^ST^12345||5551234567~5559876543|||||||||||||||||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
 
             // Act
             var copy = original.Copy();
@@ -150,7 +160,9 @@ PID|1||12345^^^MRN~67890^^^SSN||DOE^JOHN^M^JR~SMITH^J^M||19800101|M|||123 MAIN S
             // Arrange
             var originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 ";
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
 
             // Act
             var copy = original.Copy();
@@ -217,7 +229,9 @@ PID|1||12345^^^MRN~67890^^^SSN||DOE^JOHN^M^JR~SMITH^J^M||19800101|M|||123 MAIN S
             var originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
             var copy = original.Copy();
 
             // Act - Add segments to copy
@@ -241,7 +255,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN~JOHNNY^M||19800101|M|||123 MAIN ST\S\APARTMENT 2^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
 
             // Act
             var copy = original.Copy();
@@ -267,7 +283,9 @@ PID|1||12345^^^MRN||DOE^JOHN~JOHNNY^M||19800101|M|||123 MAIN ST\S\APARTMENT 2^^C
             var originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ORU^R01|12345|P|2.3||
 OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.1234||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
 
             // Act
             var copy = original.Copy();
@@ -291,7 +309,9 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F|||20231219145530.12
             var originalHl7 = @"MSH|^~\&|SENDER|SFACILITY|RECEIVER|RFACILITY|20210330110056||ADT^A01|12345|P|2.3||
 PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234567|||||||||||||||||";
             
-            var original = originalHl7.ToFluentMessage();
+            var result = originalHl7.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
 
             // Act
             var copy1 = original.Copy();
