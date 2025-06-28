@@ -30,7 +30,8 @@
 - 🛡️ **Safe Data Access** - Returns empty values instead of throwing exceptions
 - 🔧 **Auto-creation** - Automatically creates missing segments, fields, and components
 - 🗂️ **LINQ Collections** - LINQ support for segments and field repetitions
-- 🛤️ **Path API** - Fluent string-based access patterns
+- 🛤️ **Enhanced Path API** - Full repetition support with `DG1[2].3[1].2` syntax
+- 🔄 **Segment Repetitions** - Direct access to repeating segments like DG1, OBX
 
 
 ### 🏗️ Core Engine
@@ -91,7 +92,7 @@ DateTime? dateOfBirth = message.PID[7].AsDate();   // DateTime support
 
 // .Value returns entire structure with HL7 separators:
 // - Field.Value includes all components: "Smith^John^M"
-// - Field.Value with repetitions: "ID1~ID2~ID3" 
+// - Field.Value with repetitions: returns only first repetition "ID1" (use .Repetitions for all)
 // - Component.Value includes subcomponents: "Home&555-1234"
 
 // Parse dates and timestamps
@@ -110,7 +111,7 @@ string phone = message.Path("PID.13[1].1").Value;
 // Check field repetitions
 if (message.PID[3].HasRepetitions) {
     var ids = message.PID[3].Repetitions
-        .Select(r => r.Value)
+        .Select(r => r[1].Value) // first component of field
         .ToList();
 }
 
@@ -118,7 +119,7 @@ if (message.PID[3].HasRepetitions) {
 var diagnoses = message.Segments("DG1")
     .Select(dg1 => new {
         Code = dg1[3][1].Value,
-        Description = dg1[3][2].Value,
+        Description = dg1[4].Value,
         Type = dg1[6].Value
     })
     .ToList();
@@ -349,37 +350,89 @@ if (source.Segments("OBX").Any()) {
 <details>
 <summary><b>Path API</b></summary>
 
-The Path API provides string-based access to message elements, wrapping the legacy GetValue/SetValue methods.
+The Path API provides string-based access to message elements with enhanced syntax supporting both segment and field repetitions.
 
 **Important**: Path.Set() behaves like the other setters in the Fluent API - it never throws exceptions and creates missing elements automatically.
+
+### Basic Path Syntax
 
 ```csharp
 // Basic path access
 string patientName = message.Path("PID.5.1").Value;
 message.Path("PID.5.1").Set("NewLastName");
 
-// Access repetitions using array notation
-string firstId = message.Path("PID.3[1]").Value;
-string secondId = message.Path("PID.3[2]").Value;
+// Full path syntax: SEGMENT[rep].FIELD[rep].COMPONENT.SUBCOMPONENT
+// Repetition indexers [n] are optional and default to [1]
+string value = message.Path("DG1[2].3.2").Value;  // 2nd DG1 segment, field 3, component 2
+```
 
-// Create complex paths
-message.Path("PV1.7[1].1").Set("1234");     // First attending doctor ID
-message.Path("PV1.7[1].2").Set("Smith");    // Last name
-message.Path("PV1.7[1].3").Set("John");     // First name
+### Repetition Support
 
-// A better pattern would be to use structured data like below
-message.PV1[7].Repetition(1).SetComponents("1234", "Smith", "John", "Dr");
+```csharp
+// Field repetitions - [n] is optional, defaults to [1]
+string firstId = message.Path("PID.3").Value;      // Same as PID.3[1]
+string secondId = message.Path("PID.3[2]").Value;  // Second repetition
 
+// Segment repetitions - access multiple instances of the same segment
+message.Path("DG1.3.1").Set("I10");        // First diagnosis (same as DG1[1].3.1)
+message.Path("DG1[2].3.1").Set("E11.9");   // Second diagnosis segment
+message.Path("DG1[3].3.1").Set("N18.3");   // Third diagnosis segment
+
+// Combined segment and field repetitions
+message.Path("OBX[2].5").Set("95");        // 2nd OBX, field 5 (first repetition)
+message.Path("OBX[2].5[2]").Set("mg/dL");  // 2nd OBX, field 5 second repetition
+```
+
+### Complex Paths
+
+```csharp
+// Create complex paths with full addressing
+message.Path("PV1.7.1").Set("1234");       // First attending doctor ID
+message.Path("PV1.7.2").Set("Smith");      // Last name  
+message.Path("PV1.7.3").Set("John");       // First name
+message.Path("PV1.7[2].1").Set("5678");    // Second attending doctor ID
+
+// Access deeply nested structures
+message.Path("PID.11.1.1").Set("123 Main St");     // Street address subcomponent
+message.Path("PID.11[1].1.2").Set("Apt 4B");       // Additional locator
+
+// Alternative: Use structured data for clarity
+message.PV1[7].SetComponents("1234", "Smith", "John", "Dr");
+```
+
+### Auto-Creation
+
+```csharp
+// Auto-creation: Set() never throws exceptions
+message.Path("ZZ1.5.3").Set("CustomValue");      // Creates entire path if missing
+message.Path("NEW[2].99.99").Set("Value");       // Creates 2nd instance of NEW segment
+message.Path("OBX[5].5[3].2").Set("Result");     // Creates OBX segments 1-5 if needed
+```
+
+### Conditional Operations
+
+```csharp
 // Check if path exists
 bool hasAllergies = message.Path("AL1.3").Exists;
+bool hasSecondDiagnosis = message.Path("DG1[2].3.1").HasValue;
 
 // Conditional operations
 message.Path("PID.6.1").SetIf("MAIDEN", patient.HasMaidenName);
+message.Path("DG1[2].6").SetIf("F", diagnosis.IsFinal);
 
-// Auto-creation: Set() never throws exceptions
-message.Path("ZZ1.5.3").Set("CustomValue"); // Creates entire path if missing
-message.Path("NEW.99.99").Set("Value");     // Creates segment, field, component
+// Null handling
+message.Path("PID.8").SetNull();  // Sets HL7 null value ("")
+bool isNull = message.Path("PID.8").IsNull;  // Checks for HL7 null
 ```
+
+### Enhanced Features vs Legacy API
+
+The Path API in HL7lite extends the legacy GetValue/SetValue behavior with:
+- **Segment repetition syntax**: `DG1[2]` accesses the 2nd DG1 segment (optional, defaults to [1])
+- **Field repetition syntax**: `PID.3[2]` accesses the 2nd repetition of field 3 (optional, defaults to [1])
+- **Auto-creation**: Missing segments are automatically created with required fields
+- **Safe access**: Never throws exceptions for missing elements
+- **Null safety**: Properly handles HL7 null values ("")
 
 </details>
 
@@ -485,18 +538,27 @@ string lastName = message.GetValue("PID.5.1");
 message.SetValue("PID.3", "12345");
 message.SetValue("PID.5.1", "Smith");
 
-// Auto-create missing elements
-message.PutValue("ZZ1.2.3", "CustomValue");
+// Auto-create missing elements (but NOT segments)
+message.PutValue("PID.99.3", "CustomValue");  // Creates field/component if PID exists
 
 // Check existence
 bool hasValue = message.ValueExists("PID.7");
 
-// Add segments
+// Add segments manually
 var segment = new Segment("PV1", message.Encoding);
 segment.AddNewField("1", 1);
 segment.AddNewField("O", 2);
 message.AddNewSegment(segment);
 ```
+
+### Key Differences from Fluent API
+
+The legacy API has several limitations compared to the Fluent API:
+- **No segment auto-creation**: PutValue("ZZ1.2.3", "value") throws "Segment name not available" if ZZ1 doesn't exist
+- **No segment repetition support in paths**: Cannot use `DG1[2].3` syntax
+- **Limited field repetition access**: Cannot access field repetitions via path strings
+- **Exception-based**: Missing elements often throw exceptions instead of returning empty values
+- **Manual segment creation**: Must create segments manually before setting values
 
 ### Migration to Fluent API
 
@@ -515,6 +577,9 @@ string name = fluentWrapper.PID[5][1].Value;
 // Both APIs work on the same message
 legacyMessage.SetValue("PID.7", "19850315");
 var dob = fluentWrapper.PID[7].Value;  // "19850315"
+
+// Fluent API auto-creates segments
+fluentWrapper.Path("ZZ1.2.3").Set("value");  // Creates ZZ1 segment automatically
 ```
 
 </details>
@@ -525,7 +590,8 @@ var dob = fluentWrapper.PID[7].Value;  // "19850315"
 ### v2.0.0-rc.1 (June 2025)
 - **Pure Navigation API** - Crystal clear navigation with natural language-like syntax
 - **Modern Fluent API** - Complete rewrite with intuitive, chainable interface
-- **Path API** - String-based paths wrapping legacy methods
+- **Enhanced Path API** - Full segment and field repetition support (`DG1[2].3[1].2` syntax)
+- **Auto-creation** - Automatic segment creation for paths (e.g., `Path("ZZ1.5").Set()` creates ZZ1)
 - **Enhanced Collections** - Full LINQ support for segments and repetitions
 - **Better Encoding** - Improved EncodedValue methods for delimiter handling
 - **Full Compatibility** - Legacy API unchanged and fully supported
@@ -597,7 +663,7 @@ var component = message.PID[5][1];
 **Properties:**
 - `Value` - Field value (null for HL7 nulls "")
 - `Exists` - True if field exists in message
-- `HasValue` - True if not empty/null
+- `HasValue` - True if field has actual data (false for empty, null, or HL7 null "")
 - `IsNull` - True for HL7 null values ("")
 - `IsEmpty` - True for empty or null
 - `HasRepetitions` - True if field has repetitions
@@ -750,8 +816,8 @@ var count = diagnoses.Count;
 
 **Methods:**
 - `Add()` - Add new segment, returns accessor
-- `AddCopy(Segment segment)` - Add copy of segment
-- `AddCopy(SegmentAccessor segmentAccessor)` - Add copy from accessor
+- `AddCopy(Segment segment)` - Add copy of segment, returns accessor
+- `AddCopy(SegmentAccessor segmentAccessor)` - Add copy from accessor, returns accessor
 - `Clear()` - Remove all segments
 - `Segment(int index)` - Get by 1-based index
 - `RemoveSegment(int index)` - Remove by 1-based index
@@ -781,23 +847,32 @@ ids.Add("SSN123");
 
 ### Path API
 
-String-based access using HL7 path notation.
+String-based access using enhanced HL7 path notation with full repetition support.
 
 ```csharp
-var path = message.Path("PID.5.1");
+var path = message.Path("PID.5.1");              // Basic path
+var path2 = message.Path("DG1[2].3.1");          // With segment repetition
+var path3 = message.Path("PID.3[2]");            // With field repetition
+var path4 = message.Path("OBX[3].5[2].1");       // Combined repetitions
 ```
 
+**Path Syntax:**
+- `SEGMENT[segRep].FIELD[fieldRep].COMPONENT.SUBCOMPONENT`
+- Repetition brackets `[n]` are optional and default to `[1]`
+- All indices are 1-based per HL7 standard
+
 **Properties:**
-- `Value` - Get value at path
+- `Value` - Get value at path (null for HL7 nulls)
 - `Exists` - True if path exists
-- `HasValue` - True if not empty
-- `IsNull` - True for HL7 nulls
+- `HasValue` - True if has actual data (false for empty, null, or HL7 null "")
+- `IsNull` - True for HL7 nulls ("")
 
 **Methods:**
-- `Set(string value)` - Set value (auto-creates)
+- `Set(string value)` - Set value (auto-creates segments)
 - `SetIf(string value, bool condition)` - Conditional set
-- `SetNull()` - Set HL7 null
-- `SetEncoded(string value)` - Set with encoding
+- `SetNull()` - Set HL7 null ("")
+- `SetEncoded(string value)` - Set with delimiter encoding
+- `SetEncodedIf(string value, bool condition)` - Conditional encoded set
 
 ### Builders
 

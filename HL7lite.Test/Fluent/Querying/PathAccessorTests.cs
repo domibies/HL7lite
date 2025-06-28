@@ -744,5 +744,257 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
         }
 
         #endregion
+
+        #region Segment Creation Tests
+
+        [Fact]
+        public void Set_WithMissingSegment_CreatesSegment()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Verify segment doesn't exist initially
+            Assert.False(fluent.Path("ZZ1.1").Exists);
+            Assert.False(fluent["ZZ1"].Exists);
+            
+            // Act - This would normally throw "Segment name not available" 
+            var result = fluent.Path("ZZ1.1").Set("TestValue");
+            
+            // Assert - result should be the fluent message
+            Assert.Same(fluent, result);
+            
+            // Check if the value was set
+            Assert.True(fluent.Path("ZZ1.1").Exists);
+            Assert.Equal("TestValue", fluent.Path("ZZ1.1").Value);
+            Assert.True(fluent["ZZ1"].Exists);
+        }
+
+        [Fact]
+        public void Set_WithMissingSegmentAndComplexPath_CreatesSegmentAndPath()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Verify segment doesn't exist initially
+            Assert.False(fluent.Path("ZZ2.99.5").Exists);
+            Assert.False(fluent["ZZ2"].Exists);
+            
+            // Act - This would normally throw "Segment name not available"
+            fluent.Path("ZZ2.99.5").Set("ComplexValue");
+            
+            // Assert
+            Assert.True(fluent.Path("ZZ2.99.5").Exists);
+            Assert.Equal("ComplexValue", fluent.Path("ZZ2.99.5").Value);
+            Assert.True(fluent["ZZ2"].Exists);
+        }
+
+        [Fact]
+        public void Set_WithMissingSegmentRepetition_CreatesSegmentRepetition()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Verify segment doesn't exist initially
+            Assert.False(fluent.Path("DG1[3].1").Exists);
+            
+            // Act - This would normally throw "Segment name not available" for repetition 3
+            fluent.Path("DG1[3].1").Set("ThirdDiagnosis");
+            
+            // Assert
+            Assert.True(fluent.Path("DG1[3].1").Exists);
+            Assert.Equal("ThirdDiagnosis", fluent.Path("DG1[3].1").Value);
+            Assert.True(fluent.Segments("DG1").Count >= 3);
+        }
+
+        [Fact]
+        public void Set_WithMissingSegmentAndRepetition_CreatesSegmentRepetitions()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Verify segment doesn't exist initially
+            Assert.False(fluent.Path("ZZ3[2].5.1").Exists);
+            Assert.False(fluent["ZZ3"].Exists);
+            
+            // Act - This would normally throw "Segment name not available"
+            fluent.Path("ZZ3[2].5.1").Set("SecondRepetitionValue");
+            
+            // Assert
+            Assert.True(fluent.Path("ZZ3[2].5.1").Exists);
+            Assert.Equal("SecondRepetitionValue", fluent.Path("ZZ3[2].5.1").Value);
+            Assert.True(fluent["ZZ3"].Exists);
+            Assert.Equal(2, fluent.Segments("ZZ3").Count); // Should create 2 segments (repetitions 1 and 2)
+            
+            // First repetition should exist but be empty
+            Assert.True(fluent.Path("ZZ3[1].1").Exists);
+            Assert.Equal("", fluent.Path("ZZ3[1].1").Value);
+        }
+
+        [Fact]
+        public void SetIf_WithMissingSegment_CreatesSegmentWhenConditionTrue()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Verify segment doesn't exist initially
+            Assert.False(fluent.Path("ZZ4.10").Exists);
+            Assert.False(fluent["ZZ4"].Exists);
+            
+            // Act - This would normally throw "Segment name not available"
+            fluent.Path("ZZ4.10").SetIf("ConditionalValue", true);
+            
+            // Assert
+            Assert.True(fluent.Path("ZZ4.10").Exists);
+            Assert.Equal("ConditionalValue", fluent.Path("ZZ4.10").Value);
+            Assert.True(fluent["ZZ4"].Exists);
+        }
+
+        [Fact]
+        public void SetIf_WithMissingSegment_DoesNotCreateSegmentWhenConditionFalse()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Verify segment doesn't exist initially
+            Assert.False(fluent.Path("ZZ5.10").Exists);
+            Assert.False(fluent["ZZ5"].Exists);
+            
+            // Act 
+            fluent.Path("ZZ5.10").SetIf("ConditionalValue", false);
+            
+            // Assert - Segment should not be created
+            Assert.False(fluent.Path("ZZ5.10").Exists);
+            Assert.False(fluent["ZZ5"].Exists);
+        }
+
+        [Fact]
+        public void SetEncoded_WithMissingSegment_CreatesSegmentAndEncodesValue()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            var valueWithDelimiters = "Test|Value^With~Delimiters&More";
+            
+            // Verify segment doesn't exist initially
+            Assert.False(fluent.Path("ZZ6.1").Exists);
+            Assert.False(fluent["ZZ6"].Exists);
+            
+            // Act - This would normally throw "Segment name not available"
+            fluent.Path("ZZ6.1").SetEncoded(valueWithDelimiters);
+            
+            // Assert
+            Assert.True(fluent.Path("ZZ6.1").Exists);
+            Assert.Equal(valueWithDelimiters, fluent.Path("ZZ6.1").Value);
+            Assert.True(fluent["ZZ6"].Exists);
+            
+            // Verify encoding worked
+            var decodedValue = message.GetValue("ZZ6.1");
+            Assert.Equal(valueWithDelimiters, decodedValue);
+        }
+
+        [Fact]
+        public void SetNull_WithMissingSegment_CreatesSegmentAndSetsNull()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Verify segment doesn't exist initially
+            Assert.False(fluent.Path("ZZ7.2").Exists);
+            Assert.False(fluent["ZZ7"].Exists);
+            
+            // Act - This would normally throw "Segment name not available"
+            fluent.Path("ZZ7.2").SetNull();
+            
+            // Assert
+            Assert.True(fluent.Path("ZZ7.2").Exists);
+            Assert.True(fluent.Path("ZZ7.2").IsNull);
+            Assert.True(fluent["ZZ7"].Exists);
+        }
+
+        [Fact]
+        public void Set_WithMultipleMissingSegments_CreatesAllSegments()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Verify segments don't exist initially
+            Assert.False(fluent.Path("AB1.1").Exists);
+            Assert.False(fluent.Path("CD2.5").Exists);
+            Assert.False(fluent.Path("EF3.10.2").Exists);
+            
+            // Act - Chain multiple operations that would normally throw
+            fluent.Path("AB1.1").Set("FirstValue")
+                  .Path("CD2.5").Set("SecondValue")
+                  .Path("EF3.10.2").Set("ThirdValue");
+            
+            // Assert
+            Assert.True(fluent.Path("AB1.1").Exists);
+            Assert.Equal("FirstValue", fluent.Path("AB1.1").Value);
+            Assert.True(fluent["AB1"].Exists);
+            
+            Assert.True(fluent.Path("CD2.5").Exists);
+            Assert.Equal("SecondValue", fluent.Path("CD2.5").Value);
+            Assert.True(fluent["CD2"].Exists);
+            
+            Assert.True(fluent.Path("EF3.10.2").Exists);
+            Assert.Equal("ThirdValue", fluent.Path("EF3.10.2").Value);
+            Assert.True(fluent["EF3"].Exists);
+        }
+
+        [Fact]
+        public void Set_WithInvalidSegmentName_HandlesGracefully()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Act - Use invalid segment names (should not crash)
+            fluent.Path("1234.1").Set("TestValue");  // Invalid: starts with number
+            fluent.Path("A.1").Set("TestValue");     // Invalid: too short
+            fluent.Path("ABCDE.1").Set("TestValue"); // Invalid: too long
+            
+            // Assert - Should not crash, should handle gracefully (consistent with fluent API)
+            // The specific behavior depends on path parsing, but should not throw exceptions
+            Assert.True(true); // Test passes if no exception is thrown
+        }
+
+        [Fact]
+        public void Set_WithExistingSegmentButMissingField_WorksNormally()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Act - Set field that doesn't exist in existing segment (normal PutValue behavior)
+            fluent.Path("PID.99").Set("NewFieldValue");
+            
+            // Assert
+            Assert.True(fluent.Path("PID.99").Exists);
+            Assert.Equal("NewFieldValue", fluent.Path("PID.99").Value);
+        }
+
+        [Fact]
+        public void PathParsing_WithVariousFormats_ParsesCorrectly()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Act & Assert - Test various path formats for segment creation
+            
+            // Simple segment.field
+            fluent.Path("TST.1").Set("Test1");
+            Assert.Equal("Test1", fluent.Path("TST.1").Value);
+            
+            // Segment with repetition
+            fluent.Path("TST[2].1").Set("Test2");
+            Assert.Equal("Test2", fluent.Path("TST[2].1").Value);
+            
+            // Complex path with component
+            fluent.Path("TST[3].5.2").Set("Test3");
+            Assert.Equal("Test3", fluent.Path("TST[3].5.2").Value);
+            
+            // Verify segment repetitions were created correctly
+            Assert.True(fluent["TST"].Exists);
+            Assert.Equal(3, fluent.Segments("TST").Count);
+        }
+
+        #endregion
     }
 }

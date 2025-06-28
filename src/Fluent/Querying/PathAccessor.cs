@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 
 namespace HL7lite.Fluent.Querying
 {
@@ -11,6 +12,23 @@ namespace HL7lite.Fluent.Querying
         private readonly Message _message;
         private readonly string _path;
         private readonly FluentMessage _fluentMessage;
+        
+        /// <summary>
+        /// Internal class to hold parsed path information (compatible with all .NET Standard versions)
+        /// </summary>
+        private class ParsedPath
+        {
+            public string SegmentName { get; set; }
+            public int SegmentRepetition { get; set; } = 1;
+            public string RemainingPath { get; set; }
+            
+            public ParsedPath(string segmentName, int segmentRepetition, string remainingPath)
+            {
+                SegmentName = segmentName;
+                SegmentRepetition = segmentRepetition;
+                RemainingPath = remainingPath;
+            }
+        }
 
         internal PathAccessor(Message message, string path, FluentMessage fluentMessage)
         {
@@ -21,63 +39,52 @@ namespace HL7lite.Fluent.Querying
 
         /// <summary>
         /// Gets the value at the specified path. Returns null for HL7 null values, empty string for non-existent paths.
+        /// Uses the enhanced path parser supporting segment and field repetitions.
         /// </summary>
         public string Value
         {
             get
             {
-                try
-                {
-                    return _message.GetValue(_path);
-                }
-                catch
-                {
-                    // If path doesn't exist, return empty string (consistent with fluent API behavior)
-                    return "";
-                }
+                var value = PathParser.GetValue(_message, _path);
+                
+                // Convert HL7 null to actual null (consistent with fluent API)
+                if (value == _message.Encoding.PresentButNull)
+                    return null;
+                    
+                // Decode any HL7-encoded delimiter characters
+                return string.IsNullOrEmpty(value) ? value : _message.Encoding.Decode(value);
             }
         }
 
         /// <summary>
         /// Gets whether the element at this path exists in the message.
+        /// Uses the enhanced path parser supporting segment and field repetitions.
         /// </summary>
         public bool Exists
         {
             get
             {
-                try
-                {
-                    return _message.ValueExists(_path);
-                }
-                catch
-                {
-                    return false;
-                }
+                return PathParser.PathExists(_message, _path);
             }
         }
 
         /// <summary>
         /// Gets whether the element at this path has a non-empty value.
         /// Returns false for non-existent paths and HL7 null values.
+        /// Uses the enhanced path parser supporting segment and field repetitions.
         /// </summary>
         public bool HasValue
         {
             get
             {
-                try
-                {
-                    var value = _message.GetValue(_path);
-                    return !string.IsNullOrEmpty(value);
-                }
-                catch
-                {
-                    return false;
-                }
+                var value = PathParser.GetValue(_message, _path);
+                return !string.IsNullOrEmpty(value) && value != _message.Encoding.PresentButNull;
             }
         }
 
         /// <summary>
         /// Gets whether the element at this path contains an HL7 null value ("").
+        /// Uses the enhanced path parser supporting segment and field repetitions.
         /// </summary>
         public bool IsNull
         {
@@ -85,15 +92,8 @@ namespace HL7lite.Fluent.Querying
             {
                 if (!Exists) return false;
                 
-                try
-                {
-                    var value = _message.GetValue(_path);
-                    return value == _message.Encoding.PresentButNull; // HL7 null is represented by the encoding's PresentButNull value
-                }
-                catch
-                {
-                    return false;
-                }
+                var value = PathParser.GetValue(_message, _path);
+                return value == _message.Encoding.PresentButNull; // HL7 null is represented by the encoding's PresentButNull value
             }
         }
 
@@ -106,8 +106,7 @@ namespace HL7lite.Fluent.Querying
         /// <returns>The FluentMessage for method chaining</returns>
         public FluentMessage Set(string value)
         {
-            _message.PutValue(_path, value);
-            return _fluentMessage;
+            return SetPathValueInternal(_path, value, false);
         }
 
         /// <summary>
@@ -121,7 +120,7 @@ namespace HL7lite.Fluent.Querying
         {
             if (condition)
             {
-                _message.PutValue(_path, value);
+                return SetPathValueInternal(_path, value, false);
             }
             return _fluentMessage;
         }
@@ -135,13 +134,7 @@ namespace HL7lite.Fluent.Querying
         /// <returns>The FluentMessage for method chaining</returns>
         public FluentMessage SetEncoded(string value)
         {
-            if (value == null)
-            {
-                return Set("");
-            }
-
-            var encodedValue = _message.Encoding.Encode(value);
-            return Set(encodedValue);
+            return SetPathValueInternal(_path, value, true);
         }
 
         /// <summary>
@@ -155,7 +148,7 @@ namespace HL7lite.Fluent.Querying
         {
             if (condition)
             {
-                return SetEncoded(value);
+                return SetPathValueInternal(_path, value, true);
             }
             return _fluentMessage;
         }
@@ -166,13 +159,30 @@ namespace HL7lite.Fluent.Querying
         /// <returns>The FluentMessage for method chaining</returns>
         public FluentMessage SetNull()
         {
-            _message.PutValue(_path, _message.Encoding.PresentButNull);
-            return _fluentMessage;
+            return SetPathValueInternal(_path, _message.Encoding.PresentButNull, false);
         }
 
         /// <summary>
         /// Returns the path string for debugging purposes.
         /// </summary>
         public override string ToString() => _path;
+        
+        /// <summary>
+        /// Internal method that handles path value setting with automatic segment creation.
+        /// Implements DRY principle for all Set operations using the enhanced PathParser.
+        /// </summary>
+        /// <param name="path">The path to set</param>
+        /// <param name="value">The value to set</param>
+        /// <param name="isEncoded">Whether the value should be encoded</param>
+        /// <returns>The FluentMessage for method chaining</returns>
+        private FluentMessage SetPathValueInternal(string path, string value, bool isEncoded)
+        {
+            bool success = isEncoded 
+                ? PathParser.SetEncodedValue(_message, path, value)
+                : PathParser.SetValue(_message, path, value);
+                
+            // Always return the fluent message for chaining (consistent with fluent API behavior)
+            return _fluentMessage;
+        }
     }
 }

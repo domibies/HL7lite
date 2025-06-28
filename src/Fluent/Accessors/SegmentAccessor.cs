@@ -12,7 +12,6 @@ namespace HL7lite.Fluent.Accessors
         protected readonly Message _message;
         /// <summary>The segment code</summary>
         protected readonly string _segmentName;
-        internal readonly Segment _segment;
         private readonly Dictionary<int, FieldAccessor> _fieldCache = new Dictionary<int, FieldAccessor>();
 
         /// <summary>
@@ -22,12 +21,14 @@ namespace HL7lite.Fluent.Accessors
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             _segmentName = segmentName ?? throw new ArgumentNullException(nameof(segmentName));
-            
-            // Try to get the first segment of this type
-            _segment = _message.SegmentList.ContainsKey(segmentName) && _message.SegmentList[segmentName].Count > 0
-                ? _message.SegmentList[segmentName][0]
-                : null;
         }
+
+        /// <summary>
+        /// Gets the first segment of this type, or null if none exists (dynamic property)
+        /// </summary>
+        internal Segment _segment => _message.SegmentList.ContainsKey(_segmentName) && _message.SegmentList[_segmentName].Count > 0
+            ? _message.SegmentList[_segmentName][0]
+            : null;
 
         /// <summary>
         /// Gets whether this segment exists in the message

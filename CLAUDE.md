@@ -203,8 +203,9 @@ fluent.Path("PID.5.1").SetEncoded("Complex|Value^With~Delimiters");
 - Arrange-Act-Assert pattern
 - Comprehensive edge case coverage
 
-**Important Testing Notes**:
-- **Always create new test files within existing test projects** - standalone test files are not automatically included in the test discovery
+**IMPORTANT Testing Notes**:
+- **CRITICAL: Always create new test files within existing test projects** - standalone test files are not automatically included in the test discovery
+- **DO NOT create separate .cs files for testing - they will not work with `dotnet test`**
 - Add new test classes to `/HL7lite.Test/` with proper namespace `HL7lite.Test.*`
 - Use descriptive test class names ending in `Tests` (e.g. `FieldSetVsAddRepetitionTests`)
 - Test files must be in the same project structure to be discovered by `dotnet test`
