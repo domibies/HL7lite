@@ -23,25 +23,24 @@
 
 ## Key Features
 
-### 🎯 Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
-*Complete new API with intuitive, modern interface - available in v2.0.0-rc.1*
+### Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
+*New in v2.0.0-rc.1 - A complete reimagining of the HL7 parsing experience*
 
-- ⛓️ **Fluent Navigation** - Fluently get & set data accross all hierarchy levels
-- 🛡️ **Safe Data Access** - Returns empty values instead of throwing exceptions
-- 🔧 **Auto-creation** - Automatically creates missing segments, fields, and components
-- 🗂️ **LINQ Collections** - LINQ support for segments, field repetitions and groups!
-- 🛤️ **Enhanced Path API** - Full repetition support with `DG1[2].3[1].2` syntax
-- 🔄 **Segment Repetitions** - Direct access to repeating segments like DG1, OBX
-- 🏗️ **Segment Groups** - Intelligent querying of repeating segment groups
+**Fluent Navigation** - Navigate and modify data across all hierarchy levels with method chaining  
+**Safe Data Access** - No more null reference exceptions - missing elements return empty values  
+**Auto-creation** - Missing segments, fields, and components are created automatically when needed  
+**LINQ Collections** - Full LINQ support for segments, field repetitions, and segment groups  
+**Enhanced Path API** - Complete repetition support with intuitive `DG1[2].3[1].2` syntax  
+**Segment Repetitions** - Direct access to repeating segments like DG1, OBX with collection support  
+**Segment Groups** - Query consecutive segments of the same type separated by gaps  
 
-
-### 🏗️ Core Engine
-- ⚡ **Lightning Fast** - Parse HL7 messages without schema validation overhead  
-- 📦 **Lightweight** - Minimal dependencies, small footprint
-- ✅ **Battle-tested** - Key integration component in Belgium's largest hospital group ([ZAS](https://www.zas.be))
-- 🔄 **Backwards Compatible** - Remains fully compatible with 1.x [legacy API](README.Legacy.md)
-- 🔐 **Encoding Support** - Automatic HL7 delimiter character encoding/decoding
-- 🌐 **.NET Standard** - Compatible with .NET Framework, .NET Core, and .NET 5+
+### Core Engine
+**Lightning Fast** - Parses HL7 messages without the overhead of schema validation  
+**Lightweight** - Minimal dependencies keep your application lean  
+**Battle-tested** - Powers integrations at Belgium's largest hospital group ([ZAS](https://www.zas.be))  
+**Backwards Compatible** - Existing code using the 1.x API continues to work unchanged  
+**Encoding Support** - Automatic handling of HL7 delimiter characters in your data  
+**.NET Standard** - Works with .NET Framework, .NET Core, and modern .NET
 
 ## Quick Start
 
@@ -148,19 +147,19 @@ foreach (var group in diagnosisGroups)
 HL7lite uses a **Navigation Pattern** that separates navigation from setting operations for clear intent:
 
 ```csharp
-// ✅ NAVIGATION: Navigate first, then set
+// NAVIGATION: Navigate first, then set
 message.PID[5].Set("Smith")              // Set current field
     .Field(7).Set("19850315")           // Navigate to field 7, then set
     .Field(8).Set("M")                  // Navigate to field 8, then set
     .Field(11).Component(3).Set("Springfield");  // Navigate to field 11, component 3, then set
 
-// ✅ Cross-level navigation reads like natural language
+// Cross-level navigation reads like natural language
 message.PID[5][1][1].Set("LastName")     // Set current subcomponent
     .SubComponent(2).Set("FirstName")   // Navigate to subcomponent 2, then set
     .Component(2).Set("MiddleName")     // Navigate to component 2, then set
     .Field(7).Set("19850315");          // Navigate to field 7, then set
 
-// ✅ Fluent creation of new segments
+// Fluent creation of new segments
 message.Segments("OBX").Add()
     .Field(1).Set("1")                  // Navigate to field 1, set sequence ID
     .Field(3).Component(1).Set("GLUCOSE")       // Navigate to observation identifier
@@ -465,13 +464,13 @@ When field values contain HL7 delimiter characters (`|`, `^`, `~`, `\`, `&`), th
 
 ```csharp
 // WITHOUT encoding - corrupts the message structure
-message.PID[5][1].Set("Smith & Jones");  // ❌ The & breaks subcomponent separation
+message.PID[5][1].Set("Smith & Jones");  // BAD: The & breaks subcomponent separation
 
 // WITH encoding - properly escaped
-message.PID[5][1].SetEncoded("Smith & Jones");  // ✅ Becomes "Smith \T\ Jones"
+message.PID[5][1].SetEncoded("Smith & Jones");  // GOOD: Becomes "Smith \T\ Jones"
 
 // Best practice: Use structured data when possible
-message.PID[5].SetComponents("Smith-Jones", "Mary");  // ✅ No delimiters needed
+message.PID[5].SetComponents("Smith-Jones", "Mary");  // BEST: No delimiters needed
 ```
 
 ### Real-World Examples
