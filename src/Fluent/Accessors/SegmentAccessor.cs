@@ -26,29 +26,29 @@ namespace HL7lite.Fluent.Accessors
         /// <summary>
         /// Gets the first segment of this type, or null if none exists (dynamic property)
         /// </summary>
-        internal Segment _segment => _message.SegmentList.ContainsKey(_segmentName) && _message.SegmentList[_segmentName].Count > 0
+        internal virtual Segment _segment => _message.SegmentList.ContainsKey(_segmentName) && _message.SegmentList[_segmentName].Count > 0
             ? _message.SegmentList[_segmentName][0]
             : null;
 
         /// <summary>
         /// Gets whether this segment exists in the message
         /// </summary>
-        public bool Exists => _segment != null;
+        public virtual bool Exists => _segment != null;
 
         /// <summary>
         /// Gets whether there are multiple instances of this segment type
         /// </summary>
-        public bool HasMultiple => _message.SegmentList.ContainsKey(_segmentName) && _message.SegmentList[_segmentName].Count > 1;
+        public virtual bool HasMultiple => _message.SegmentList.ContainsKey(_segmentName) && _message.SegmentList[_segmentName].Count > 1;
 
         /// <summary>
         /// Gets the total count of this segment type
         /// </summary>
-        public int Count => _message.SegmentList.ContainsKey(_segmentName) ? _message.SegmentList[_segmentName].Count : 0;
+        public virtual int Count => _message.SegmentList.ContainsKey(_segmentName) ? _message.SegmentList[_segmentName].Count : 0;
 
         /// <summary>
         /// Gets whether there is exactly one instance of this segment
         /// </summary>
-        public bool IsSingle => Count == 1;
+        public virtual bool IsSingle => Count == 1;
 
         /// <summary>
         /// Gets a field accessor by 1-based field number
@@ -125,22 +125,27 @@ namespace HL7lite.Fluent.Accessors
         /// <summary>
         /// Gets whether this specific segment instance exists
         /// </summary>
-        public new bool Exists => _specificSegment != null;
+        public override bool Exists => _specificSegment != null;
 
         /// <summary>
         /// Specific instances don't have multiple (they represent a single instance)
         /// </summary>
-        public new bool HasMultiple => false;
+        public override bool HasMultiple => false;
 
         /// <summary>
         /// Specific instances have count of 1 if they exist, 0 otherwise
         /// </summary>
-        public new int Count => _specificSegment != null ? 1 : 0;
+        public override int Count => _specificSegment != null ? 1 : 0;
 
         /// <summary>
         /// Gets whether this specific instance is the only one (same as Exists for specific instances)
         /// </summary>
-        public new bool IsSingle => _specificSegment != null;
+        public override bool IsSingle => _specificSegment != null;
+
+        /// <summary>
+        /// Override the _segment property to return the specific segment instance
+        /// </summary>
+        internal override Segment _segment => _specificSegment;
 
         /// <summary>
         /// Gets a field accessor by 1-based field number for this specific segment instance

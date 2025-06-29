@@ -26,19 +26,20 @@
 ### 🎯 Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
 *Complete new API with intuitive, modern interface - available in v2.0.0-rc.1*
 
-- ⛓️ **Fluent Navigation** - Fluently set data accross all hierarchy levels
+- ⛓️ **Fluent Navigation** - Fluently get & set data accross all hierarchy levels
 - 🛡️ **Safe Data Access** - Returns empty values instead of throwing exceptions
 - 🔧 **Auto-creation** - Automatically creates missing segments, fields, and components
-- 🗂️ **LINQ Collections** - LINQ support for segments and field repetitions
+- 🗂️ **LINQ Collections** - LINQ support for segments, field repetitions and groups!
 - 🛤️ **Enhanced Path API** - Full repetition support with `DG1[2].3[1].2` syntax
 - 🔄 **Segment Repetitions** - Direct access to repeating segments like DG1, OBX
+- 🏗️ **Segment Groups** - Intelligent querying of repeating segment groups
 
 
 ### 🏗️ Core Engine
 - ⚡ **Lightning Fast** - Parse HL7 messages without schema validation overhead  
 - 📦 **Lightweight** - Minimal dependencies, small footprint
 - ✅ **Battle-tested** - Key integration component in Belgium's largest hospital group ([ZAS](https://www.zas.be))
-- 🔄 **Always Compatible** - Remains fully backward compatible with 1.x [legacy API](README.Legacy.md)
+- 🔄 **Backwards Compatible** - Remains fully compatible with 1.x [legacy API](README.Legacy.md)
 - 🔐 **Encoding Support** - Automatic HL7 delimiter character encoding/decoding
 - 🌐 **.NET Standard** - Compatible with .NET Framework, .NET Core, and .NET 5+
 
@@ -123,6 +124,23 @@ var diagnoses = message.Segments("DG1")
         Type = dg1[6].Value
     })
     .ToList();
+
+// Work with segment groups (consecutive segments separated by gaps)
+var diagnosisGroups = message.Segments("DG1").Groups();
+foreach (var group in diagnosisGroups)
+{
+    Console.WriteLine($"Diagnosis group {group.Count} diagnoses:");
+    var primaryDiagnosis = group.First[3][1].Value;  
+    var relatedDiagnoses = group.Skip(1)
+        .Select(dg1 => dg1[3][1].Value)
+        .ToList();
+        Console.WriteLine($"Primary Diagnosis: {primaryDiagnosis}");
+    Console.WriteLine("Related Diagnoses:");
+    foreach (var diagnosis in relatedDiagnoses)
+    {
+        Console.WriteLine($"- {diagnosis}");
+    }        
+}
 ```
 
 ### Data Manipulation with Navigation and Setters
@@ -447,10 +465,10 @@ When field values contain HL7 delimiter characters (`|`, `^`, `~`, `\`, `&`), th
 
 ```csharp
 // WITHOUT encoding - corrupts the message structure
-message.PID[5].SetComponents("Smith|Jones", "Mary");  // ❌ The | breaks field separation
+message.PID[5][1].Set("Smith & Jones");  // ❌ The & breaks subcomponent separation
 
 // WITH encoding - properly escaped
-message.PID[5][1].SetEncoded("Smith|Jones");  // ✅ Becomes "Smith\F\Jones"
+message.PID[5][1].SetEncoded("Smith & Jones");  // ✅ Becomes "Smith \T\ Jones"
 
 // Best practice: Use structured data when possible
 message.PID[5].SetComponents("Smith-Jones", "Mary");  // ✅ No delimiters needed
@@ -483,10 +501,10 @@ When reading values, delimiters are automatically decoded:
 
 ```csharp
 // Set encoded value
-message.PID[5][1].SetEncoded("Smith|Jones");
+message.PID[5][1].SetEncoded("Smith & Jones");
 
 // Read value - automatically decoded
-string name = message.PID[5][1].Value;  // Returns: "Smith|Jones"
+string name = message.PID[5][1].Value;  // Returns: "Smith & Jones"
 ```
 
 </details>
@@ -809,10 +827,15 @@ LINQ-compatible collection of segments.
 var diagnoses = message.Segments("DG1");
 var primary = diagnoses[0];  // 0-based indexer
 var count = diagnoses.Count;
+
+// Access segment groups
+var groups = diagnoses.Groups();  // Get consecutive segment groups
 ```
 
 **Properties:**
 - `Count` - Number of segments
+- `HasGroups` - Whether segments have groups (gaps between them)
+- `GroupCount` - Number of consecutive segment groups
 
 **Methods:**
 - `Add()` - Add new segment, returns accessor
@@ -822,6 +845,8 @@ var count = diagnoses.Count;
 - `Segment(int index)` - Get by 1-based index
 - `RemoveSegment(int index)` - Remove by 1-based index
 - `this[int index]` - Get by 0-based index
+- `Groups()` - Get segment groups collection
+- `Group(int groupNumber)` - Get specific group by 1-based index
 - LINQ methods (Where, Select, etc.)
 
 #### FieldRepetitionCollection
@@ -844,6 +869,57 @@ ids.Add("SSN123");
 - `RemoveRepetition(int index)` - Remove by 1-based index
 - `this[int index]` - Get by 0-based index
 - LINQ methods
+
+#### Segment Groups
+Intelligent grouping of consecutive segments of the same type, automatically detecting gaps created by other segment types.
+
+```csharp
+// Example message structure:
+// DG1|1|I9|^Diabetes|
+// DG1|2|I9|^Hypertension|  
+// OBX|1|ST|^Lab Result|     <- Creates gap
+// DG1|3|I9|^Asthma|
+// DG1|4|I9|^COPD|
+
+var groups = message.Segments("DG1").Groups();
+// Returns 2 groups: [DG1,DG1] and [DG1,DG1]
+
+// Access groups
+var firstGroup = groups[0];          // 0-based indexer
+var secondGroup = groups.Group(2);   // 1-based Group() method
+
+// LINQ operations on groups
+var largeGroups = groups.Where(g => g.Count >= 2).ToList();
+
+// Access segments within groups
+foreach (var group in groups)
+{
+    foreach (var segment in group)
+    {
+        var diagnosis = segment[3][2].Value; // Diagnosis description
+    }
+}
+```
+
+**SegmentGroupCollection Properties:**
+- `Count` - Number of groups
+- `HasGroups` - Whether any groups exist
+- `GroupCount` - Same as Count
+
+**SegmentGroupCollection Methods:**
+- `Group(int groupNumber)` - Get group by 1-based index
+- `this[int index]` - Get group by 0-based index
+- LINQ methods (Where, Select, etc.)
+
+**SegmentGroup Properties:**
+- `Count` - Number of segments in group
+- `First` - First segment in group
+- `Last` - Last segment in group
+- `IsEmpty` - Whether group is empty
+
+**SegmentGroup Methods:**
+- `this[int index]` - Get segment by 0-based index
+- LINQ methods for processing segments
 
 ### Path API
 

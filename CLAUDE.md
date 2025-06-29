@@ -135,6 +135,38 @@ var fluent = hl7String.ToFluentMessage();
 - Use message encoding for null values
 - Support method chaining
 
+### Polymorphism and Inheritance Principle
+
+**CRITICAL: Always use virtual/override for polymorphic behavior**
+
+When creating derived classes that need to override base class behavior:
+- **Base class**: Mark properties and methods as `virtual`
+- **Derived class**: Use `override` keyword, NOT `new`
+
+The `new` keyword creates a new member that hides the base member, breaking polymorphism:
+```csharp
+// ❌ WRONG - Using 'new' breaks polymorphism
+public class Base { 
+    public bool Exists => true; 
+}
+public class Derived : Base { 
+    public new bool Exists => false;  // Won't be called through base reference!
+}
+
+// ✅ CORRECT - Using virtual/override enables polymorphism
+public class Base { 
+    public virtual bool Exists => true; 
+}
+public class Derived : Base { 
+    public override bool Exists => false;  // Will be called correctly
+}
+```
+
+**In HL7lite context**: 
+- `SegmentAccessor` properties (`Exists`, `HasMultiple`, `Count`, `IsSingle`, `_segment`) must be `virtual`
+- `SpecificInstanceSegmentAccessor` must use `override` for these properties
+- This ensures correct behavior when accessing specific segment instances through base class references
+
 ### Indexing Strategy
 
 **1-based** (HL7 Standard):

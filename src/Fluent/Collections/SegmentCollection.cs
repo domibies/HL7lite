@@ -179,6 +179,38 @@ namespace HL7lite.Fluent.Collections
         }
 
         /// <summary>
+        /// Gets a collection of segment groups for this segment type.
+        /// Groups are formed by consecutive segments of the same type without gaps.
+        /// </summary>
+        /// <returns>A SegmentGroupCollection containing all groups</returns>
+        public SegmentGroupCollection Groups()
+        {
+            return new SegmentGroupCollection(this, _message, _segmentName);
+        }
+
+        /// <summary>
+        /// Gets a specific segment group by one-based group number (HL7 convention)
+        /// </summary>
+        /// <param name="groupNumber">The 1-based group number</param>
+        /// <returns>A SegmentGroup for the specified group number</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown when group number is out of range</exception>
+        public SegmentGroup Group(int groupNumber)
+        {
+            var groups = Groups();
+            return groups.Group(groupNumber);
+        }
+
+        /// <summary>
+        /// Gets whether this segment type has multiple groups (separated by gaps)
+        /// </summary>
+        public bool HasGroups => Groups().Count > 0;
+
+        /// <summary>
+        /// Gets the total number of segment groups for this segment type
+        /// </summary>
+        public int GroupCount => Groups().Count;
+
+        /// <summary>
         /// Returns an enumerator that iterates through the collection
         /// </summary>
         public IEnumerator<SegmentAccessor> GetEnumerator()

@@ -374,5 +374,104 @@ namespace HL7lite.Test.Fluent.Accessors
             // Act & Assert
             Assert.Throws<ArgumentOutOfRangeException>(() => fluentMessage["PID"].Instance(-1));
         }
+
+        [Fact]
+        public void SpecificInstanceSegmentAccessor_WithMultipleSegments_ShouldAccessCorrectSegmentData()
+        {
+            // This test verifies that SpecificInstanceSegmentAccessor correctly accesses
+            // the specific segment instance, not just the first segment of that type.
+            // This addresses the bug where _segment property always returned the first segment [0].
+            
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithPID()
+                .WithDG1(1, "250.00", "Diabetes")
+                .WithDG1(2, "401.9", "Hypertension") 
+                .WithDG1(3, "272.4", "Hyperlipidemia")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+
+            // Act - Get specific instances
+            var firstDG1 = fluentMessage["DG1"].Instance(0);
+            var secondDG1 = fluentMessage["DG1"].Instance(1);
+            var thirdDG1 = fluentMessage["DG1"].Instance(2);
+
+            // Assert - Verify each instance accesses correct segment data
+            Assert.True(firstDG1.Exists);
+            Assert.True(secondDG1.Exists);
+            Assert.True(thirdDG1.Exists);
+
+            // Verify field values are different for each instance
+            Assert.Equal("1", firstDG1[1].Value);   // DG1.1 (Set ID) should be "1"
+            Assert.Equal("2", secondDG1[1].Value);  // DG1.1 (Set ID) should be "2"  
+            Assert.Equal("3", thirdDG1[1].Value);   // DG1.1 (Set ID) should be "3"
+
+            // Verify diagnosis codes are different
+            Assert.Equal("250.00", firstDG1[3][1].Value);   // First diagnosis code
+            Assert.Equal("401.9", secondDG1[3][1].Value);   // Second diagnosis code
+            Assert.Equal("272.4", thirdDG1[3][1].Value);    // Third diagnosis code
+
+            // Verify diagnosis descriptions are different
+            Assert.Equal("Diabetes", firstDG1[3][2].Value);      // First diagnosis description
+            Assert.Equal("Hypertension", secondDG1[3][2].Value); // Second diagnosis description
+            Assert.Equal("Hyperlipidemia", thirdDG1[3][2].Value); // Third diagnosis description
+        }
+
+        [Fact]
+        public void SpecificInstanceSegmentAccessor_Properties_ShouldReflectSpecificInstance()
+        {
+            // This test verifies that SpecificInstanceSegmentAccessor properties
+            // correctly reflect the specific instance, not the general segment type
+            
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithPID()
+                .WithDG1(1, "250.00", "Diabetes")
+                .WithDG1(2, "401.9", "Hypertension")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+
+            // Act
+            var generalDG1 = fluentMessage["DG1"];  // General accessor
+            var specificDG1 = fluentMessage["DG1"].Instance(0);  // Specific instance
+
+            // Assert - General accessor properties
+            Assert.True(generalDG1.Exists);
+            Assert.True(generalDG1.HasMultiple);
+            Assert.False(generalDG1.IsSingle);
+            Assert.Equal(2, generalDG1.Count);
+
+            // Assert - Specific instance accessor properties
+            Assert.True(specificDG1.Exists);
+            Assert.False(specificDG1.HasMultiple);  // Specific instance doesn't have multiple
+            Assert.True(specificDG1.IsSingle);      // Specific instance is single
+            Assert.Equal(1, specificDG1.Count);     // Specific instance count is 1
+        }
+
+        [Fact]
+        public void SpecificInstanceSegmentAccessor_NonExistentInstance_ShouldReturnCorrectProperties()
+        {
+            // This test verifies that SpecificInstanceSegmentAccessor correctly handles
+            // non-existent instances
+            
+            // Arrange
+            var message = HL7MessageBuilder.Create()
+                .WithMSH()
+                .WithPID()
+                .WithDG1(1, "250.00", "Diabetes")
+                .Build();
+            var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
+
+            // Act
+            var nonExistentInstance = fluentMessage["DG1"].Instance(5);
+
+            // Assert
+            Assert.False(nonExistentInstance.Exists);
+            Assert.False(nonExistentInstance.HasMultiple);
+            Assert.False(nonExistentInstance.IsSingle);
+            Assert.Equal(0, nonExistentInstance.Count);
+        }
     }
 }
