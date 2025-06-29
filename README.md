@@ -172,8 +172,8 @@ message.EVN[2].SetDateTime(DateTime.Now)          // Event occurred
     .Field(6).SetDateTime(DateTime.Now);               // Event entered
 
 // Auto-creation: Set() never throws - creates missing elements automatically
-message["Z01"][99][3].Set("CustomValue");  // Creates entire structure
-message.Path("Z02.99.99").Set("Value");    // Creates segment, field, component
+message["ZZ1"][99][3].Set("CustomValue");  // Creates entire structure
+message.Path("ZZ2.99.99").Set("Value");    // Creates segment, field, component
 
 // Add field repetitions with fluent chaining
 message.PID[3].Set("ID001")
