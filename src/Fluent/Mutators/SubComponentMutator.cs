@@ -169,6 +169,13 @@ namespace HL7lite.Fluent.Mutators
             var subComponent = component.EnsureSubComponent(_subComponentIndex);
             subComponent.Value = value ?? string.Empty;
             
+            // Mark field as componentized so it serializes properly
+            field.IsComponentized = true;
+            
+            // Force rebuild of field value from components
+            var fieldValue = field.SerializeValue();
+            field.Value = fieldValue;
+            
             return this;
         }
 

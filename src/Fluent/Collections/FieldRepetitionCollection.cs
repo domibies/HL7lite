@@ -246,8 +246,10 @@ namespace HL7lite.Fluent.Collections
             {
                 // Field already has repetitions, add to the end
                 var repetitionCount = field.Repetitions().Count;
-                var repetitionPath = $"{_segmentName}.{_fieldIndex}({repetitionCount + 1})";
-                _message.PutValue(repetitionPath, value ?? string.Empty);
+                
+                // Use direct field manipulation instead of PutValue to respect segment instance
+                var newRepetition = field.EnsureRepetition(repetitionCount + 1);
+                newRepetition.Value = value ?? string.Empty;
                 
                 // Clear cache and return accessor for the new repetition
                 _cache.Clear();
@@ -255,10 +257,15 @@ namespace HL7lite.Fluent.Collections
             }
             else
             {
-                // Convert single field to repetitions
+                // Convert single field to repetitions using direct manipulation
                 var existingValue = field.Value;
-                _message.PutValue($"{_segmentName}.{_fieldIndex}(1)", existingValue);
-                _message.PutValue($"{_segmentName}.{_fieldIndex}(2)", value ?? string.Empty);
+                
+                // Create repetition structure
+                var firstRepetition = field.EnsureRepetition(1);
+                firstRepetition.Value = existingValue;
+                
+                var secondRepetition = field.EnsureRepetition(2);
+                secondRepetition.Value = value ?? string.Empty;
                 
                 // Clear cache and return accessor for the new (second) repetition
                 _cache.Clear();

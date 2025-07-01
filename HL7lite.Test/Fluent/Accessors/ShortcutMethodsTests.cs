@@ -223,7 +223,7 @@ PV1|1|I";
             Assert.Equal("12345", fluent.PID[3].Value);
             Assert.Equal("19850315", fluent.PID[7].Value);
             Assert.Equal("M", fluent.PID[8].Value);
-            Assert.Equal("Smith", fluent.PID[5][1].Value);
+            Assert.Equal("LastName&FirstName", fluent.PID[5][1].Value); // Component 1 now has subcomponents
             Assert.Equal("John", fluent.PID[5][2].Value);
             Assert.Equal("LastName", fluent.PID[5][1][1].Value);
             Assert.Equal("FirstName", fluent.PID[5][1][2].Value);
