@@ -996,5 +996,134 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
         }
 
         #endregion
+
+        #region Segment and Field Repetition Tests (Fix for Endless Loop)
+
+        [Fact]
+        public void Set_WithSegmentAndFieldRepetitions_ShouldNotCauseEndlessLoop()
+        {
+            // Arrange - This test verifies the fix for the endless loop issue
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Act - This used to cause an endless loop before the fix
+            fluent.Path("ZZ2[2].99[2].99").Set("Value2b");
+            
+            // Assert
+            Assert.True(fluent.Path("ZZ2[2].99[2].99").Exists);
+            Assert.Equal("Value2b", fluent.Path("ZZ2[2].99[2].99").Value);
+            
+            // Verify the structure was created correctly
+            var segments = fluent.Segments("ZZ2");
+            Assert.Equal(2, segments.Count);
+            
+            // Check second segment, field 99, second repetition, component 99
+            var field = segments[1][99];
+            Assert.True(field.HasRepetitions);
+            Assert.Equal(2, field.RepetitionCount);
+            
+            var secondRepetition = field.Repetition(2);
+            Assert.Equal("Value2b", secondRepetition[99].Value);
+        }
+
+        [Fact]
+        public void Set_MultipleSegmentRepetitionsWithFieldRepetitions_ShouldWorkCorrectly()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Act - Set various combinations of segment and field repetitions
+            fluent.Path("DG1[1].3[1].1").Set("Diagnosis1a");
+            fluent.Path("DG1[1].3[2].1").Set("Diagnosis1b");
+            fluent.Path("DG1[2].3[1].1").Set("Diagnosis2a");
+            fluent.Path("DG1[2].3[2].1").Set("Diagnosis2b");
+            fluent.Path("DG1[3].3[1].1").Set("Diagnosis3a");
+            
+            // Assert
+            Assert.Equal("Diagnosis1a", fluent.Path("DG1[1].3[1].1").Value);
+            Assert.Equal("Diagnosis1b", fluent.Path("DG1[1].3[2].1").Value);
+            Assert.Equal("Diagnosis2a", fluent.Path("DG1[2].3[1].1").Value);
+            Assert.Equal("Diagnosis2b", fluent.Path("DG1[2].3[2].1").Value);
+            Assert.Equal("Diagnosis3a", fluent.Path("DG1[3].3[1].1").Value);
+            
+            // Verify structure
+            var dg1Segments = fluent.Segments("DG1");
+            Assert.Equal(3, dg1Segments.Count);
+            
+            // First DG1 segment should have 2 repetitions of field 3
+            Assert.Equal(2, dg1Segments[0][3].RepetitionCount);
+            Assert.Equal(2, dg1Segments[1][3].RepetitionCount);
+            Assert.Equal(1, dg1Segments[2][3].RepetitionCount);
+        }
+
+        [Fact]
+        public void Set_HighFieldNumberWithRepetitionsOnNonFirstSegment_ShouldWork()
+        {
+            // Arrange - Test with high field numbers that require field creation
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Act
+            fluent.Path("ZZ1[3].50[3].5").Set("HighFieldValue");
+            
+            // Assert
+            Assert.Equal("HighFieldValue", fluent.Path("ZZ1[3].50[3].5").Value);
+            
+            // Verify the segment was created
+            var segments = fluent.Segments("ZZ1");
+            Assert.Equal(3, segments.Count);
+            
+            // Verify field 50 exists with 3 repetitions
+            var field50 = segments[2][50];
+            Assert.True(field50.Exists);
+            Assert.Equal(3, field50.RepetitionCount);
+            
+            // Verify the value is in the correct location
+            Assert.Equal("HighFieldValue", field50.Repetition(3)[5].Value);
+        }
+
+        [Fact]
+        public void SetEncoded_WithSegmentAndFieldRepetitions_ShouldHandleDelimiters()
+        {
+            // Arrange
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Act - Set encoded value with delimiters on non-first segment with field repetitions
+            fluent.Path("OBX[2].5[2].1").SetEncoded("Result|With^Delimiters~And&More");
+            
+            // Assert - Value should be properly encoded
+            var retrievedValue = fluent.Path("OBX[2].5[2].1").Value;
+            Assert.Equal("Result|With^Delimiters~And&More", retrievedValue);
+            
+            // Verify the raw stored value has encoded delimiters
+            var segments = fluent.Segments("OBX");
+            Assert.Equal(2, segments.Count);
+            var field = segments[1][5];
+            Assert.Equal(2, field.RepetitionCount);
+        }
+
+        [Fact]
+        public void Set_CreatingMultipleSegmentInstancesInReverseOrder_ShouldWork()
+        {
+            // Arrange - Test creating segments in non-sequential order
+            var (fluent, message) = CreateTestMessagePair();
+            
+            // Act - Create segments 3, 1, 2 in that order
+            fluent.Path("AL1[3].3.1").Set("Allergy3");
+            fluent.Path("AL1[1].3.1").Set("Allergy1");
+            fluent.Path("AL1[2].3.1").Set("Allergy2");
+            
+            // Assert - All should be accessible in correct order
+            Assert.Equal("Allergy1", fluent.Path("AL1[1].3.1").Value);
+            Assert.Equal("Allergy2", fluent.Path("AL1[2].3.1").Value);
+            Assert.Equal("Allergy3", fluent.Path("AL1[3].3.1").Value);
+            
+            // Verify segment order
+            var segments = fluent.Segments("AL1");
+            Assert.Equal(3, segments.Count);
+            Assert.Equal("Allergy1", segments[0][3][1].Value);
+            Assert.Equal("Allergy2", segments[1][3][1].Value);
+            Assert.Equal("Allergy3", segments[2][3][1].Value);
+        }
+
+        #endregion
     }
 }

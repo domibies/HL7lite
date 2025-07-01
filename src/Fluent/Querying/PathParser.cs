@@ -375,12 +375,18 @@ namespace HL7lite.Fluent.Querying
                 
                 if (parsed.FieldRepetition > 1)
                 {
-                    // For field repetitions > 1, ensure the repetition exists first
-                    var fieldAccessor = segmentAccessor[parsed.FieldNumber.Value];
-                    while (fieldAccessor.RepetitionCount < parsed.FieldRepetition)
+                    // For field repetitions > 1, use direct field manipulation to avoid endless loop
+                    // Get the specific segment instance
+                    var segment = GetSegmentInstance(message, parsed.SegmentName, parsed.SegmentRepetition - 1);
+                    if (segment == null)
                     {
-                        fieldAccessor.Repetitions.Add("");
+                        // This shouldn't happen as EnsureSegment was called, but handle gracefully
+                        return false;
                     }
+                    
+                    // Directly ensure the field and repetitions exist using Segment.EnsureField
+                    // This method properly handles repetitions on the correct segment instance
+                    var field = segment.EnsureField(parsed.FieldNumber.Value, parsed.FieldRepetition);
                     
                     // Create FieldMutator for the specific repetition
                     fieldMutator = new FieldMutator(message, parsed.SegmentName, parsed.FieldNumber.Value, 
@@ -457,12 +463,18 @@ namespace HL7lite.Fluent.Querying
                 
                 if (parsed.FieldRepetition > 1)
                 {
-                    // For field repetitions > 1, ensure the repetition exists first
-                    var fieldAccessor = segmentAccessor[parsed.FieldNumber.Value];
-                    while (fieldAccessor.RepetitionCount < parsed.FieldRepetition)
+                    // For field repetitions > 1, use direct field manipulation to avoid endless loop
+                    // Get the specific segment instance
+                    var segment = GetSegmentInstance(message, parsed.SegmentName, parsed.SegmentRepetition - 1);
+                    if (segment == null)
                     {
-                        fieldAccessor.Repetitions.Add("");
+                        // This shouldn't happen as EnsureSegment was called, but handle gracefully
+                        return false;
                     }
+                    
+                    // Directly ensure the field and repetitions exist using Segment.EnsureField
+                    // This method properly handles repetitions on the correct segment instance
+                    var field = segment.EnsureField(parsed.FieldNumber.Value, parsed.FieldRepetition);
                     
                     // Create FieldMutator for the specific repetition
                     fieldMutator = new FieldMutator(message, parsed.SegmentName, parsed.FieldNumber.Value, 
