@@ -13,13 +13,14 @@ namespace HL7lite.Fluent.Mutators
         private readonly int _fieldIndex;
         private readonly int _componentIndex;
         private readonly int _repetitionIndex;
+        private readonly int _segmentInstanceIndex;
         private readonly string _path;
 
         /// <summary>
         /// Initializes a new ComponentMutator.
         /// </summary>
         public ComponentMutator(Message message, string segmentCode, int fieldIndex, int componentIndex)
-            : this(message, segmentCode, fieldIndex, componentIndex, 1)
+            : this(message, segmentCode, fieldIndex, componentIndex, 1, 0)
         {
         }
 
@@ -27,6 +28,14 @@ namespace HL7lite.Fluent.Mutators
         /// Initializes a new ComponentMutator with repetition index.
         /// </summary>
         public ComponentMutator(Message message, string segmentCode, int fieldIndex, int componentIndex, int repetitionIndex)
+            : this(message, segmentCode, fieldIndex, componentIndex, repetitionIndex, 0)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new ComponentMutator with repetition and segment instance indices.
+        /// </summary>
+        public ComponentMutator(Message message, string segmentCode, int fieldIndex, int componentIndex, int repetitionIndex, int segmentInstanceIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             if (segmentCode == null)
@@ -37,6 +46,7 @@ namespace HL7lite.Fluent.Mutators
             _fieldIndex = fieldIndex > 0 ? fieldIndex : throw new ArgumentException("Field index must be greater than 0", nameof(fieldIndex));
             _componentIndex = componentIndex > 0 ? componentIndex : throw new ArgumentException("Component index must be greater than 0", nameof(componentIndex));
             _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
+            _segmentInstanceIndex = segmentInstanceIndex;
             _path = $"{_segmentCode}.{_fieldIndex}({_repetitionIndex}).{_componentIndex}";
         }
 
@@ -58,23 +68,55 @@ namespace HL7lite.Fluent.Mutators
         /// </example>
         public ComponentMutator Set(string value)
         {
-            // Ensure segment exists
-            try
+            // Get the specific segment instance
+            Segment targetSegment = null;
+            
+            if (_message.SegmentList.ContainsKey(_segmentCode))
             {
-                _message.DefaultSegment(_segmentCode);
-            }
-            catch (InvalidOperationException)
-            {
-                // Segment doesn't exist, create it
-                var newSegment = new Segment(_message.Encoding)
+                var segments = _message.SegmentList[_segmentCode];
+                if (_segmentInstanceIndex < segments.Count)
                 {
-                    Name = _segmentCode,
-                    Value = _segmentCode
-                };
-                _message.AddNewSegment(newSegment);
+                    targetSegment = segments[_segmentInstanceIndex];
+                }
             }
             
-            _message.PutValue(_path, value ?? string.Empty);
+            if (targetSegment == null)
+            {
+                // Segment instance doesn't exist, create it if it's the first instance
+                if (_segmentInstanceIndex == 0)
+                {
+                    var newSegment = new Segment(_message.Encoding)
+                    {
+                        Name = _segmentCode,
+                        Value = _segmentCode
+                    };
+                    _message.AddNewSegment(newSegment);
+                    targetSegment = newSegment;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Cannot set component on segment instance {_segmentInstanceIndex} that doesn't exist.");
+                }
+            }
+            
+            // Set the component value directly on the target segment
+            var field = targetSegment.Fields(_fieldIndex);
+            if (field == null)
+            {
+                targetSegment.AddNewField(string.Empty, _fieldIndex);
+                field = targetSegment.Fields(_fieldIndex);
+            }
+            
+            // Handle field repetitions if needed
+            if (_repetitionIndex > 1)
+            {
+                field = field.EnsureRepetition(_repetitionIndex);
+            }
+            
+            // Ensure component exists and set its value
+            var component = field.EnsureComponent(_componentIndex);
+            component.Value = value ?? string.Empty;
+            
             return this;
         }
 
@@ -124,8 +166,7 @@ namespace HL7lite.Fluent.Mutators
         /// </example>
         public ComponentMutator SetNull()
         {
-            _message.PutValue(_path, _message.Encoding.PresentButNull);
-            return this;
+            return Set(_message.Encoding.PresentButNull);
         }
 
         /// <summary>
@@ -133,8 +174,7 @@ namespace HL7lite.Fluent.Mutators
         /// </summary>
         public ComponentMutator Clear()
         {
-            _message.PutValue(_path, string.Empty);
-            return this;
+            return Set(string.Empty);
         }
 
         /// <summary>
@@ -204,7 +244,7 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("Field index must be greater than 0", nameof(fieldIndex));
 
             // Create and return a new FieldMutator for the target field
-            return new FieldMutator(_message, _segmentCode, fieldIndex);
+            return new FieldMutator(_message, _segmentCode, fieldIndex, null, _segmentInstanceIndex);
         }
 
         /// <summary>
@@ -218,7 +258,7 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("Component index must be greater than 0", nameof(componentIndex));
 
             // Create and return a new ComponentMutator for the target component
-            return new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex);
+            return new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex, _segmentInstanceIndex);
         }
 
         /// <summary>
@@ -232,7 +272,7 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("SubComponent index must be greater than 0", nameof(subComponentIndex));
 
             // Create and return a new SubComponentMutator for the target subcomponent
-            return new SubComponentMutator(_message, _segmentCode, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex);
+            return new SubComponentMutator(_message, _segmentCode, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex, _segmentInstanceIndex);
         }
     }
 }

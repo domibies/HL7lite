@@ -324,7 +324,7 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("Component index must be greater than 0", nameof(componentIndex));
 
             // Create and return a new ComponentMutator for the target component
-            return new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex ?? 1);
+            return new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex ?? 1, _segmentInstanceIndex);
         }
 
         /// <summary>
@@ -341,7 +341,7 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("SubComponent index must be greater than 0", nameof(subComponentIndex));
 
             // Create and return a new SubComponentMutator for the target subcomponent
-            return new SubComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, subComponentIndex, _repetitionIndex ?? 1);
+            return new SubComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, subComponentIndex, _repetitionIndex ?? 1, _segmentInstanceIndex);
         }
 
         /// <summary>

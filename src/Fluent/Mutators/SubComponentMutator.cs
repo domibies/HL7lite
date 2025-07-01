@@ -38,6 +38,7 @@ namespace HL7lite.Fluent.Mutators
         private readonly int _componentIndex;
         private readonly int _subComponentIndex;
         private readonly int _repetitionIndex;
+        private readonly int _segmentInstanceIndex;
         private readonly string _path;
 
         /// <summary>
@@ -52,7 +53,7 @@ namespace HL7lite.Fluent.Mutators
         /// <exception cref="ArgumentNullException">Thrown when message or segmentCode is null</exception>
         /// <exception cref="ArgumentException">Thrown when segmentCode is empty or indices are invalid</exception>
         public SubComponentMutator(Message message, string segmentCode, int fieldIndex, int componentIndex, int subComponentIndex)
-            : this(message, segmentCode, fieldIndex, componentIndex, subComponentIndex, 1)
+            : this(message, segmentCode, fieldIndex, componentIndex, subComponentIndex, 1, 0)
         {
         }
 
@@ -68,6 +69,23 @@ namespace HL7lite.Fluent.Mutators
         /// <exception cref="ArgumentNullException">Thrown when message or segmentCode is null</exception>
         /// <exception cref="ArgumentException">Thrown when segmentCode is empty or indices are invalid</exception>
         public SubComponentMutator(Message message, string segmentCode, int fieldIndex, int componentIndex, int subComponentIndex, int repetitionIndex)
+            : this(message, segmentCode, fieldIndex, componentIndex, subComponentIndex, repetitionIndex, 0)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new SubComponentMutator for the specified subcomponent location, field repetition, and segment instance.
+        /// </summary>
+        /// <param name="message">The HL7 message to modify</param>
+        /// <param name="segmentCode">The segment code (e.g., "PID", "OBX")</param>
+        /// <param name="fieldIndex">The 1-based field index</param>
+        /// <param name="componentIndex">The 1-based component index</param>
+        /// <param name="subComponentIndex">The 1-based subcomponent index</param>
+        /// <param name="repetitionIndex">The 1-based field repetition index</param>
+        /// <param name="segmentInstanceIndex">The 0-based segment instance index</param>
+        /// <exception cref="ArgumentNullException">Thrown when message or segmentCode is null</exception>
+        /// <exception cref="ArgumentException">Thrown when segmentCode is empty or indices are invalid</exception>
+        public SubComponentMutator(Message message, string segmentCode, int fieldIndex, int componentIndex, int subComponentIndex, int repetitionIndex, int segmentInstanceIndex)
         {
             _message = message ?? throw new ArgumentNullException(nameof(message));
             if (segmentCode == null)
@@ -79,6 +97,7 @@ namespace HL7lite.Fluent.Mutators
             _componentIndex = componentIndex > 0 ? componentIndex : throw new ArgumentException("Component index must be greater than 0", nameof(componentIndex));
             _subComponentIndex = subComponentIndex > 0 ? subComponentIndex : throw new ArgumentException("SubComponent index must be greater than 0", nameof(subComponentIndex));
             _repetitionIndex = repetitionIndex > 0 ? repetitionIndex : 1;
+            _segmentInstanceIndex = segmentInstanceIndex;
             _path = $"{_segmentCode}.{_fieldIndex}({_repetitionIndex}).{_componentIndex}.{_subComponentIndex}";
         }
 
@@ -100,23 +119,56 @@ namespace HL7lite.Fluent.Mutators
         /// </example>
         public SubComponentMutator Set(string value)
         {
-            // Ensure segment exists
-            try
+            // Get the specific segment instance
+            Segment targetSegment = null;
+            
+            if (_message.SegmentList.ContainsKey(_segmentCode))
             {
-                _message.DefaultSegment(_segmentCode);
-            }
-            catch (InvalidOperationException)
-            {
-                // Segment doesn't exist, create it
-                var newSegment = new Segment(_message.Encoding)
+                var segments = _message.SegmentList[_segmentCode];
+                if (_segmentInstanceIndex < segments.Count)
                 {
-                    Name = _segmentCode,
-                    Value = _segmentCode
-                };
-                _message.AddNewSegment(newSegment);
+                    targetSegment = segments[_segmentInstanceIndex];
+                }
             }
             
-            _message.PutValue(_path, value ?? string.Empty);
+            if (targetSegment == null)
+            {
+                // Segment instance doesn't exist, create it if it's the first instance
+                if (_segmentInstanceIndex == 0)
+                {
+                    var newSegment = new Segment(_message.Encoding)
+                    {
+                        Name = _segmentCode,
+                        Value = _segmentCode
+                    };
+                    _message.AddNewSegment(newSegment);
+                    targetSegment = newSegment;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Cannot set subcomponent on segment instance {_segmentInstanceIndex} that doesn't exist.");
+                }
+            }
+            
+            // Set the subcomponent value directly on the target segment
+            var field = targetSegment.Fields(_fieldIndex);
+            if (field == null)
+            {
+                targetSegment.AddNewField(string.Empty, _fieldIndex);
+                field = targetSegment.Fields(_fieldIndex);
+            }
+            
+            // Handle field repetitions if needed
+            if (_repetitionIndex > 1)
+            {
+                field = field.EnsureRepetition(_repetitionIndex);
+            }
+            
+            // Ensure component and subcomponent exist and set the value
+            var component = field.EnsureComponent(_componentIndex);
+            var subComponent = component.EnsureSubComponent(_subComponentIndex);
+            subComponent.Value = value ?? string.Empty;
+            
             return this;
         }
 
@@ -165,8 +217,7 @@ namespace HL7lite.Fluent.Mutators
         /// </example>
         public SubComponentMutator SetNull()
         {
-            _message.PutValue(_path, _message.Encoding.PresentButNull);
-            return this;
+            return Set(_message.Encoding.PresentButNull);
         }
 
         /// <summary>
@@ -176,8 +227,7 @@ namespace HL7lite.Fluent.Mutators
         /// <returns>The SubComponentMutator for method chaining</returns>
         public SubComponentMutator Clear()
         {
-            _message.PutValue(_path, string.Empty);
-            return this;
+            return Set(string.Empty);
         }
 
         /// <summary>
@@ -217,7 +267,7 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("SubComponent index must be greater than 0", nameof(subComponentIndex));
 
             // Create and return a new SubComponentMutator for the target subcomponent
-            return new SubComponentMutator(_message, _segmentCode, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex);
+            return new SubComponentMutator(_message, _segmentCode, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex, _segmentInstanceIndex);
         }
 
         /// <summary>
@@ -231,7 +281,7 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("Component index must be greater than 0", nameof(componentIndex));
 
             // Create and return a new ComponentMutator for the target component
-            return new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex);
+            return new ComponentMutator(_message, _segmentCode, _fieldIndex, componentIndex, _repetitionIndex, _segmentInstanceIndex);
         }
 
         /// <summary>
@@ -245,7 +295,7 @@ namespace HL7lite.Fluent.Mutators
                 throw new ArgumentException("Field index must be greater than 0", nameof(fieldIndex));
 
             // Create and return a new FieldMutator for the target field
-            return new FieldMutator(_message, _segmentCode, fieldIndex);
+            return new FieldMutator(_message, _segmentCode, fieldIndex, null, _segmentInstanceIndex);
         }
     }
 }

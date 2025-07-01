@@ -208,7 +208,7 @@ namespace HL7lite.Fluent.Accessors
         /// <returns>A SubComponentMutator for this subcomponent.</returns>
         public SubComponentMutator Set()
         {
-            return new SubComponentMutator(_message, _segmentName, _fieldIndex, _componentIndex, _subComponentIndex, _repetitionIndex);
+            return new SubComponentMutator(_message, _segmentName, _fieldIndex, _componentIndex, _subComponentIndex, _repetitionIndex, _segmentInstanceIndex);
         }
 
         /// <summary>

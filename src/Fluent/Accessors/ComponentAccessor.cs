@@ -200,7 +200,7 @@ namespace HL7lite.Fluent.Accessors
                 if (!_subComponentCache.ContainsKey(subComponentIndex))
                 {
                     _subComponentCache[subComponentIndex] = new SubComponentAccessor(
-                        _message, _segmentName, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex);
+                        _message, _segmentName, _fieldIndex, _componentIndex, subComponentIndex, _repetitionIndex, _segmentInstanceIndex);
                 }
                 return _subComponentCache[subComponentIndex];
             }
@@ -222,7 +222,7 @@ namespace HL7lite.Fluent.Accessors
         /// <returns>A ComponentMutator for this component.</returns>
         public ComponentMutator Set()
         {
-            return new ComponentMutator(_message, _segmentName, _fieldIndex, _componentIndex, _repetitionIndex);
+            return new ComponentMutator(_message, _segmentName, _fieldIndex, _componentIndex, _repetitionIndex, _segmentInstanceIndex);
         }
 
         /// <summary>
