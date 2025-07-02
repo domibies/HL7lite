@@ -58,7 +58,9 @@ namespace HL7lite
         public Segment DeepCopy()
         {
             var newSegment = new Segment(this.Name, this.Encoding);
-            newSegment.Value = this.Value; 
+            // Use SerializeValue() to ensure we get the full segment content,
+            // including fields that were set via fluent API but not yet serialized
+            newSegment.Value = this.SerializeValue(); 
 
             return newSegment;        
         }

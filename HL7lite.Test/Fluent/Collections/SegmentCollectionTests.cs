@@ -884,6 +884,296 @@ PV1|1|I";
             Assert.Equal(result1[4].Value, result2[4].Value);
         }
 
+        [Fact]
+        public void AddCopy_WithOBXSegment_CopiesAllFieldValues()
+        {
+            // Arrange - Create a message with OBX segment
+            var hl7 = @"MSH|^~\&|SYSTEM|SENDER|RECEIVER|DESTINATION|20230101000000||ADT^A01|123456|P|2.5
+PID|1||123456789||DOE^JOHN||19800101|M
+OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
+            
+            var parseResult = hl7.TryParse();
+            Assert.True(parseResult.IsSuccess);
+            var sourceFluent = parseResult.Message;
+            
+            // Create a new target message
+            var targetMessage = CreateEmptyMessage();
+            var targetFluent = new FluentMessage(targetMessage);
+            
+            // Act - Get source OBX and copy it
+            var sourceOBX = sourceFluent.Segments("OBX")[0];
+            var copiedOBX = targetFluent.Segments("OBX").AddCopy(sourceOBX);
+            
+            // Assert - Verify all fields were copied
+            Assert.Equal("1", copiedOBX[1].Value);
+            Assert.Equal("TX", copiedOBX[2].Value);
+            Assert.Equal("GLUCOSE", copiedOBX[3].Value);
+            Assert.Equal("1", copiedOBX[4].Value);
+            Assert.Equal("120", copiedOBX[5].Value);
+            Assert.Equal("mg/dl", copiedOBX[6].Value);
+            Assert.Equal("70-100", copiedOBX[7].Value);
+            Assert.Equal("H", copiedOBX[8].Value);
+            Assert.Equal("F", copiedOBX[11].Value);
+            
+            // Verify segment exists and has values
+            Assert.True(copiedOBX.Exists);
+            Assert.NotNull(copiedOBX[1].Value);
+            
+            // Verify independence - modify copy without affecting original
+            copiedOBX[5].Set("999");
+            Assert.Equal("999", copiedOBX[5].Value);
+            Assert.Equal("120", sourceOBX[5].Value);
+        }
+
+        [Fact]
+        public void AddCopy_UserScenario_EmptySegmentDebug()
+        {
+            // Arrange - Create source message with OBX
+            var sourceHL7 = @"MSH|^~\&|SYSTEM|SENDER|RECEIVER|DESTINATION|20230101000000||ADT^A01|123456|P|2.5
+PID|1||123456789||DOE^JOHN||19800101|M
+OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
+            
+            var sourceFluent = sourceHL7.TryParse().Message;
+            
+            // Create target message
+            var targetFluent = new FluentMessage(CreateEmptyMessage());
+            
+            // Act - Using fluent API to mimic user scenario
+            var sourceOBX = sourceFluent.Segments("OBX")[0];
+            
+            // Debug: Check source OBX before copy
+            Assert.True(sourceOBX.Exists);
+            Assert.Equal("1", sourceOBX[1].Value);
+            Assert.Equal("TX", sourceOBX[2].Value);
+            
+            var copiedOBX = targetFluent.Segments("OBX").AddCopy(sourceOBX);
+            
+            // Assert - Debug the copied segment
+            Assert.NotNull(copiedOBX);
+            Assert.True(copiedOBX.Exists, "Copied OBX segment should exist");
+            
+            // Check if we can get field values (this will tell us if the segment was copied correctly)
+            var field1Value = copiedOBX[1].Value;
+            var field2Value = copiedOBX[2].Value;
+            Assert.NotNull(field1Value);
+            Assert.NotNull(field2Value);
+            
+            // Most important: Check if fields were copied
+            Assert.Equal("1", copiedOBX[1].Value);
+            Assert.Equal("TX", copiedOBX[2].Value);
+            Assert.Equal("GLUCOSE", copiedOBX[3].Value);
+        }
+
+        [Fact]
+        public void AddCopy_ExactUserScenario_WithMessageCopyAndOBXAddCopy()
+        {
+            // This test reproduces the exact user scenario where they get an empty OBX
+            var hl7String = @"MSH|^~\&|SYSTEM|SENDER|RECEIVER|DESTINATION|20230101000000||ADT^A01|123456|P|2.5
+PID|1||123456789||DOE^JOHN||19800101|M
+OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
+
+            var result = hl7String.TryParse();
+            if (!result.IsSuccess) return;
+            var original = result.Message;
+            var copy = original.Copy();
+
+            // Modify the copy without affecting the original
+            copy.PID[3].Set("NEW_ID");
+            copy.PID[5].SetComponents("NewLastName", "NewFirstName");
+
+            // User's code (with fix: using 'original' instead of undefined 'message')
+            if (original.Segments("OBX").Any())
+            {
+                var sourceOBX = original.Segments("OBX")[0];
+                var obxAccessor = copy.Segments("OBX").AddCopy(sourceOBX);
+            }
+            
+            // Assert - The copy should now have 2 OBX segments
+            var obxSegments = copy.Segments("OBX").ToList();
+            Assert.Equal(2, obxSegments.Count());
+            
+            // First OBX (from Copy())
+            Assert.Equal("1", obxSegments[0][1].Value);
+            Assert.Equal("TX", obxSegments[0][2].Value);
+            Assert.Equal("GLUCOSE", obxSegments[0][3].Value);
+            Assert.Equal("120", obxSegments[0][5].Value);
+            
+            // Second OBX (from AddCopy) - This is where user reports it's empty
+            Assert.Equal("1", obxSegments[1][1].Value);
+            Assert.Equal("TX", obxSegments[1][2].Value);
+            Assert.Equal("GLUCOSE", obxSegments[1][3].Value);
+            Assert.Equal("120", obxSegments[1][5].Value);
+        }
+
+        [Fact]
+        public void AddCopy_PureFluentAPI_AddingSegmentAccessorToSegmentAccessor()
+        {
+            // Pure fluent API test - exactly as user describes
+            var hl7String = @"MSH|^~\&|SYSTEM|SENDER|RECEIVER|DESTINATION|20230101000000||ADT^A01|123456|P|2.5
+PID|1||123456789||DOE^JOHN||19800101|M
+OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
+
+            var result = hl7String.TryParse();
+            if (!result.IsSuccess) return;
+            var original = result.Message;
+            var copy = original.Copy();
+
+            // User is getting sourceOBX via fluent API (Segments returns SegmentCollection)
+            var sourceOBX = original.Segments("OBX")[0]; // This returns a SegmentAccessor
+            var obxAccessor = copy.Segments("OBX").AddCopy(sourceOBX);
+            
+            // The issue: user reports the added OBX is empty
+            Assert.NotNull(obxAccessor);
+            Assert.True(obxAccessor.Exists);
+            
+            // Check if fields are actually copied
+            Assert.Equal("1", obxAccessor[1].Value);
+            Assert.Equal("TX", obxAccessor[2].Value);
+            Assert.Equal("GLUCOSE", obxAccessor[3].Value);
+            Assert.Equal("120", obxAccessor[5].Value);
+            
+            // Verify we now have 2 OBX segments
+            Assert.Equal(2, copy.Segments("OBX").Count);
+        }
+
+        [Fact]
+        public void AddCopy_DebugSegmentContent_VerifyNotEmpty()
+        {
+            // Debug test to see exactly what's in the segments
+            var hl7String = @"MSH|^~\&|SYSTEM|SENDER|RECEIVER|DESTINATION|20230101000000||ADT^A01|123456|P|2.5
+PID|1||123456789||DOE^JOHN||19800101|M
+OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
+
+            var result = hl7String.TryParse();
+            var original = result.Message;
+            var copy = original.Copy();
+
+            // Get the source OBX
+            var sourceOBX = original.Segments("OBX")[0];
+            
+            // Add copy
+            var addedOBX = copy.Segments("OBX").AddCopy(sourceOBX);
+            
+            // Get all OBX segments
+            var allOBX = copy.Segments("OBX").ToList();
+            Assert.Equal(2, allOBX.Count);
+            
+            // Check first OBX (from Copy())
+            var firstOBX = allOBX[0];
+            Assert.True(firstOBX.Exists);
+            for (int i = 1; i <= 11; i++)
+            {
+                var fieldValue = firstOBX[i].Value;
+                if (fieldValue != null)
+                {
+                    // Field {i} has value: {fieldValue}
+                }
+            }
+            
+            // Check second OBX (from AddCopy) - this is what user reports as empty
+            var secondOBX = allOBX[1];
+            Assert.True(secondOBX.Exists);
+            
+            // Check each field to see if any are null/empty
+            var hasAnyContent = false;
+            for (int i = 1; i <= 11; i++)
+            {
+                var fieldValue = secondOBX[i].Value;
+                if (!string.IsNullOrEmpty(fieldValue))
+                {
+                    hasAnyContent = true;
+                }
+            }
+            
+            Assert.True(hasAnyContent, "Second OBX segment has no field content - reproduces user's issue!");
+            
+            // Specifically check expected fields
+            Assert.Equal("1", secondOBX[1].Value);
+            Assert.Equal("TX", secondOBX[2].Value);
+            Assert.Equal("GLUCOSE", secondOBX[3].Value);
+        }
+
+        [Fact]
+        public void AddCopy_FromFluentCreatedMessage_ReproducesEmptySegmentIssue()
+        {
+            // This reproduces the exact user scenario:
+            // 1. Create message from scratch using fluent API
+            // 2. Serialize to string
+            // 3. Parse back
+            // 4. Try to copy from the original fluent-created message (not the parsed one)
+            
+            // Step 1: Create message from scratch
+            var baseMessage = new Message();
+            baseMessage.AddSegmentMSH("SYSTEM", "SENDER", "RECEIVER", "DESTINATION", "", "ADT^A01", "123456", "P", "2.5");
+            var message = new FluentMessage(baseMessage);
+            
+            // Add PID
+            message.PID[1].Set("1");
+            message.PID[3].Set("123456789");
+            message.PID[5].SetComponents("DOE", "JOHN");
+            message.PID[7].Set("19800101");
+            message.PID[8].Set("M");
+            
+            // Add OBX
+            var obx = message.Segments("OBX").Add();
+            obx[1].Set("1");
+            obx[2].Set("TX");
+            obx[3].Set("GLUCOSE");
+            obx[4].Set("1");
+            obx[5].Set("120");
+            obx[6].Set("mg/dl");
+            obx[7].Set("70-100");
+            obx[8].Set("H");
+            obx[11].Set("F");
+            
+            // Step 2: Serialize to string
+            var hl7String = message.Serialize().ToString();
+            
+            // Step 3: Parse back
+            var result = hl7String.TryParse();
+            Assert.True(result.IsSuccess);
+            var original = result.Message;
+            var copy = original.Copy();
+            
+            // Step 4: User accidentally uses 'message' instead of 'original'
+            if (message.Segments("OBX").Any())
+            {
+                var sourceOBX = message.Segments("OBX")[0]; // BUG: Using 'message' instead of 'original'
+                var obxAccessor = copy.Segments("OBX").AddCopy(sourceOBX);
+                
+                // Check if the copied OBX is empty (reproducing user's issue)
+                Assert.True(obxAccessor.Exists);
+                
+                // These should fail if we're reproducing the issue
+                var field1 = obxAccessor[1].Value;
+                var field2 = obxAccessor[2].Value;
+                var field5 = obxAccessor[5].Value;
+                
+                // If these are null/empty, we've reproduced the issue
+                if (string.IsNullOrEmpty(field1) && string.IsNullOrEmpty(field2) && string.IsNullOrEmpty(field5))
+                {
+                    Assert.True(false, "Reproduced user's issue: AddCopy from fluent-created message produces empty segment!");
+                }
+                else
+                {
+                    // Otherwise, check values are correct
+                    Assert.Equal("1", field1);
+                    Assert.Equal("TX", field2);
+                    Assert.Equal("120", field5);
+                }
+            }
+        }
+        
+        // Helper to get segment value via reflection for debugging
+        private string GetSegmentValue(SegmentAccessor accessor)
+        {
+            var segmentField = typeof(SegmentAccessor).GetField("_segment", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var segment = (Segment)segmentField.GetValue(accessor);
+            return segment?.Value;
+        }
+
+
         #endregion
     }
 }
