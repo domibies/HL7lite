@@ -2,6 +2,16 @@
 
 > **Note**: This documentation is for the legacy HL7lite API (v1.x). For the modern fluent API with intuitive, chainable methods, see the [main README](README.md).
 
+## 🔧 Core API Improvements in v2.0.0
+
+Even if you're using the legacy API, you benefit from these important bug fixes:
+- **Field Repetition Fixes** - Fixed data loss in `RemoveRepetitions()` and state preservation in `AddRepetition()`
+- **Segment Copy Fix** - `DeepCopy()` now properly copies segments with individually set fields
+- **Position Validation** - Added validation to prevent invalid field/component positions
+- **Architecture** - Unified collections using generic `ElementCollection<T>` for consistency
+
+[View detailed fixes](README.CoreFixes_v2.md)
+
 ## 📦 Installation
 
 > **Note**: You can install the latest version of HL7lite and continue using the legacy API - all existing functionality remains fully supported and backward compatible.

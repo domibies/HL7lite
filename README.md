@@ -26,42 +26,51 @@
 ### Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
 *New in v2.0.0-rc.1 - A complete reimagining of the HL7 parsing experience*
 
-**Fluent Navigation** - Navigate and modify data across all hierarchy levels with method chaining  
-**Safe Data Access** - No more null reference exceptions - missing elements return empty values  
-**Auto-creation** - Missing segments, fields, and components are created automatically when needed  
-**LINQ Collections** - Full LINQ support for segments, field repetitions, and segment groups  
-**Enhanced Path API** - Complete repetition support with intuitive `DG1[2].3[1].2` syntax  
-**Segment Repetitions** - Direct access to repeating segments like DG1, OBX with collection support  
-**Segment Groups** - Query consecutive segments of the same type separated by gaps  
+- **Fluent Navigation** - Navigate and modify data across all hierarchy levels with method chaining  
+- **Safe Data Access** - No more null reference exceptions - missing elements return empty values  
+- **Auto-creation** - Missing segments, fields, and components are created automatically when needed  
+- **LINQ Collections** - Full LINQ support for segments, field repetitions, and segment groups  
+- **Enhanced Path API** - Complete repetition support with intuitive `DG1[2].3[1].2` syntax  
+- **Segment Repetitions** - Direct access to repeating segments like DG1, OBX with collection support  
+- **Segment Groups** - Query consecutive segments of the same type separated by gaps  
 
 ### Core Engine
-**Lightning Fast** - Parses HL7 messages without the overhead of schema validation  
-**Lightweight** - Minimal dependencies keep your application lean  
-**Battle-tested** - Powers integrations at Belgium's largest hospital group ([ZAS](https://www.zas.be))  
-**Backwards Compatible** - Existing code using the 1.x API continues to work unchanged  
-**Encoding Support** - Automatic handling of HL7 delimiter characters in your data  
-**.NET Standard** - Works with .NET Framework, .NET Core, and modern .NET
+- **Lightning Fast** - Parses HL7 messages without the overhead of schema validation  
+- **Lightweight** - Minimal dependencies keep your application lean  
+- **Battle-tested** - Powers integrations at Belgium's largest hospital group ([ZAS](https://www.zas.be))  
+- **Backwards Compatible** - Existing code using the 1.x API continues to work unchanged  
+- **Encoding Support** - Automatic handling of HL7 delimiter characters in your data  
+- **Universal .NET** - Compatibility across .NET Framework, .NET Core, and .NET 5+
+- **Bug Fixes** - Important [core API fixes](#core-hl7lite-fixes) for field repetitions and segment copying
+
 
 ## Quick Start
 
 ### Installation
 
-> **Note**: The fluent API is currently in Release Candidate. Installing without specifying a version will install the latest stable 1.2.0 version (legacy API only).
+---
+
+```
+⚠️ The fluent API is currently in Release Candidate (RC) and is considered a preview.
+For production use, the legacy API remains fully supported and unchanged
+```
+---
+
 
 ```bash
-# .NET CLI - Fluent API (RC)
+# .NET CLI - Fluent API (RC), including legacy API
 dotnet add package HL7lite --version 2.0.0-rc.1
 
 # .NET CLI - Legacy API only (stable)
 dotnet add package HL7lite
 
-# Package Manager - Fluent API (RC)
+# Package Manager - Fluent API (RC), including legacy API
 Install-Package HL7lite -Version 2.0.0-rc.1
 
 # Package Manager - Legacy API only (stable)
 Install-Package HL7lite
 
-# PackageReference - Fluent API (RC)
+# PackageReference - Fluent API (RC), including legacy API
 <PackageReference Include="HL7lite" Version="2.0.0-rc.1" />
 
 # PackageReference - Legacy API only (stable)
@@ -144,7 +153,7 @@ foreach (var group in diagnosisGroups)
 
 ### Data Manipulation with Navigation and Setters
 
-HL7lite uses a **Navigation Pattern** that separates navigation from setting operations for clear intent:
+HL7lite uses a **Navigation Pattern** that separates navigation from setting operations for clear intent. With Field(), Component and SubComponent() methods you can navigate down and up the hierarchy.
 
 ```csharp
 // NAVIGATION: Navigate first, then set
@@ -167,10 +176,7 @@ message.Segments("OBX").Add()
     .Field(14).Component(1).Set("20240101120000");  // Navigate to timestamp
 ```
 
-**Key Benefits:**
-- **Crystal Clear Intent**: `Field(11).Component(1).Set("text")` is completely unambiguous
-- **Natural Language**: Code reads like step-by-step navigation instructions  
-- **No Parameter Confusion**: Single-parameter methods eliminate ambiguity
+**Faetures:**
 - **Full Navigation Matrix**: Navigate anywhere from any mutator type
 - **Type Safety**: Return types clearly indicate current navigation context
 
@@ -201,11 +207,11 @@ message.PID[3].Set("ID001")
 // Or add repetitions with components
 message.PID[3].Set("SimpleID")
     .AddRepetition()                      // Add empty repetition
-        .SetComponents("MRN", "001", "HOSPITAL")  // Set complex components
+        .SetComponents("186668", "", "", "", "MRN", "HOSPITAL")  // Set complex components
     .AddRepetition()                      // Add another empty repetition
-        .SetComponents("ENC", "123", "VISIT");    // Different components
+        .SetComponents("110203", "", "", "", "ENC", "VISIT");    // Different components
 
-// Work with multiple segments using pure navigation
+// Add a segment & add fields and components fluently
 message.Segments("DG1").Add()
     .Field(1).Set("1")                  // Navigate to field 1, set ID
     .Field(3).SetComponents("I10", "250.00", "Diabetes mellitus type 2")  // Set components
@@ -604,7 +610,7 @@ fluentWrapper.Path("ZZ1.2.3").Set("value");  // Creates ZZ1 segment automaticall
 <details>
 <summary><b>What's New</b></summary>
 
-### v2.0.0-rc.1 (June 2025)
+### v2.0.0-rc.1 (July 2025)
 - **Pure Navigation API** - Crystal clear navigation with natural language-like syntax
 - **Modern Fluent API** - Complete rewrite with intuitive, chainable interface
 - **Enhanced Path API** - Full segment and field repetition support (`DG1[2].3[1].2` syntax)
@@ -612,6 +618,7 @@ fluentWrapper.Path("ZZ1.2.3").Set("value");  // Creates ZZ1 segment automaticall
 - **Enhanced Collections** - Full LINQ support for segments and repetitions
 - **Better Encoding** - Improved EncodedValue methods for delimiter handling
 - **Full Compatibility** - Legacy API unchanged and fully supported
+- **Core Bug Fixes** - Important [fixes](#core-hl7lite-fixes) for field repetitions, segment copying, and more
 
 ### Previous Versions
 - v1.2.0 - Optional validation, improved error handling
@@ -619,6 +626,17 @@ fluentWrapper.Path("ZZ1.2.3").Set("value");  // Creates ZZ1 segment automaticall
 - v1.0.0 - Initial stable release
 
 </details>
+
+## Core HL7lite Fixes
+
+Important bug fixes in v2.0.0 that benefit all users (including legacy API):
+
+- **Field Repetition Fixes** - Fixed data loss in `RemoveRepetitions()` and state preservation in `AddRepetition()`
+- **Segment Copy Fix** - `DeepCopy()` now properly copies segments with individually set fields  
+- **Position Validation** - Added validation to prevent invalid field/component positions
+- **Architecture** - Unified collections using generic `ElementCollection<T>` for consistency
+
+For detailed information about these fixes, see [README.CoreFixes_v2.md](README.CoreFixes_v2.md).
 
 ## HL7lite API Reference
 
@@ -699,7 +717,7 @@ var component = message.PID[5][1];
 - `SetDate(DateTime date)` - Set date (YYYYMMDD) and return mutator
 - `SetDateTime(DateTime dateTime)` - Set date/time (YYYYMMDDHHMMSS) and return mutator
 - `AsDate(bool throwOnError = false)` - Parse as date
-- `AsDateTime` - Parse as date/time
+- `AsDateTime()` - Parse as date/time
 
 #### ComponentAccessor
 Access to component-level data.
@@ -1012,8 +1030,6 @@ string hl7 = message.Serialize()
 var result = hl7String.TryParse();
 if (result.IsSuccess) { var message = result.Message; }
 
-// Legacy Message to FluentMessage
-var fluentWrapper = message.ToFluentMessage();
 ```
 
 ### Utility Methods
