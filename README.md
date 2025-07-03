@@ -48,13 +48,9 @@
 
 ### Installation
 
----
 
-```
-⚠️ The fluent API is currently in Release Candidate (RC) and is considered a preview.
-For production use, the legacy API remains fully supported (some [fixes](#core-hl7lite-fixes))
-```
----
+> ⚠️ The fluent API is currently in Release Candidate (RC) and is considered a preview.
+> For production use, the legacy API remains fully supported (some [fixes](#core-hl7lite-fixes))
 
 
 ```bash
