@@ -24,7 +24,7 @@
 ## Key Features
 
 ### Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
-*New in v2.0.0-rc.1 - A complete reimagining of the HL7 parsing experience*
+*New in v2.0.0-rc.1 - A complete reimplementation of the HL7 parsing experience*
 
 - **Fluent Navigation** - Navigate and modify data across all hierarchy levels with method chaining  
 - **Safe Data Access** - No more null reference exceptions - missing elements return empty values  
@@ -52,7 +52,7 @@
 
 ```
 ⚠️ The fluent API is currently in Release Candidate (RC) and is considered a preview.
-For production use, the legacy API remains fully supported and unchanged
+For production use, the legacy API remains fully supported (some [fixes](#core-hl7lite-fixes))
 ```
 ---
 
@@ -176,7 +176,7 @@ message.Segments("OBX").Add()
     .Field(14).Component(1).Set("20240101120000");  // Navigate to timestamp
 ```
 
-**Faetures:**
+**Features:**
 - **Full Navigation Matrix**: Navigate anywhere from any mutator type
 - **Type Safety**: Return types clearly indicate current navigation context
 
@@ -203,13 +203,6 @@ message.PID[3].Set("ID001")
     .AddRepetition("MRN001")              // Adds repetition, stays in fluent chain
     .AddRepetition("ENC123")              // Add another repetition
     .Field(5).SetComponents("Smith", "John");  // Continue with other fields
-
-// Or add repetitions with components
-message.PID[3].Set("SimpleID")
-    .AddRepetition()                      // Add empty repetition
-        .SetComponents("186668", "", "", "", "MRN", "HOSPITAL")  // Set complex components
-    .AddRepetition()                      // Add another empty repetition
-        .SetComponents("110203", "", "", "", "ENC", "VISIT");    // Different components
 
 // Add a segment & add fields and components fluently
 message.Segments("DG1").Add()
@@ -428,7 +421,7 @@ message.PV1[7].SetComponents("1234", "Smith", "John", "Dr");
 ```csharp
 // Auto-creation: Set() never throws exceptions
 message.Path("ZZ1.5.3").Set("CustomValue");      // Creates entire path if missing
-message.Path("NEW[2].99.99").Set("Value");       // Creates 2nd instance of NEW segment
+message.Path("ZZ2[2].99.99").Set("Value");       // Creates 2nd instance of ZZ2 segment
 message.Path("OBX[5].5[3].2").Set("Result");     // Creates OBX segments 1-5 if needed
 ```
 
