@@ -37,22 +37,149 @@ namespace HL7lite.Fluent.Mutators
         }
 
         /// <summary>
-        /// Sets the field to the specified value. Creates the field if it doesn't exist.
-        /// Null values are converted to empty strings. For explicit HL7 null values, use the SetNull() method.
+        /// Sets the field to the specified value, automatically encoding any HL7 delimiter characters.
+        /// Creates the field if it doesn't exist. Null values are converted to empty strings.
+        /// For explicit HL7 null values, use the SetNull() method.
         /// </summary>
-        /// <param name="value">The value to set. Null values are converted to empty strings.</param>
+        /// <param name="value">The value to set. Delimiter characters will be automatically encoded.</param>
         /// <returns>The FieldMutator for method chaining</returns>
         /// <example>
         /// <code>
-        /// // Set field value
+        /// // Set field value (delimiters automatically encoded)
         /// fluent.PID[3].Set("12345");
+        /// fluent.PID[5].Set("Smith &amp; Jones");  // &amp; automatically encoded to \T\
         /// 
         /// // Chain multiple operations
         /// fluent.PID[3].Set("12345")
-        ///     .Field(5).Set("Smith^John");
+        ///     .Field(5).Set("Smith^John");  // ^ automatically encoded to \S\
         /// </code>
         /// </example>
         public FieldMutator Set(string value)
+        {
+            // Encode the value if not null
+            var encodedValue = value != null ? _message.Encoding.Encode(value) : null;
+            // Get the specific segment instance
+            Segment targetSegment = null;
+            
+            if (_message.SegmentList.ContainsKey(_segmentCode))
+            {
+                var segments = _message.SegmentList[_segmentCode];
+                if (_segmentInstanceIndex < segments.Count)
+                {
+                    targetSegment = segments[_segmentInstanceIndex];
+                }
+            }
+            
+            if (targetSegment == null)
+            {
+                // Segment instance doesn't exist, create it if it's the first instance
+                if (_segmentInstanceIndex == 0)
+                {
+                    var newSegment = new Segment(_message.Encoding)
+                    {
+                        Name = _segmentCode,
+                        Value = _segmentCode
+                    };
+                    _message.AddNewSegment(newSegment);
+                    targetSegment = newSegment;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Cannot set field on segment instance {_segmentInstanceIndex} that doesn't exist.");
+                }
+            }
+            
+            // Set the field value directly on the target segment
+            if (_repetitionIndex.HasValue && _repetitionIndex.Value > 1)
+            {
+                // Handle repetition-specific field setting
+                var field = targetSegment.Fields(_fieldIndex);
+                if (field == null)
+                {
+                    targetSegment.AddNewField(encodedValue ?? string.Empty, _fieldIndex);
+                    field = targetSegment.Fields(_fieldIndex);
+                }
+                
+                // Set specific repetition
+                if (field.HasRepetitions)
+                {
+                    var repetitions = field.Repetitions();
+                    if (_repetitionIndex.Value <= repetitions.Count)
+                    {
+                        repetitions[_repetitionIndex.Value - 1].Value = encodedValue ?? string.Empty;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"Repetition {_repetitionIndex.Value} does not exist.");
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Field does not have repetitions.");
+                }
+            }
+            else
+            {
+                // Set the field value (handles first repetition or non-repeated field)
+                var field = targetSegment.Fields(_fieldIndex);
+                if (field == null)
+                {
+                    targetSegment.AddNewField(encodedValue ?? string.Empty, _fieldIndex);
+                }
+                else
+                {
+                    field.Value = encodedValue ?? string.Empty;
+                }
+            }
+            
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the field to a raw HL7 value that may contain structural delimiters and encoded characters.
+        /// This method validates that the value doesn't contain invalid delimiters for the field level.
+        /// Use this for pre-encoded data or when building structured values.
+        /// </summary>
+        /// <param name="value">The raw HL7 value to set</param>
+        /// <returns>The FieldMutator for method chaining</returns>
+        /// <exception cref="ArgumentException">If value contains field or repetition delimiters</exception>
+        /// <example>
+        /// <code>
+        /// // Set pre-encoded value
+        /// fluent.PID[5].SetRaw("Smith\\T\\Jones^John");  // \T\ is encoded &amp;, ^ is component separator
+        /// 
+        /// // Invalid - contains field delimiter
+        /// fluent.PID[5].SetRaw("Value|Other");  // Throws ArgumentException
+        /// </code>
+        /// </example>
+        public FieldMutator SetRaw(string value)
+        {
+            // Validate the value doesn't contain invalid delimiters
+            if (value != null)
+            {
+                if (value.Contains(_message.Encoding.FieldDelimiter))
+                {
+                    throw new ArgumentException(
+                        $"Field value cannot contain field delimiter '{_message.Encoding.FieldDelimiter}'. " +
+                        "Use separate field assignments or encode the delimiter.");
+                }
+                
+                if (value.Contains(_message.Encoding.RepeatDelimiter))
+                {
+                    throw new ArgumentException(
+                        $"Field value cannot contain repetition delimiter '{_message.Encoding.RepeatDelimiter}'. " +
+                        "Use AddRepetition() or encode the delimiter.");
+                }
+            }
+            
+            // Now set the raw value without encoding
+            return SetRawInternal(value);
+        }
+        
+        /// <summary>
+        /// Internal method to set raw value without encoding
+        /// </summary>
+        private FieldMutator SetRawInternal(string value)
         {
             // Get the specific segment instance
             Segment targetSegment = null;
@@ -131,34 +258,6 @@ namespace HL7lite.Fluent.Mutators
             return this;
         }
 
-        /// <summary>
-        /// Sets the field value after encoding any HL7 delimiter characters.
-        /// Use this method when your value contains characters like |, ^, ~, \, or &amp;
-        /// that need to be safely stored in the HL7 message.
-        /// </summary>
-        /// <param name="value">The value to encode and set</param>
-        /// <returns>The FieldMutator for method chaining</returns>
-        /// <example>
-        /// <code>
-        /// // Set value with special characters
-        /// fluent.PID[5].SetEncoded("Smith|Jones");  // Becomes "Smith\\F\\Jones"
-        /// 
-        /// // Chain with other operations
-        /// fluent.PID[5].SetEncoded("Complex|Value")
-        ///     .Field(7).Set("19850315");
-        /// </code>
-        /// </example>
-        public FieldMutator SetEncoded(string value)
-        {
-            if (value == null)
-            {
-                return Set(null);
-            }
-
-            var encodedValue = _message.Encoding.Encode(value);
-            return Set(encodedValue);
-        }
-
 
         /// <summary>
         /// Sets the field to HL7 null value.
@@ -194,14 +293,14 @@ namespace HL7lite.Fluent.Mutators
 
         /// <summary>
         /// Sets multiple field components in a single operation.
-        /// Components are joined with the HL7 component separator (^).
+        /// Components are automatically encoded and joined with the HL7 component separator (^).
         /// </summary>
-        /// <param name="components">The component values to set</param>
+        /// <param name="components">The component values to set. Delimiter characters will be automatically encoded.</param>
         /// <returns>The FieldMutator for method chaining</returns>
         /// <example>
         /// <code>
-        /// // Set patient name components
-        /// fluent.PID[5].SetComponents("Smith", "John", "M", "Jr", "Dr");
+        /// // Set patient name components (delimiters automatically encoded)
+        /// fluent.PID[5].SetComponents("Smith &amp; Sons", "John", "M", "Jr", "Dr");
         /// 
         /// // Chain with other operations
         /// fluent.PID[5].SetComponents("Smith", "John")
@@ -217,9 +316,13 @@ namespace HL7lite.Fluent.Mutators
 
             var encoding = _message.Encoding;
             var componentSeparator = encoding.ComponentDelimiter;
-            var value = string.Join(componentSeparator.ToString(), components.Select(c => c ?? string.Empty));
             
-            return Set(value);
+            // Encode each component individually to handle delimiter characters
+            var encodedComponents = components.Select(c => c != null ? encoding.Encode(c) : string.Empty);
+            var value = string.Join(componentSeparator.ToString(), encodedComponents);
+            
+            // Use SetRawInternal since components are already encoded and we've added structural delimiters
+            return SetRawInternal(value);
         }
 
         /// <summary>

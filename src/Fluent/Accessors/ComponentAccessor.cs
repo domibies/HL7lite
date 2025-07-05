@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using HL7lite.Fluent.Mutators;
 
 namespace HL7lite.Fluent.Accessors
@@ -52,9 +53,10 @@ namespace HL7lite.Fluent.Accessors
         }
 
         /// <summary>
-        /// Gets the value of the component. Returns null for HL7 null values ("") and empty string for non-existent components.
+        /// Gets the raw component value with structural delimiters and encoded characters.
+        /// Returns HL7 null ("") for explicit nulls and empty string for non-existent components.
         /// </summary>
-        public string Value
+        public string Raw
         {
             get
             {
@@ -92,7 +94,9 @@ namespace HL7lite.Fluent.Accessors
                     var component = field.ComponentList[_componentIndex - 1];
                     var rawValue = component.Value;
                     
-                    // HL7 null handling is done by the core Component implementation
+                    // Core API converts "" to null, convert back for consistency
+                    if (rawValue == null)
+                        return _message.Encoding.PresentButNull;
                     return rawValue;
                 }
                 catch
@@ -160,7 +164,7 @@ namespace HL7lite.Fluent.Accessors
         /// <summary>
         /// Gets whether the component is explicitly set to HL7 null ("").
         /// </summary>
-        public bool IsNull => Value == null && Exists;
+        public bool IsNull => Raw == _message.Encoding.PresentButNull && Exists;
 
         /// <summary>
         /// Gets whether the component exists but contains an empty string.
@@ -171,7 +175,7 @@ namespace HL7lite.Fluent.Accessors
             {
                 if (!Exists)
                     return false;
-                var val = Value;
+                var val = Raw;
                 return val != null && val == "";
             }
         }
@@ -183,7 +187,7 @@ namespace HL7lite.Fluent.Accessors
         {
             get
             {
-                var val = Value;
+                var val = Raw;
                 return val != null && val != "";
             }
         }
@@ -236,14 +240,14 @@ namespace HL7lite.Fluent.Accessors
         }
 
         /// <summary>
-        /// Sets the component value with HL7 delimiter encoding. Shortcut for Set().SetEncoded(value).
-        /// Use this method when your value contains HL7 delimiter characters that need to be safely encoded.
+        /// Sets the component to a raw HL7 value. Shortcut for Set().SetRaw(value).
+        /// Use this for pre-encoded data or when building structured values.
         /// </summary>
-        /// <param name="value">The value to encode and set</param>
+        /// <param name="value">The raw HL7 value to set</param>
         /// <returns>A ComponentMutator for method chaining</returns>
-        public ComponentMutator SetEncoded(string value)
+        public ComponentMutator SetRaw(string value)
         {
-            return Set().SetEncoded(value);
+            return Set().SetRaw(value);
         }
 
         /// <summary>Sets multiple subcomponents. Shortcut for Set().SetSubComponents().</summary>
@@ -262,6 +266,34 @@ namespace HL7lite.Fluent.Accessors
         public ComponentMutator SetIf(string value, bool condition)
         {
             return Set().SetIf(value, condition);
+        }
+        
+        /// <summary>
+        /// Returns a human-readable representation of the component value.
+        /// Decodes any encoded delimiters and replaces structural delimiters with spaces.
+        /// HL7 null values are displayed as "&lt;null&gt;".
+        /// </summary>
+        public override string ToString()
+        {
+            var rawValue = this.Raw;
+            
+            // Handle empty/missing
+            if (string.IsNullOrEmpty(rawValue))
+                return "";
+            
+            // First replace structural delimiters with spaces (before decoding)
+            // For components, we only replace subcomponent (&) delimiters
+            var processed = rawValue;
+            var delimiterPattern = "[" + Regex.Escape(_message.Encoding.SubComponentDelimiter.ToString()) + "]+";
+            processed = Regex.Replace(processed, delimiterPattern, " ");
+            
+            // Then decode encoded delimiters (e.g., \T\ → &) - these become literal characters
+            var decoded = _message.Encoding.Decode(processed);
+            
+            // Replace HL7 nulls with readable placeholder
+            decoded = decoded.Replace(_message.Encoding.PresentButNull, "<null>");
+            
+            return decoded.Trim();
         }
     }
 }

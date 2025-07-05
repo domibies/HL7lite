@@ -24,7 +24,7 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Assert
             Assert.Equal(0, repetitions.Count);
-            Assert.Equal("", fluentMessage.PID[3].Value);
+            Assert.Equal("", fluentMessage.PID[3].Raw);
         }
 
         [Fact]
@@ -43,7 +43,7 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Assert
             Assert.Equal(0, repetitions.Count);
-            Assert.Equal("", fluentMessage.PID[3].Value);
+            Assert.Equal("", fluentMessage.PID[3].Raw);
         }
 
         [Fact]
@@ -83,8 +83,8 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Assert
             Assert.Equal(2, repetitions.Count);
-            Assert.Equal("123456", repetitions[0].Value);
-            Assert.Equal("345678", repetitions[1].Value);
+            Assert.Equal("123456", repetitions[0].Raw);
+            Assert.Equal("345678", repetitions[1].Raw);
         }
 
         [Fact]
@@ -103,9 +103,9 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Assert
             Assert.Equal(2, repetitions.Count);
-            Assert.Equal("789012", repetitions[0].Value);
-            Assert.Equal("345678", repetitions[1].Value);
-            Assert.Equal("789012", fluentMessage.PID[3].Value);
+            Assert.Equal("789012", repetitions[0].Raw);
+            Assert.Equal("345678", repetitions[1].Raw);
+            Assert.Equal("789012", fluentMessage.PID[3].Raw);
         }
 
         [Fact]
@@ -140,8 +140,8 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Assert
             Assert.Equal(1, repetitions.Count);
-            Assert.Equal("123456", repetitions[0].Value);
-            Assert.Equal("123456", fluentMessage.PID[3].Value);
+            Assert.Equal("123456", repetitions[0].Raw);
+            Assert.Equal("123456", fluentMessage.PID[3].Raw);
             Assert.False(fluentMessage.PID[3].HasRepetitions); // Should no longer have repetitions
         }
 

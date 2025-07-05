@@ -32,11 +32,11 @@ namespace HL7lite.Test.Fluent
 
             // Assert
             Assert.True(fluent.MSH.Exists);
-            Assert.Equal("APP", fluent.MSH[3].Value);
-            Assert.Equal("FACILITY", fluent.MSH[4].Value);
-            Assert.Equal("DEST", fluent.MSH[5].Value);
-            Assert.Equal("FACILITY2", fluent.MSH[6].Value);
-            Assert.Equal("ADT^A01", fluent.MSH[9].Value);
+            Assert.Equal("APP", fluent.MSH[3].Raw);
+            Assert.Equal("FACILITY", fluent.MSH[4].Raw);
+            Assert.Equal("DEST", fluent.MSH[5].Raw);
+            Assert.Equal("FACILITY2", fluent.MSH[6].Raw);
+            Assert.Equal("ADT^A01", fluent.MSH[9].Raw);
         }
 
         [Fact]
@@ -70,11 +70,11 @@ namespace HL7lite.Test.Fluent
 
             // Assert
             Assert.Equal(3, fluent.UnderlyingMessage.Segments().Count);
-            Assert.Equal("PAT001", fluent.PID[3].Value);
-            Assert.Equal("Doe^John^M", fluent.PID[5].Value);
-            Assert.Equal("19800101", fluent.PID[7].Value);
-            Assert.Equal("I", fluent.PV1[2].Value);
-            Assert.Equal("ICU^001^A", fluent.PV1[3].Value);
+            Assert.Equal("PAT001", fluent.PID[3].Raw);
+            Assert.Equal("Doe^John^M", fluent.PID[5].Raw);
+            Assert.Equal("19800101", fluent.PID[7].Raw);
+            Assert.Equal("I", fluent.PV1[2].Raw);
+            Assert.Equal("ICU^001^A", fluent.PV1[3].Raw);
         }
 
         [Fact]
@@ -92,7 +92,7 @@ namespace HL7lite.Test.Fluent
             fluent1.PID[3].Set("ID1");
             fluent2.PID[3].Set("ID1");
 
-            Assert.Equal(fluent1.PID[3].Value, fluent2.PID[3].Value);
+            Assert.Equal(fluent1.PID[3].Raw, fluent2.PID[3].Raw);
         }
 
         [Fact]
@@ -110,8 +110,8 @@ namespace HL7lite.Test.Fluent
             fluent1.PID[3].Set("ID1");
             fluent2.PID[3].Set("ID2");
 
-            Assert.Equal("ID1", fluent1.PID[3].Value);
-            Assert.Equal("ID2", fluent2.PID[3].Value);
+            Assert.Equal("ID1", fluent1.PID[3].Raw);
+            Assert.Equal("ID2", fluent2.PID[3].Raw);
         }
 
         [Fact]
@@ -154,7 +154,7 @@ namespace HL7lite.Test.Fluent
 
             // Assert
             Assert.True(fluent.MSH.Exists);
-            Assert.Equal("ADT^A01", fluent.MSH[9].Value);
+            Assert.Equal("ADT^A01", fluent.MSH[9].Raw);
         }
     }
 }

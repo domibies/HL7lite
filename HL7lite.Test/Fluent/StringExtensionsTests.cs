@@ -23,7 +23,7 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             Assert.Null(result.ErrorCode);
             Assert.True(result.Message.MSH.Exists);
             Assert.True(result.Message.PID.Exists);
-            Assert.Equal("DOE^JOHN^M", result.Message.PID[5].Value);
+            Assert.Equal("DOE^JOHN^M", result.Message.PID[5].Raw);
         }
 
         [Fact]
@@ -42,7 +42,7 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             Assert.Null(result.ErrorMessage);
             Assert.True(result.Message.MSH.Exists);
             Assert.True(result.Message.PID.Exists);
-            Assert.Equal("DOE^JOHN^M", result.Message.PID[5].Value);
+            Assert.Equal("DOE^JOHN^M", result.Message.PID[5].Raw);
         }
 
         [Fact]
@@ -131,15 +131,15 @@ OBX|2|NM|RBC^RED BLOOD COUNT^L||4.2|10*6/uL|4.2-5.8|N|||F||";
             Assert.True(message.OBX.Exists);
             
             // Verify specific field values
-            Assert.Equal("DOE^JOHN^M", message.PID[5].Value);
-            Assert.Equal("CBC^COMPLETE BLOOD COUNT^L", message.OBR[4].Value);
-            Assert.Equal("7.5", message.OBX[5].Value);
+            Assert.Equal("DOE^JOHN^M", message.PID[5].Raw);
+            Assert.Equal("CBC^COMPLETE BLOOD COUNT^L", message.OBR[4].Raw);
+            Assert.Equal("7.5", message.OBX[5].Raw);
             
             // Verify segments collection works
             var obxSegments = message.Segments("OBX");
             Assert.Equal(2, obxSegments.Count);
-            Assert.Equal("WBC^WHITE BLOOD COUNT^L", obxSegments[0][3].Value);
-            Assert.Equal("RBC^RED BLOOD COUNT^L", obxSegments[1][3].Value);
+            Assert.Equal("WBC^WHITE BLOOD COUNT^L", obxSegments[0][3].Raw);
+            Assert.Equal("RBC^RED BLOOD COUNT^L", obxSegments[1][3].Raw);
         }
 
         [Fact]
@@ -157,8 +157,8 @@ PID|1||12345^^^MRN||DOE^JOHN^M~JOHNNY^J^M||19800101|M|||123 MAIN ST\S\APARTMENT 
             Assert.NotNull(result.Message);
             var message = result.Message;
             // First repetition should be the first part
-            Assert.Equal("DOE^JOHN^M", message.PID[5].Repetition(1).Value);
-            Assert.Contains("APARTMENT 2", message.PID[11].Value);
+            Assert.Equal("DOE^JOHN^M", message.PID[5].Repetition(1).Raw);
+            Assert.Contains("APARTMENT 2", message.PID[11].Raw);
         }
 
         [Fact]
@@ -174,12 +174,12 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var message = result.Message;
             
             // Manipulate the message
-            message.PID[5].Set("SMITH^JANE^F");
-            message.PID[8].Set("F");
+            message.PID[5].SetRaw("SMITH^JANE^F");
+            message.PID[8].SetRaw("F");
 
             // Assert
-            Assert.Equal("SMITH^JANE^F", message.PID[5].Value);
-            Assert.Equal("F", message.PID[8].Value);
+            Assert.Equal("SMITH^JANE^F", message.PID[5].Raw);
+            Assert.Equal("F", message.PID[8].Raw);
         }
 
         [Fact]
@@ -202,9 +202,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
 
             // Assert
             Assert.True(message.OBX.Exists);
-            Assert.Equal("1", message.OBX[1].Value);
-            Assert.Equal("NM", message.OBX[2].Value);
-            Assert.Equal("GLUCOSE", message.OBX[3].Value);
+            Assert.Equal("1", message.OBX[1].Raw);
+            Assert.Equal("NM", message.OBX[2].Raw);
+            Assert.Equal("GLUCOSE", message.OBX[3].Raw);
         }
 
     }

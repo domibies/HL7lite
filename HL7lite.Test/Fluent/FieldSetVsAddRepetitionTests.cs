@@ -25,7 +25,7 @@ namespace HL7lite.Test.Fluent
             message.PID[3].Set("SecondID");
             
             // Assert - Should only have the last value, not repetitions
-            Assert.Equal("SecondID", message.PID[3].Value);
+            Assert.Equal("SecondID", message.PID[3].Raw);
             Assert.False(message.PID[3].HasRepetitions);
             Assert.Equal(1, message.PID[3].RepetitionCount);
         }
@@ -51,9 +51,9 @@ namespace HL7lite.Test.Fluent
             // Assert - Should have both values as repetitions
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(2, message.PID[3].RepetitionCount);
-            Assert.Equal("FirstID", message.PID[3].Value); // First repetition
-            Assert.Equal("FirstID", message.PID[3].Repetition(1).Value);
-            Assert.Equal("SecondID", message.PID[3].Repetition(2).Value);
+            Assert.Equal("FirstID", message.PID[3].Raw); // First repetition
+            Assert.Equal("FirstID", message.PID[3].Repetition(1).Raw);
+            Assert.Equal("SecondID", message.PID[3].Repetition(2).Raw);
         }
         
         [Fact]
@@ -78,9 +78,9 @@ namespace HL7lite.Test.Fluent
             // Assert - Should have all three values as repetitions
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(3, message.PID[3].RepetitionCount);
-            Assert.Equal("FirstID", message.PID[3].Repetition(1).Value);
-            Assert.Equal("SecondID", message.PID[3].Repetition(2).Value);
-            Assert.Equal("ThirdID", message.PID[3].Repetition(3).Value);
+            Assert.Equal("FirstID", message.PID[3].Repetition(1).Raw);
+            Assert.Equal("SecondID", message.PID[3].Repetition(2).Raw);
+            Assert.Equal("ThirdID", message.PID[3].Repetition(3).Raw);
         }
         
         [Fact]
@@ -105,12 +105,12 @@ namespace HL7lite.Test.Fluent
             // Debug: Print current state
             var hasReps = message.PID[3].HasRepetitions;
             var repCount = message.PID[3].RepetitionCount;
-            var value = message.PID[3].Value;
+            var value = message.PID[3].Raw;
             
             // Assert what actually happens - calling Set() after Repetitions.Add() resets the field
             Assert.False(message.PID[3].HasRepetitions, $"HasRepetitions={hasReps}, RepCount={repCount}, Value='{value}'");
             Assert.Equal(1, message.PID[3].RepetitionCount);
-            Assert.Equal("NewFirstID", message.PID[3].Value);
+            Assert.Equal("NewFirstID", message.PID[3].Raw);
         }
         
         [Fact]
@@ -135,9 +135,9 @@ namespace HL7lite.Test.Fluent
             // Assert
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(3, message.PID[3].RepetitionCount);
-            Assert.Equal("MRN001", message.PID[3].Repetition(1).Value);
-            Assert.Equal("ENC123", message.PID[3].Repetition(2).Value);
-            Assert.Equal("SSN456", message.PID[3].Repetition(3).Value);
+            Assert.Equal("MRN001", message.PID[3].Repetition(1).Raw);
+            Assert.Equal("ENC123", message.PID[3].Repetition(2).Raw);
+            Assert.Equal("SSN456", message.PID[3].Repetition(3).Raw);
         }
     }
 }

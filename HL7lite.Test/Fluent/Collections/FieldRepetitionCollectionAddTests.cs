@@ -32,10 +32,10 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("MRN001", message.PID[3].Value);
+            Assert.Equal("MRN001", message.PID[3].Raw);
             Assert.False(message.PID[3].HasRepetitions); // Single value, not yet repetitions
             Assert.Equal(1, message.PID[3].RepetitionCount);
-            Assert.Equal("MRN001", result.Value);
+            Assert.Equal("MRN001", result.Raw);
         }
 
         [Fact]
@@ -52,9 +52,9 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.NotNull(result);
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(2, message.PID[3].RepetitionCount);
-            Assert.Equal("MRN001", message.PID[3].Repetition(1).Value);
-            Assert.Equal("ENC123", message.PID[3].Repetition(2).Value);
-            Assert.Equal("ENC123", result.Value);
+            Assert.Equal("MRN001", message.PID[3].Repetition(1).Raw);
+            Assert.Equal("ENC123", message.PID[3].Repetition(2).Raw);
+            Assert.Equal("ENC123", result.Raw);
         }
 
         [Fact]
@@ -72,10 +72,10 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.NotNull(result);
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(3, message.PID[3].RepetitionCount);
-            Assert.Equal("MRN001", message.PID[3].Repetition(1).Value);
-            Assert.Equal("ENC123", message.PID[3].Repetition(2).Value);
-            Assert.Equal("SSN456", message.PID[3].Repetition(3).Value);
-            Assert.Equal("SSN456", result.Value);
+            Assert.Equal("MRN001", message.PID[3].Repetition(1).Raw);
+            Assert.Equal("ENC123", message.PID[3].Repetition(2).Raw);
+            Assert.Equal("SSN456", message.PID[3].Repetition(3).Raw);
+            Assert.Equal("SSN456", result.Raw);
         }
 
         [Fact]
@@ -89,8 +89,8 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("", message.PID[3].Value);
-            Assert.Equal("", result.Value);
+            Assert.Equal("", message.PID[3].Raw);
+            Assert.Equal("", result.Raw);
             Assert.False(message.PID[3].HasRepetitions); // Single empty value
             Assert.Equal(1, message.PID[3].RepetitionCount);
         }
@@ -109,9 +109,9 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.NotNull(result);
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(2, message.PID[3].RepetitionCount);
-            Assert.Equal("MRN001", message.PID[3].Repetition(1).Value);
-            Assert.Equal("", message.PID[3].Repetition(2).Value);
-            Assert.Equal("", result.Value);
+            Assert.Equal("MRN001", message.PID[3].Repetition(1).Raw);
+            Assert.Equal("", message.PID[3].Repetition(2).Raw);
+            Assert.Equal("", result.Raw);
         }
 
         [Fact]
@@ -128,14 +128,14 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(3, message.PID[3].RepetitionCount);
-            Assert.Equal("MRN001", message.PID[3].Repetition(1).Value);
-            Assert.Equal("ENC123", message.PID[3].Repetition(2).Value);
-            Assert.Equal("SSN456", message.PID[3].Repetition(3).Value);
+            Assert.Equal("MRN001", message.PID[3].Repetition(1).Raw);
+            Assert.Equal("ENC123", message.PID[3].Repetition(2).Raw);
+            Assert.Equal("SSN456", message.PID[3].Repetition(3).Raw);
             
             // Verify returned accessors
-            Assert.Equal("MRN001", result1.Value);
-            Assert.Equal("ENC123", result2.Value);
-            Assert.Equal("SSN456", result3.Value);
+            Assert.Equal("MRN001", result1.Raw);
+            Assert.Equal("ENC123", result2.Raw);
+            Assert.Equal("SSN456", result3.Raw);
         }
 
         [Fact]
@@ -149,8 +149,8 @@ namespace HL7lite.Test.Fluent.Collections
             emptyRepetition.SetComponents("MRN", "001", "HOSPITAL");
             
             // Assert
-            Assert.Equal("MRN^001^HOSPITAL", emptyRepetition.Value);
-            Assert.Equal("MRN^001^HOSPITAL", message.PID[3].Value);
+            Assert.Equal("MRN^001^HOSPITAL", emptyRepetition.Raw);
+            Assert.Equal("MRN^001^HOSPITAL", message.PID[3].Raw);
         }
 
         [Fact]
@@ -164,8 +164,8 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Assert
             Assert.NotNull(result);
-            Assert.Equal("", message.PID[3].Value);
-            Assert.Equal("", result.Value);
+            Assert.Equal("", message.PID[3].Raw);
+            Assert.Equal("", result.Raw);
         }
 
         [Fact]
@@ -191,8 +191,8 @@ namespace HL7lite.Test.Fluent.Collections
             // Note: The segment should be created by our Add() method
             var segmentExists = message.UnderlyingMessage.Segments("PID").Count > 0;
             Assert.True(segmentExists, "PID segment should have been created by Add() method");
-            Assert.Equal("MRN001", message.PID[3].Value);
-            Assert.Equal("MRN001", result.Value);
+            Assert.Equal("MRN001", message.PID[3].Raw);
+            Assert.Equal("MRN001", result.Raw);
         }
 
         [Fact]
@@ -209,8 +209,8 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(2, message.PID[3].RepetitionCount);
-            Assert.Equal("MRN^001^HOSP", message.PID[3].Repetition(1).Value);
-            Assert.Equal("ENC^123^VISIT", message.PID[3].Repetition(2).Value);
+            Assert.Equal("MRN^001^HOSP", message.PID[3].Repetition(1).Raw);
+            Assert.Equal("ENC^123^VISIT", message.PID[3].Repetition(2).Raw);
         }
 
         [Fact]
@@ -230,8 +230,8 @@ namespace HL7lite.Test.Fluent.Collections
             newRepetition.SetComponents("MRN", "001");
             
             // Assert - Both patterns work the same way
-            Assert.Equal("1", message.Segments("DG1")[0][1].Value);
-            Assert.Equal("MRN^001", message.PID[3].Repetitions[0].Value);
+            Assert.Equal("1", message.Segments("DG1")[0][1].Raw);
+            Assert.Equal("MRN^001", message.PID[3].Repetitions[0].Raw);
         }
 
         [Fact]
@@ -247,8 +247,8 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(2, message.PID[3].RepetitionCount);
-            Assert.Equal("MRN^001^HOSP", rep1.Value);
-            Assert.Equal("ENC^123^VISIT", rep2.Value);
+            Assert.Equal("MRN^001^HOSP", rep1.Raw);
+            Assert.Equal("ENC^123^VISIT", rep2.Raw);
         }
 
         [Fact]
@@ -260,7 +260,7 @@ namespace HL7lite.Test.Fluent.Collections
             
             // Access to populate cache
             var initialAccessor = message.PID[3].Repetitions[0];
-            Assert.Equal("Initial", initialAccessor.Value);
+            Assert.Equal("Initial", initialAccessor.Raw);
             
             // Act - Add repetition should clear cache
             var newRepetition = message.PID[3].Repetitions.Add("Second");
@@ -268,8 +268,8 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert - Cache should be cleared, new access should reflect current state
             Assert.True(message.PID[3].HasRepetitions);
             Assert.Equal(2, message.PID[3].RepetitionCount);
-            Assert.Equal("Initial", message.PID[3].Repetitions[0].Value);
-            Assert.Equal("Second", message.PID[3].Repetitions[1].Value);
+            Assert.Equal("Initial", message.PID[3].Repetitions[0].Raw);
+            Assert.Equal("Second", message.PID[3].Repetitions[1].Raw);
         }
 
         #region Segment Instance Tests
@@ -291,15 +291,15 @@ namespace HL7lite.Test.Fluent.Collections
             var newRepetition = dg1Second[3].Repetitions.Add("AdditionalDiagnosis");
             
             // Assert - First segment should remain unchanged
-            Assert.Equal("FirstDiagnosis", message.Segments("DG1")[0][3].Value);
+            Assert.Equal("FirstDiagnosis", message.Segments("DG1")[0][3].Raw);
             Assert.False(message.Segments("DG1")[0][3].HasRepetitions);
             
             // Second segment should have repetitions
             Assert.True(message.Segments("DG1")[1][3].HasRepetitions);
             Assert.Equal(2, message.Segments("DG1")[1][3].RepetitionCount);
-            Assert.Equal("SecondDiagnosis", message.Segments("DG1")[1][3].Repetition(1).Value);
-            Assert.Equal("AdditionalDiagnosis", message.Segments("DG1")[1][3].Repetition(2).Value);
-            Assert.Equal("AdditionalDiagnosis", newRepetition.Value);
+            Assert.Equal("SecondDiagnosis", message.Segments("DG1")[1][3].Repetition(1).Raw);
+            Assert.Equal("AdditionalDiagnosis", message.Segments("DG1")[1][3].Repetition(2).Raw);
+            Assert.Equal("AdditionalDiagnosis", newRepetition.Raw);
         }
 
         [Fact]
@@ -318,16 +318,16 @@ namespace HL7lite.Test.Fluent.Collections
             var newRepetition = dg1Third[3].Repetitions.Add("ThirdAdditional");
             
             // Assert - First two segments unchanged
-            Assert.Equal("First", message.Segments("DG1")[0][3].Value);
+            Assert.Equal("First", message.Segments("DG1")[0][3].Raw);
             Assert.False(message.Segments("DG1")[0][3].HasRepetitions);
-            Assert.Equal("Second", message.Segments("DG1")[1][3].Value);
+            Assert.Equal("Second", message.Segments("DG1")[1][3].Raw);
             Assert.False(message.Segments("DG1")[1][3].HasRepetitions);
             
             // Third segment should have repetitions
             Assert.True(message.Segments("DG1")[2][3].HasRepetitions);
             Assert.Equal(2, message.Segments("DG1")[2][3].RepetitionCount);
-            Assert.Equal("Third", message.Segments("DG1")[2][3].Repetition(1).Value);
-            Assert.Equal("ThirdAdditional", message.Segments("DG1")[2][3].Repetition(2).Value);
+            Assert.Equal("Third", message.Segments("DG1")[2][3].Repetition(1).Raw);
+            Assert.Equal("ThirdAdditional", message.Segments("DG1")[2][3].Repetition(2).Raw);
         }
 
         [Fact]
@@ -351,15 +351,15 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert - First segment has 2 repetitions
             Assert.True(message.Segments("DG1")[0][3].HasRepetitions);
             Assert.Equal(2, message.Segments("DG1")[0][3].RepetitionCount);
-            Assert.Equal("First-1", message.Segments("DG1")[0][3].Repetition(1).Value);
-            Assert.Equal("First-2", message.Segments("DG1")[0][3].Repetition(2).Value);
+            Assert.Equal("First-1", message.Segments("DG1")[0][3].Repetition(1).Raw);
+            Assert.Equal("First-2", message.Segments("DG1")[0][3].Repetition(2).Raw);
             
             // Second segment has 3 repetitions
             Assert.True(message.Segments("DG1")[1][3].HasRepetitions);
             Assert.Equal(3, message.Segments("DG1")[1][3].RepetitionCount);
-            Assert.Equal("Second-1", message.Segments("DG1")[1][3].Repetition(1).Value);
-            Assert.Equal("Second-2", message.Segments("DG1")[1][3].Repetition(2).Value);
-            Assert.Equal("Second-3", message.Segments("DG1")[1][3].Repetition(3).Value);
+            Assert.Equal("Second-1", message.Segments("DG1")[1][3].Repetition(1).Raw);
+            Assert.Equal("Second-2", message.Segments("DG1")[1][3].Repetition(2).Raw);
+            Assert.Equal("Second-3", message.Segments("DG1")[1][3].Repetition(3).Raw);
         }
 
         [Fact]
@@ -373,9 +373,9 @@ namespace HL7lite.Test.Fluent.Collections
             var addedRepetition = newDG1[3].Repetitions.Add("DiagnosisCode");
             
             // Verify the navigation worked correctly by checking the value through different access paths
-            Assert.Equal("DiagnosisCode", newDG1[3].Value);
-            Assert.Equal("DiagnosisCode", message.Segments("DG1")[0][3].Value);
-            Assert.Equal("DiagnosisCode", addedRepetition.Value);
+            Assert.Equal("DiagnosisCode", newDG1[3].Raw);
+            Assert.Equal("DiagnosisCode", message.Segments("DG1")[0][3].Raw);
+            Assert.Equal("DiagnosisCode", addedRepetition.Raw);
         }
 
         [Fact]
@@ -393,16 +393,16 @@ namespace HL7lite.Test.Fluent.Collections
             var newRepetition = dg1Second[3].Repetitions.Add("SecondAdditional");
             
             // Assert - First segment remains single
-            Assert.Equal("FirstSingle", message.Segments("DG1")[0][3].Value);
+            Assert.Equal("FirstSingle", message.Segments("DG1")[0][3].Raw);
             Assert.False(message.Segments("DG1")[0][3].HasRepetitions);
             Assert.Equal(1, message.Segments("DG1")[0][3].RepetitionCount);
             
             // Second segment converted to repetitions
             Assert.True(message.Segments("DG1")[1][3].HasRepetitions);
             Assert.Equal(2, message.Segments("DG1")[1][3].RepetitionCount);
-            Assert.Equal("SecondSingle", message.Segments("DG1")[1][3].Repetition(1).Value);
-            Assert.Equal("SecondAdditional", message.Segments("DG1")[1][3].Repetition(2).Value);
-            Assert.Equal("SecondAdditional", newRepetition.Value);
+            Assert.Equal("SecondSingle", message.Segments("DG1")[1][3].Repetition(1).Raw);
+            Assert.Equal("SecondAdditional", message.Segments("DG1")[1][3].Repetition(2).Raw);
+            Assert.Equal("SecondAdditional", newRepetition.Raw);
         }
 
         #endregion

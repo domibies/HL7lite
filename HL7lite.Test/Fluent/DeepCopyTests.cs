@@ -40,16 +40,16 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var copy = original.Copy();
 
             // Act - Modify copy
-            copy.PID[5].Set("SMITH^JANE^F");
-            copy.PID[8].Set("F");
+            copy.PID[5].SetRaw("SMITH^JANE^F");
+            copy.PID[8].SetRaw("F");
 
             // Assert - Original unchanged
-            Assert.Equal("DOE^JOHN^M", original.PID[5].Value);
-            Assert.Equal("M", original.PID[8].Value);
+            Assert.Equal("DOE^JOHN^M", original.PID[5].Raw);
+            Assert.Equal("M", original.PID[8].Raw);
             
             // Assert - Copy changed
-            Assert.Equal("SMITH^JANE^F", copy.PID[5].Value);
-            Assert.Equal("F", copy.PID[8].Value);
+            Assert.Equal("SMITH^JANE^F", copy.PID[5].Raw);
+            Assert.Equal("F", copy.PID[8].Raw);
         }
 
         [Fact]
@@ -65,16 +65,16 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var copy = original.Copy();
 
             // Act - Modify original
-            original.PID[5].Set("BROWN^ROBERT^L");
-            original.PID[8].Set("F");
+            original.PID[5].SetRaw("BROWN^ROBERT^L");
+            original.PID[8].SetRaw("F");
 
             // Assert - Copy unchanged  
-            Assert.Equal("DOE^JOHN^M", copy.PID[5].Value);
-            Assert.Equal("M", copy.PID[8].Value);
+            Assert.Equal("DOE^JOHN^M", copy.PID[5].Raw);
+            Assert.Equal("M", copy.PID[8].Raw);
             
             // Assert - Original changed
-            Assert.Equal("BROWN^ROBERT^L", original.PID[5].Value);
-            Assert.Equal("F", original.PID[8].Value);
+            Assert.Equal("BROWN^ROBERT^L", original.PID[5].Raw);
+            Assert.Equal("F", original.PID[8].Raw);
         }
 
         [Fact]
@@ -102,8 +102,8 @@ OBX|2|NM|RBC^RED BLOOD COUNT^L||4.2|10*6/uL|4.2-5.8|N|||F|||20231219145530.1234|
             
             // Assert - Multiple OBX segments
             Assert.Equal(2, copy.Segments("OBX").Count);
-            Assert.Equal("7.5", copy.Segments("OBX")[0][5].Value);
-            Assert.Equal("4.2", copy.Segments("OBX")[1][5].Value);
+            Assert.Equal("7.5", copy.Segments("OBX")[0][5].Raw);
+            Assert.Equal("4.2", copy.Segments("OBX")[1][5].Raw);
         }
 
         [Fact]
@@ -121,21 +121,21 @@ PID|1||12345^^^MRN~67890^^^SSN||DOE^JOHN^M^JR~SMITH^J^M||19800101|M|||123 MAIN S
             var copy = original.Copy();
 
             // Assert - Repetitions are preserved (Value only shows first repetition)
-            Assert.Equal("12345^^^MRN", copy.PID[3].Value); // First repetition via .Value
-            Assert.Equal("12345^^^MRN", copy.PID[3].Repetition(1).Value); // First repetition explicit
-            Assert.Equal("67890^^^SSN", copy.PID[3].Repetition(2).Value); // Second repetition
+            Assert.Equal("12345^^^MRN", copy.PID[3].Raw); // First repetition via .Raw
+            Assert.Equal("12345^^^MRN", copy.PID[3].Repetition(1).Raw); // First repetition explicit
+            Assert.Equal("67890^^^SSN", copy.PID[3].Repetition(2).Raw); // Second repetition
             Assert.Equal(2, copy.PID[3].Repetitions.Count); // Repetition count preserved
             
-            Assert.Equal("DOE^JOHN^M^JR", copy.PID[5].Value); // First repetition
-            Assert.Equal("SMITH^J^M", copy.PID[5].Repetition(2).Value); // Second repetition
-            Assert.Equal("123 MAIN ST\\S\\APT 2^SUITE 100^CITY^ST^12345", copy.PID[11].Value);
-            Assert.Equal("5551234567", copy.PID[13].Value); // First repetition
-            Assert.Equal("5559876543", copy.PID[13].Repetition(2).Value); // Second repetition
+            Assert.Equal("DOE^JOHN^M^JR", copy.PID[5].Raw); // First repetition
+            Assert.Equal("SMITH^J^M", copy.PID[5].Repetition(2).Raw); // Second repetition
+            Assert.Equal("123 MAIN ST\\S\\APT 2^SUITE 100^CITY^ST^12345", copy.PID[11].Raw);
+            Assert.Equal("5551234567", copy.PID[13].Raw); // First repetition
+            Assert.Equal("5559876543", copy.PID[13].Repetition(2).Raw); // Second repetition
             
             // Assert - Individual components work
-            Assert.Equal("DOE", copy.PID[5].Component(1).Value);
-            Assert.Equal("JOHN", copy.PID[5].Component(2).Value);
-            Assert.Equal("SMITH", copy.PID[5].Repetition(2).Component(1).Value);
+            Assert.Equal("DOE", copy.PID[5].Component(1).Raw);
+            Assert.Equal("JOHN", copy.PID[5].Component(2).Raw);
+            Assert.Equal("SMITH", copy.PID[5].Repetition(2).Component(1).Raw);
         }
 
         [Fact]
@@ -169,16 +169,16 @@ PID|1||12345^^^MRN~67890^^^SSN||DOE^JOHN^M^JR~SMITH^J^M||19800101|M|||123 MAIN S
 
             // Assert
             Assert.True(copy.MSH.Exists);
-            Assert.Equal("SENDER", copy.MSH[3].Value);
-            Assert.Equal("SFACILITY", copy.MSH[4].Value);
-            Assert.Equal("RECEIVER", copy.MSH[5].Value);
-            Assert.Equal("RFACILITY", copy.MSH[6].Value);
-            Assert.Equal("ADT^A01", copy.MSH[9].Value);
-            Assert.Equal("12345", copy.MSH[10].Value);
+            Assert.Equal("SENDER", copy.MSH[3].Raw);
+            Assert.Equal("SFACILITY", copy.MSH[4].Raw);
+            Assert.Equal("RECEIVER", copy.MSH[5].Raw);
+            Assert.Equal("RFACILITY", copy.MSH[6].Raw);
+            Assert.Equal("ADT^A01", copy.MSH[9].Raw);
+            Assert.Equal("12345", copy.MSH[10].Raw);
             
             // MSH special fields (delimiters)
-            Assert.Equal("|", copy.MSH[1].Value);
-            Assert.Equal("^~\\&", copy.MSH[2].Value);
+            Assert.Equal("|", copy.MSH[1].Raw);
+            Assert.Equal("^~\\&", copy.MSH[2].Raw);
         }
 
         [Fact]
@@ -196,8 +196,8 @@ PID|1||12345^^^MRN~67890^^^SSN||DOE^JOHN^M^JR~SMITH^J^M||19800101|M|||123 MAIN S
                 .Build();
                 
             original.Segments("PID").Add();
-            original.PID[5].Set("DOE^JOHN^M");
-            original.PID[8].Set("M");
+            original.PID[5].SetRaw("DOE^JOHN^M");
+            original.PID[8].SetRaw("M");
             
             original.Segments("OBX").Add();
             original.OBX[1].Set("1");
@@ -209,17 +209,17 @@ PID|1||12345^^^MRN~67890^^^SSN||DOE^JOHN^M^JR~SMITH^J^M||19800101|M|||123 MAIN S
 
             // Assert - All programmatically set data preserved
             Assert.True(copy.MSH.Exists);
-            Assert.Equal("MyApp", copy.MSH[3].Value);
-            Assert.Equal("MyFac", copy.MSH[4].Value);
+            Assert.Equal("MyApp", copy.MSH[3].Raw);
+            Assert.Equal("MyFac", copy.MSH[4].Raw);
             
             Assert.True(copy.PID.Exists);
-            Assert.Equal("DOE^JOHN^M", copy.PID[5].Value);
-            Assert.Equal("M", copy.PID[8].Value);
+            Assert.Equal("DOE^JOHN^M", copy.PID[5].Raw);
+            Assert.Equal("M", copy.PID[8].Raw);
             
             Assert.True(copy.OBX.Exists);
-            Assert.Equal("1", copy.OBX[1].Value);
-            Assert.Equal("NM", copy.OBX[2].Value);
-            Assert.Equal("120", copy.OBX[5].Value);
+            Assert.Equal("1", copy.OBX[1].Raw);
+            Assert.Equal("NM", copy.OBX[2].Raw);
+            Assert.Equal("120", copy.OBX[5].Raw);
         }
 
         [Fact]
@@ -242,7 +242,7 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
 
             // Assert - Copy has new segment
             Assert.True(copy.OBX.Exists);
-            Assert.Equal("1", copy.OBX[1].Value);
+            Assert.Equal("1", copy.OBX[1].Raw);
             
             // Assert - Original doesn't have new segment
             Assert.False(original.OBX.Exists);
@@ -263,17 +263,17 @@ PID|1||12345^^^MRN||DOE^JOHN~JOHNNY^M||19800101|M|||123 MAIN ST\S\APARTMENT 2^^C
             var copy = original.Copy();
 
             // Assert - Special characters preserved (Value shows first repetition only)
-            Assert.Equal("DOE^JOHN", copy.PID[5].Value); // First repetition only
-            Assert.Contains("APARTMENT 2", copy.PID[11].Value);
+            Assert.Equal("DOE^JOHN", copy.PID[5].Raw); // First repetition only
+            Assert.Contains("APARTMENT 2", copy.PID[11].Raw);
             
             // Assert - Individual repetitions work correctly  
-            Assert.Equal("DOE^JOHN", copy.PID[5].Repetition(1).Value); // First repetition
-            Assert.Equal("JOHNNY^M", copy.PID[5].Repetition(2).Value); // Second repetition
+            Assert.Equal("DOE^JOHN", copy.PID[5].Repetition(1).Raw); // First repetition
+            Assert.Equal("JOHNNY^M", copy.PID[5].Repetition(2).Raw); // Second repetition
             
             // Assert - Encoding delimiters work
-            Assert.Equal("DOE", copy.PID[5].Component(1).Value);
-            Assert.Equal("JOHN", copy.PID[5].Component(2).Value);
-            Assert.Equal("JOHNNY", copy.PID[5].Repetition(2).Component(1).Value);
+            Assert.Equal("DOE", copy.PID[5].Component(1).Raw);
+            Assert.Equal("JOHN", copy.PID[5].Component(2).Raw);
+            Assert.Equal("JOHNNY", copy.PID[5].Repetition(2).Component(1).Raw);
         }
 
         [Fact]
@@ -318,13 +318,13 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var copy2 = original.Copy();
 
             // Modify each copy differently
-            copy1.PID[5].Set("SMITH^JANE^F");
-            copy2.PID[5].Set("BROWN^ROBERT^L");
+            copy1.PID[5].SetRaw("SMITH^JANE^F");
+            copy2.PID[5].SetRaw("BROWN^ROBERT^L");
 
             // Assert - All copies are independent
-            Assert.Equal("DOE^JOHN^M", original.PID[5].Value);
-            Assert.Equal("SMITH^JANE^F", copy1.PID[5].Value);
-            Assert.Equal("BROWN^ROBERT^L", copy2.PID[5].Value);
+            Assert.Equal("DOE^JOHN^M", original.PID[5].Raw);
+            Assert.Equal("SMITH^JANE^F", copy1.PID[5].Raw);
+            Assert.Equal("BROWN^ROBERT^L", copy2.PID[5].Raw);
             
             // Assert - Copies are independent of each other
             Assert.NotSame(copy1, copy2);
@@ -361,9 +361,9 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             Assert.Equal(5, copy.Segments("OBX").Count);
             for (int i = 1; i <= 5; i++)
             {
-                Assert.Equal(i.ToString(), copy.Segments("OBX")[i-1][1].Value);
-                Assert.Equal("NM", copy.Segments("OBX")[i-1][2].Value);
-                Assert.Equal((100 + i).ToString(), copy.Segments("OBX")[i-1][5].Value);
+                Assert.Equal(i.ToString(), copy.Segments("OBX")[i-1][1].Raw);
+                Assert.Equal("NM", copy.Segments("OBX")[i-1][2].Raw);
+                Assert.Equal((100 + i).ToString(), copy.Segments("OBX")[i-1][5].Raw);
             }
         }
     }

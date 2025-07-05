@@ -20,7 +20,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var rep5 = fluent.PID[3].Repetition(5);
             
             // Assert - Should return empty value, not throw
-            Assert.Equal("", rep5.Value);
+            Assert.Equal("", rep5.Raw);
             Assert.False(rep5.Exists);
         }
 
@@ -38,7 +38,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var rep2 = fluent.PID[5].Repetition(2);
             
             // Assert
-            Assert.Equal("", rep2.Value);
+            Assert.Equal("", rep2.Raw);
             Assert.False(rep2.Exists);
         }
 
@@ -72,7 +72,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var rep1 = fluent.PID[99].Repetition(1);
             
             // Assert
-            Assert.Equal("", rep1.Value);
+            Assert.Equal("", rep1.Raw);
             Assert.False(rep1.Exists);
             Assert.Equal(0, fluent.PID[99].RepetitionCount);
         }
@@ -90,17 +90,17 @@ namespace HL7lite.Test.Fluent.Accessors
             // Act - Test consistency with other accessors
             // Non-existent field
             var nonExistentField = fluent.PID[99];
-            Assert.Equal("", nonExistentField.Value);
+            Assert.Equal("", nonExistentField.Raw);
             Assert.False(nonExistentField.Exists);
             
             // Non-existent component
             var nonExistentComponent = fluent.PID[3][99];
-            Assert.Equal("", nonExistentComponent.Value);
+            Assert.Equal("", nonExistentComponent.Raw);
             Assert.False(nonExistentComponent.Exists);
             
             // Non-existent repetition - should behave the same way
             var nonExistentRepetition = fluent.PID[3].Repetition(99);
-            Assert.Equal("", nonExistentRepetition.Value);
+            Assert.Equal("", nonExistentRepetition.Raw);
             Assert.False(nonExistentRepetition.Exists);
         }
 
@@ -125,12 +125,12 @@ namespace HL7lite.Test.Fluent.Accessors
             // Assert
             if (repetitionIndex == 1)
             {
-                Assert.Equal("ID001", rep.Value);
+                Assert.Equal("ID001", rep.Raw);
                 Assert.True(rep.Exists);
             }
             else
             {
-                Assert.Equal("", rep.Value);
+                Assert.Equal("", rep.Raw);
                 Assert.False(rep.Exists);
             }
         }

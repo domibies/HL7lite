@@ -275,7 +275,7 @@ PV1|1|I";
             // Test that mutator works correctly when accessed through fluent API
             fluent.PID[5][2].Set("NewFirstName");
             
-            Assert.Equal("NewFirstName", fluent.PID[5][2].Value);
+            Assert.Equal("NewFirstName", fluent.PID[5][2].Raw);
             Assert.Equal("NewFirstName", message.GetValue("PID.5.2"));
         }
 

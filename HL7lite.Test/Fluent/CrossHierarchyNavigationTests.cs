@@ -41,12 +41,12 @@ namespace HL7lite.Test.Fluent
                 .Field(4).Set("RelatedField");
             
             // Assert - First segment unchanged
-            Assert.Equal("FirstDiagnosis", message.Segments("DG1")[0][3].Value);
-            Assert.Equal("", message.Segments("DG1")[0][4].Value);
+            Assert.Equal("FirstDiagnosis", message.Segments("DG1")[0][3].Raw);
+            Assert.Equal("", message.Segments("DG1")[0][4].Raw);
             
             // Second segment modified correctly
-            Assert.Equal("ModifiedComponent", message.Segments("DG1")[1][3].Value);
-            Assert.Equal("RelatedField", message.Segments("DG1")[1][4].Value);
+            Assert.Equal("ModifiedComponent", message.Segments("DG1")[1][3].Raw);
+            Assert.Equal("RelatedField", message.Segments("DG1")[1][4].Raw);
         }
 
         [Fact]
@@ -65,12 +65,12 @@ namespace HL7lite.Test.Fluent
                 .Component(3).Set("ModifiedThird");
             
             // Assert - First segment unchanged
-            Assert.Equal("First^Component1^Component2", message.Segments("DG1")[0][5].Value);
+            Assert.Equal("First^Component1^Component2", message.Segments("DG1")[0][5].Raw);
             
             // Second segment modified correctly
-            Assert.Equal("ModifiedFirst", message.Segments("DG1")[1][5][1].Value);
-            Assert.Equal("ModifiedThird", message.Segments("DG1")[1][5][3].Value);
-            Assert.Equal("Component1", message.Segments("DG1")[1][5][2].Value); // Unchanged
+            Assert.Equal("ModifiedFirst", message.Segments("DG1")[1][5][1].Raw);
+            Assert.Equal("ModifiedThird", message.Segments("DG1")[1][5][3].Raw);
+            Assert.Equal("Component1", message.Segments("DG1")[1][5][2].Raw); // Unchanged
         }
 
         #endregion
@@ -93,12 +93,12 @@ namespace HL7lite.Test.Fluent
                 .Field(5).Component(1).Set("VALUE1");
             
             // Assert - First segment unchanged
-            Assert.Equal("CE^CODE1^TEXT1", message.Segments("OBX")[0][3].Value);
-            Assert.Equal("", message.Segments("OBX")[0][5].Value);
+            Assert.Equal("CE^CODE1^TEXT1", message.Segments("OBX")[0][3].Raw);
+            Assert.Equal("", message.Segments("OBX")[0][5].Raw);
             
             // Second segment modified correctly
-            Assert.Equal("CE^MODIFIED_CODE^TEXT2", message.Segments("OBX")[1][3].Value);
-            Assert.Equal("VALUE1", message.Segments("OBX")[1][5][1].Value);
+            Assert.Equal("CE^MODIFIED_CODE^TEXT2", message.Segments("OBX")[1][3].Raw);
+            Assert.Equal("VALUE1", message.Segments("OBX")[1][5][1].Raw);
         }
 
         #endregion
@@ -112,9 +112,9 @@ namespace HL7lite.Test.Fluent
             var message = CreateTestMessage();
             
             // Create multiple PID segments with complex name fields
-            message.Segments("PID").Add()[5].SetComponents("Smith&Sr", "John&Jr", "M");
+            message.Segments("PID").Add()[5].SetRaw("Smith&Sr^John&Jr^M");
             var pidSecond = message.Segments("PID").Add();
-            pidSecond[5].SetComponents("Jones&Sr", "Jane&Jr", "F");
+            pidSecond[5].SetRaw("Jones&Sr^Jane&Jr^F");
             
             // Act - Navigate: SubComponent[1][1] → Component[2] → Field[7] on second segment
             pidSecond[5][1][1].Set("ModifiedJones")
@@ -122,13 +122,13 @@ namespace HL7lite.Test.Fluent
                 .Field(7).Set("19850315");
             
             // Assert - First segment unchanged
-            Assert.Equal("Smith&Sr^John&Jr^M", message.Segments("PID")[0][5].Value);
-            Assert.Equal("", message.Segments("PID")[0][7].Value);
+            Assert.Equal("Smith&Sr^John&Jr^M", message.Segments("PID")[0][5].Raw);
+            Assert.Equal("", message.Segments("PID")[0][7].Raw);
             
             // Second segment modified correctly
-            Assert.Equal("ModifiedJones&Sr", message.Segments("PID")[1][5][1].Value);
-            Assert.Equal("ModifiedJane", message.Segments("PID")[1][5][2].Value);
-            Assert.Equal("19850315", message.Segments("PID")[1][7].Value);
+            Assert.Equal("ModifiedJones&Sr", message.Segments("PID")[1][5][1].Raw);
+            Assert.Equal("ModifiedJane", message.Segments("PID")[1][5][2].Raw);
+            Assert.Equal("19850315", message.Segments("PID")[1][7].Raw);
         }
 
         [Fact]
@@ -147,12 +147,12 @@ namespace HL7lite.Test.Fluent
                 .SubComponent(3).Set("IV");
             
             // Assert - First segment unchanged
-            Assert.Equal("Smith&Sr&III", message.Segments("PID")[0][5][1].Value);
+            Assert.Equal("Smith&Sr&III", message.Segments("PID")[0][5][1].Raw);
             
             // Second segment modified correctly
-            Assert.Equal("ModifiedJones", message.Segments("PID")[1][5][1][1].Value);
-            Assert.Equal("Jr", message.Segments("PID")[1][5][1][2].Value); // Unchanged
-            Assert.Equal("IV", message.Segments("PID")[1][5][1][3].Value);
+            Assert.Equal("ModifiedJones", message.Segments("PID")[1][5][1][1].Raw);
+            Assert.Equal("Jr", message.Segments("PID")[1][5][1][2].Raw); // Unchanged
+            Assert.Equal("IV", message.Segments("PID")[1][5][1][3].Raw);
         }
 
         #endregion
@@ -166,21 +166,21 @@ namespace HL7lite.Test.Fluent
             var message = CreateTestMessage();
             
             // Create multiple complex segments
-            message.Segments("DG1").Add()[3].SetComponents("ICD10", "A00.0&Primary", "Description");
+            message.Segments("DG1").Add()[3].SetRaw("ICD10^A00.0&Primary^Description");
             var dg1Second = message.Segments("DG1").Add();
-            dg1Second[3].SetComponents("ICD10", "B00.0&Secondary", "Other");
+            dg1Second[3].SetRaw("ICD10^B00.0&Secondary^Other");
             
             // Act - Complex navigation: SubComponent[2][2] → Field[4] → Component[1] → SubComponent[2]
             dg1Second[3][2][2].Set("Modified")
                 .Field(4).Component(1).SubComponent(2).Set("Result");
             
             // Assert - First segment unchanged
-            Assert.Equal("ICD10^A00.0&Primary^Description", message.Segments("DG1")[0][3].Value);
-            Assert.Equal("", message.Segments("DG1")[0][4].Value);
+            Assert.Equal("ICD10^A00.0&Primary^Description", message.Segments("DG1")[0][3].Raw);
+            Assert.Equal("", message.Segments("DG1")[0][4].Raw);
             
             // Second segment modified correctly
-            Assert.Equal("ICD10^B00.0&Modified^Other", message.Segments("DG1")[1][3].Value);
-            Assert.Equal("&Result", message.Segments("DG1")[1][4].Value); // Empty first subcomponent, set second subcomponent
+            Assert.Equal("ICD10^B00.0&Modified^Other", message.Segments("DG1")[1][3].Raw);
+            Assert.Equal("&Result", message.Segments("DG1")[1][4].Raw); // Empty first subcomponent, set second subcomponent
         }
 
         [Fact]
@@ -201,14 +201,14 @@ namespace HL7lite.Test.Fluent
                 .Field(3).Set("BackToThird");
             
             // Assert - First two segments unchanged
-            Assert.Equal("First", message.Segments("OBX")[0][3].Value);
-            Assert.Equal("Second", message.Segments("OBX")[1][3].Value);
-            Assert.Equal("", message.Segments("OBX")[0][5].Value);
-            Assert.Equal("", message.Segments("OBX")[1][5].Value);
+            Assert.Equal("First", message.Segments("OBX")[0][3].Raw);
+            Assert.Equal("Second", message.Segments("OBX")[1][3].Raw);
+            Assert.Equal("", message.Segments("OBX")[0][5].Raw);
+            Assert.Equal("", message.Segments("OBX")[1][5].Raw);
             
             // Third segment modified in all expected ways
-            Assert.Equal("BackToThird", message.Segments("OBX")[2][3].Value);
-            Assert.Equal("RelatedField", message.Segments("OBX")[2][5].Value);
+            Assert.Equal("BackToThird", message.Segments("OBX")[2][3].Raw);
+            Assert.Equal("RelatedField", message.Segments("OBX")[2][5].Raw);
         }
 
         #endregion
@@ -232,15 +232,15 @@ namespace HL7lite.Test.Fluent
                 .Field(4).Set("Severity");
             
             // Assert - First segment unchanged
-            Assert.Equal("FirstDiagnosis", message.Segments("DG1")[0][3].Value);
+            Assert.Equal("FirstDiagnosis", message.Segments("DG1")[0][3].Raw);
             Assert.False(message.Segments("DG1")[0][3].HasRepetitions);
-            Assert.Equal("", message.Segments("DG1")[0][4].Value);
+            Assert.Equal("", message.Segments("DG1")[0][4].Raw);
             
             // Second segment has repetition and related field set
             Assert.True(message.Segments("DG1")[1][3].HasRepetitions);
-            Assert.Equal("SecondDiagnosis", message.Segments("DG1")[1][3].Repetition(1).Value);
-            Assert.Equal("ICD10^A00.0^Primary", message.Segments("DG1")[1][3].Repetition(2).Value);
-            Assert.Equal("Severity", message.Segments("DG1")[1][4].Value);
+            Assert.Equal("SecondDiagnosis", message.Segments("DG1")[1][3].Repetition(1).Raw);
+            Assert.Equal("ICD10^A00.0^Primary", message.Segments("DG1")[1][3].Repetition(2).Raw);
+            Assert.Equal("Severity", message.Segments("DG1")[1][4].Raw);
         }
 
         [Fact]
@@ -262,11 +262,11 @@ namespace HL7lite.Test.Fluent
                 .Field(4).Set("SecondRelated");
             
             // Assert - Each segment modified independently
-            Assert.Equal("FirstRep", message.Segments("DG1")[0][3].Value);
-            Assert.Equal("FirstRelated", message.Segments("DG1")[0][4].Value);
+            Assert.Equal("FirstRep", message.Segments("DG1")[0][3].Raw);
+            Assert.Equal("FirstRelated", message.Segments("DG1")[0][4].Raw);
             
-            Assert.Equal("SecondRep", message.Segments("DG1")[1][3].Value);
-            Assert.Equal("SecondRelated", message.Segments("DG1")[1][4].Value);
+            Assert.Equal("SecondRep", message.Segments("DG1")[1][3].Raw);
+            Assert.Equal("SecondRelated", message.Segments("DG1")[1][4].Raw);
         }
 
         #endregion
@@ -289,8 +289,8 @@ namespace HL7lite.Test.Fluent
             
             // Assert - Segment created and navigation worked
             Assert.Equal(1, message.Segments("DG1").Count);
-            Assert.Equal("Component1", message.Segments("DG1")[0][3].Value);
-            Assert.Equal("RelatedField", message.Segments("DG1")[0][4].Value);
+            Assert.Equal("Component1", message.Segments("DG1")[0][3].Raw);
+            Assert.Equal("RelatedField", message.Segments("DG1")[0][4].Raw);
         }
 
         [Fact]
@@ -311,13 +311,13 @@ namespace HL7lite.Test.Fluent
                 .Field(5).Component(1).SubComponent(1).Set("FinalValue");
             
             // Assert - Only third segment affected
-            Assert.Equal("First", message.Segments("OBX")[0][3].Value);
-            Assert.Equal("Second", message.Segments("OBX")[1][3].Value);
+            Assert.Equal("First", message.Segments("OBX")[0][3].Raw);
+            Assert.Equal("Second", message.Segments("OBX")[1][3].Raw);
             
             // Third segment has complex modifications
-            Assert.Equal("DeepValue&SubValue", message.Segments("OBX")[2][3][1].Value);
-            Assert.Equal("CompValue", message.Segments("OBX")[2][3][2].Value);
-            Assert.Equal("FinalValue", message.Segments("OBX")[2][5][1][1].Value);
+            Assert.Equal("DeepValue&SubValue", message.Segments("OBX")[2][3][1].Raw);
+            Assert.Equal("CompValue", message.Segments("OBX")[2][3][2].Raw);
+            Assert.Equal("FinalValue", message.Segments("OBX")[2][5][1][1].Raw);
         }
 
         #endregion

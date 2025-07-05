@@ -23,7 +23,7 @@ PV1|1|I";
 
             var result = fluent.PID[7].Set("19900101");
 
-            Assert.Equal("19900101", fluent.PID[7].Value);
+            Assert.Equal("19900101", fluent.PID[7].Raw);
             Assert.Equal("19900101", fluent.UnderlyingMessage.GetValue("PID.7"));
         }
 
@@ -45,8 +45,8 @@ PV1|1|I";
             fluent.PID[7].Set("19900101")
                 .Field(8).Set("F");
 
-            Assert.Equal("19900101", fluent.PID[7].Value);
-            Assert.Equal("F", fluent.PID[8].Value);
+            Assert.Equal("19900101", fluent.PID[7].Raw);
+            Assert.Equal("F", fluent.PID[8].Raw);
         }
 
         [Fact]
@@ -56,7 +56,7 @@ PV1|1|I";
 
             fluent.PID[7].Set(null);
 
-            Assert.Equal("", fluent.PID[7].Value);
+            Assert.Equal("", fluent.PID[7].Raw);
         }
 
         [Fact]
@@ -66,7 +66,7 @@ PV1|1|I";
 
             var result = fluent.PID[5][2].Set("Jane");
 
-            Assert.Equal("Jane", fluent.PID[5][2].Value);
+            Assert.Equal("Jane", fluent.PID[5][2].Raw);
             Assert.Equal("Jane", fluent.UnderlyingMessage.GetValue("PID.5.2"));
         }
 
@@ -89,9 +89,9 @@ PV1|1|I";
                 .Component(3).Set("Marie")
                 .Field(7).Set("19900101");
 
-            Assert.Equal("Jane", fluent.PID[5][2].Value);
-            Assert.Equal("Marie", fluent.PID[5][3].Value);
-            Assert.Equal("19900101", fluent.PID[7].Value);
+            Assert.Equal("Jane", fluent.PID[5][2].Raw);
+            Assert.Equal("Marie", fluent.PID[5][3].Raw);
+            Assert.Equal("19900101", fluent.PID[7].Raw);
         }
 
         [Fact]
@@ -101,7 +101,7 @@ PV1|1|I";
 
             fluent.PID[5][2].Set(null);
 
-            Assert.Equal("", fluent.PID[5][2].Value);
+            Assert.Equal("", fluent.PID[5][2].Raw);
         }
 
         [Fact]
@@ -118,8 +118,8 @@ PV1|1|I";
             fluent2.PID[3].Set("98765");
             fluent2.PID[5][1].Set("Smith");
 
-            Assert.Equal(fluent1.PID[3].Value, fluent2.PID[3].Value);
-            Assert.Equal(fluent1.PID[5][1].Value, fluent2.PID[5][1].Value);
+            Assert.Equal(fluent1.PID[3].Raw, fluent2.PID[3].Raw);
+            Assert.Equal(fluent1.PID[5][1].Raw, fluent2.PID[5][1].Raw);
         }
 
         [Fact]
@@ -129,7 +129,7 @@ PV1|1|I";
 
             var result = fluent.PID[5][1][1].Set("LastPart");
 
-            Assert.Equal("LastPart", fluent.PID[5][1][1].Value);
+            Assert.Equal("LastPart", fluent.PID[5][1][1].Raw);
             Assert.Equal("LastPart", fluent.UnderlyingMessage.GetValue("PID.5.1.1"));
         }
 
@@ -144,19 +144,19 @@ PV1|1|I";
             fluent1.PID[5].SetComponents("Smith", "John", "M");  // Shortcut
             fluent2.PID[5].Set().SetComponents("Smith", "John", "M");  // Verbose
 
-            Assert.Equal(fluent1.PID[5].Value, fluent2.PID[5].Value);
+            Assert.Equal(fluent1.PID[5].Raw, fluent2.PID[5].Raw);
 
             // Test SetNull shortcut vs verbose  
             fluent1.PID[6].SetNull();  // Shortcut
             fluent2.PID[6].Set().SetNull();  // Verbose
 
-            Assert.Equal(fluent1.PID[6].Value, fluent2.PID[6].Value);
+            Assert.Equal(fluent1.PID[6].Raw, fluent2.PID[6].Raw);
 
             // Test SetIf shortcut vs verbose
             fluent1.PID[8].SetIf("M", true);  // Shortcut
             fluent2.PID[8].Set().SetIf("M", true);  // Verbose
 
-            Assert.Equal(fluent1.PID[8].Value, fluent2.PID[8].Value);
+            Assert.Equal(fluent1.PID[8].Raw, fluent2.PID[8].Raw);
         }
 
         [Fact]
@@ -179,10 +179,10 @@ PV1|1|I";
                 .Component(2).Set("SecondComp")
                 .Field(7).Set("19900101");
 
-            Assert.Equal("FirstSub", fluent.PID[5][1][1].Value);
-            Assert.Equal("SecondSub", fluent.PID[5][1][2].Value);
-            Assert.Equal("SecondComp", fluent.PID[5][2].Value);
-            Assert.Equal("19900101", fluent.PID[7].Value);
+            Assert.Equal("FirstSub", fluent.PID[5][1][1].Raw);
+            Assert.Equal("SecondSub", fluent.PID[5][1][2].Raw);
+            Assert.Equal("SecondComp", fluent.PID[5][2].Raw);
+            Assert.Equal("19900101", fluent.PID[7].Raw);
         }
 
         [Fact]
@@ -192,7 +192,7 @@ PV1|1|I";
 
             fluent.PID[5][1][1].Set(null);
 
-            Assert.Equal("", fluent.PID[5][1][1].Value);
+            Assert.Equal("", fluent.PID[5][1][1].Raw);
         }
 
         [Fact]
@@ -220,15 +220,15 @@ PV1|1|I";
                 .Field(9).Set("F");                // SubComponentMutator.Field() returns FieldMutator, use .Set()
 
             // Verify all values were set correctly
-            Assert.Equal("12345", fluent.PID[3].Value);
-            Assert.Equal("19850315", fluent.PID[7].Value);
-            Assert.Equal("M", fluent.PID[8].Value);
-            Assert.Equal("LastName&FirstName", fluent.PID[5][1].Value); // Component 1 now has subcomponents
-            Assert.Equal("John", fluent.PID[5][2].Value);
-            Assert.Equal("LastName", fluent.PID[5][1][1].Value);
-            Assert.Equal("FirstName", fluent.PID[5][1][2].Value);
-            Assert.Equal("MiddleName", fluent.PID[5][3].Value);
-            Assert.Equal("F", fluent.PID[9].Value);
+            Assert.Equal("12345", fluent.PID[3].Raw);
+            Assert.Equal("19850315", fluent.PID[7].Raw);
+            Assert.Equal("M", fluent.PID[8].Raw);
+            Assert.Equal("LastName&FirstName", fluent.PID[5][1].Raw); // Component 1 now has subcomponents
+            Assert.Equal("John", fluent.PID[5][2].Raw);
+            Assert.Equal("LastName", fluent.PID[5][1][1].Raw);
+            Assert.Equal("FirstName", fluent.PID[5][1][2].Raw);
+            Assert.Equal("MiddleName", fluent.PID[5][3].Raw);
+            Assert.Equal("F", fluent.PID[9].Raw);
         }
 
         [Fact]
@@ -242,9 +242,9 @@ PV1|1|I";
                 .Field(8).Set("M");
 
             // Verify all values were set correctly
-            Assert.Equal("12345", fluent.PID[3].Value);
-            Assert.Equal("19850315", fluent.PID[7].Value);
-            Assert.Equal("M", fluent.PID[8].Value);
+            Assert.Equal("12345", fluent.PID[3].Raw);
+            Assert.Equal("19850315", fluent.PID[7].Raw);
+            Assert.Equal("M", fluent.PID[8].Raw);
         }
 
         [Fact]
@@ -253,24 +253,24 @@ PV1|1|I";
             var fluent = CreateTestMessage();
 
             // Demonstrate concise message building
-            fluent.PID[3].Set("98765")
-                .Field(5).Set("Johnson^Mary^Elizabeth")
-                .Field(7).Set("19851225")
-                .Field(8).Set("F");
+            fluent.PID[3].SetRaw("98765")
+                .Field(5).SetRaw("Johnson^Mary^Elizabeth")
+                .Field(7).SetRaw("19851225")
+                .Field(8).SetRaw("F");
 
-            fluent.PID[5][1].Set("Johnson")
-                .Component(2).Set("Mary")
-                .Component(3).Set("Elizabeth")
-                .Field(11).Set("456 Oak Ave^Boston^MA^02101");
+            fluent.PID[5][1].SetRaw("Johnson")
+                .Component(2).SetRaw("Mary")
+                .Component(3).SetRaw("Elizabeth")
+                .Field(11).SetRaw("456 Oak Ave^Boston^MA^02101");
 
-            Assert.Equal("98765", fluent.PID[3].Value);
-            Assert.Equal("Johnson^Mary^Elizabeth", fluent.PID[5].Value);
-            Assert.Equal("19851225", fluent.PID[7].Value);
-            Assert.Equal("F", fluent.PID[8].Value);
-            Assert.Equal("Johnson", fluent.PID[5][1].Value);
-            Assert.Equal("Mary", fluent.PID[5][2].Value);
-            Assert.Equal("Elizabeth", fluent.PID[5][3].Value);
-            Assert.Equal("456 Oak Ave^Boston^MA^02101", fluent.PID[11].Value);
+            Assert.Equal("98765", fluent.PID[3].Raw);
+            Assert.Equal("Johnson^Mary^Elizabeth", fluent.PID[5].Raw);
+            Assert.Equal("19851225", fluent.PID[7].Raw);
+            Assert.Equal("F", fluent.PID[8].Raw);
+            Assert.Equal("Johnson", fluent.PID[5][1].Raw);
+            Assert.Equal("Mary", fluent.PID[5][2].Raw);
+            Assert.Equal("Elizabeth", fluent.PID[5][3].Raw);
+            Assert.Equal("456 Oak Ave^Boston^MA^02101", fluent.PID[11].Raw);
         }
 
         [Fact]
@@ -287,8 +287,8 @@ PV1|1|I";
             fluent2.PID[5][1][1].Set("Doe");
             fluent2.PID[5][1][2].Set("Jr");
 
-            Assert.Equal(fluent1.PID[5][1][1].Value, fluent2.PID[5][1][1].Value);
-            Assert.Equal(fluent1.PID[5][1][2].Value, fluent2.PID[5][1][2].Value);
+            Assert.Equal(fluent1.PID[5][1][1].Raw, fluent2.PID[5][1][1].Raw);
+            Assert.Equal(fluent1.PID[5][1][2].Raw, fluent2.PID[5][1][2].Raw);
         }
 
         [Fact]
@@ -311,14 +311,14 @@ PV1|1|I";
                 .Field(13).Set("555-1234");
 
             // Check individual subcomponents
-            Assert.Equal("NewLastName", fluent.PID[5][1][1].Value);
-            Assert.Equal("Suffix", fluent.PID[5][1][2].Value);
-            Assert.Equal("Jane", fluent.PID[5][2].Value);
-            Assert.Equal("MiddleName", fluent.PID[5][3].Value);
-            Assert.Equal("19900101", fluent.PID[7].Value);
-            Assert.Equal("M", fluent.PID[8].Value);
-            Assert.Equal("123 Main St", fluent.PID[11].Value);
-            Assert.Equal("555-1234", fluent.PID[13].Value);
+            Assert.Equal("NewLastName", fluent.PID[5][1][1].Raw);
+            Assert.Equal("Suffix", fluent.PID[5][1][2].Raw);
+            Assert.Equal("Jane", fluent.PID[5][2].Raw);
+            Assert.Equal("MiddleName", fluent.PID[5][3].Raw);
+            Assert.Equal("19900101", fluent.PID[7].Raw);
+            Assert.Equal("M", fluent.PID[8].Raw);
+            Assert.Equal("123 Main St", fluent.PID[11].Raw);
+            Assert.Equal("555-1234", fluent.PID[13].Raw);
         }
     }
 }

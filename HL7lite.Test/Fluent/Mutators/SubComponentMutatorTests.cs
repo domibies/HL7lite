@@ -25,7 +25,7 @@ PV1|1|I";
 
             fluent.PID[5][1][1].Set("Johnson");
 
-            Assert.Equal("Johnson", fluent.PID[5][1][1].Value);
+            Assert.Equal("Johnson", fluent.PID[5][1][1].Raw);
             Assert.Equal("Johnson", fluent.UnderlyingMessage.GetValue("PID.5.1.1"));
         }
 
@@ -36,7 +36,7 @@ PV1|1|I";
 
             fluent.PID[5][1][1].Set(null);
 
-            Assert.Equal("", fluent.PID[5][1][1].Value);
+            Assert.Equal("", fluent.PID[5][1][1].Raw);
         }
 
         [Fact]
@@ -44,10 +44,10 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].SetEncoded("Test|With^Delimiters");
+            fluent.PID[5][1][1].Set("Test|With^Delimiters");
 
             var expectedEncoded = fluent.UnderlyingMessage.Encoding.Encode("Test|With^Delimiters");
-            Assert.Equal(expectedEncoded, fluent.PID[5][1][1].Value);
+            Assert.Equal(expectedEncoded, fluent.PID[5][1][1].Raw);
         }
 
         [Fact]
@@ -55,9 +55,9 @@ PV1|1|I";
         {
             var fluent = CreateTestMessage();
 
-            fluent.PID[5][1][1].SetEncoded(null);
+            fluent.PID[5][1][1].Set(null);
 
-            Assert.Equal("", fluent.PID[5][1][1].Value);
+            Assert.Equal("", fluent.PID[5][1][1].Raw);
         }
 
         [Fact]
@@ -80,7 +80,7 @@ PV1|1|I";
             fluent.PID[5][1][1].Set("SomeValue");
             fluent.PID[5][1][1].Set().Clear();
 
-            Assert.Equal("", fluent.PID[5][1][1].Value);
+            Assert.Equal("", fluent.PID[5][1][1].Raw);
         }
 
         [Fact]
@@ -90,18 +90,18 @@ PV1|1|I";
 
             fluent.PID[5][1][1].SetIf("ConditionalValue", true);
 
-            Assert.Equal("ConditionalValue", fluent.PID[5][1][1].Value);
+            Assert.Equal("ConditionalValue", fluent.PID[5][1][1].Raw);
         }
 
         [Fact]
         public void SubComponentMutator_ValueIf_WithFalseCondition_ShouldNotSetValue()
         {
             var fluent = CreateTestMessage();
-            var originalValue = fluent.PID[5][1][1].Value;
+            var originalValue = fluent.PID[5][1][1].Raw;
 
             fluent.PID[5][1][1].SetIf("ConditionalValue", false);
 
-            Assert.Equal(originalValue, fluent.PID[5][1][1].Value);
+            Assert.Equal(originalValue, fluent.PID[5][1][1].Raw);
         }
 
         [Fact]
@@ -112,8 +112,8 @@ PV1|1|I";
             fluent.PID[5][1][1].Set("First")
                 .SubComponent(2).Set("Second");
 
-            Assert.Equal("First", fluent.PID[5][1][1].Value);
-            Assert.Equal("Second", fluent.PID[5][1][2].Value);
+            Assert.Equal("First", fluent.PID[5][1][1].Raw);
+            Assert.Equal("Second", fluent.PID[5][1][2].Raw);
         }
 
         [Fact]
@@ -124,8 +124,8 @@ PV1|1|I";
             fluent.PID[5][1][1].Set("FirstSubComp")
                 .Component(2).Set("SecondComponent");
 
-            Assert.Equal("FirstSubComp", fluent.PID[5][1][1].Value);
-            Assert.Equal("SecondComponent", fluent.PID[5][2].Value);
+            Assert.Equal("FirstSubComp", fluent.PID[5][1][1].Raw);
+            Assert.Equal("SecondComponent", fluent.PID[5][2].Raw);
         }
 
         [Fact]
@@ -136,8 +136,8 @@ PV1|1|I";
             fluent.PID[5][1][1].Set("SubCompValue")
                 .Field(7).Set("19900101");
 
-            Assert.Equal("SubCompValue", fluent.PID[5][1][1].Value);
-            Assert.Equal("19900101", fluent.PID[7].Value);
+            Assert.Equal("SubCompValue", fluent.PID[5][1][1].Raw);
+            Assert.Equal("19900101", fluent.PID[7].Raw);
         }
 
         [Fact]
@@ -149,7 +149,7 @@ PV1|1|I";
                 .Clear()
                 .Set("Final");
 
-            Assert.Equal("Final", fluent.PID[5][1][1].Value);
+            Assert.Equal("Final", fluent.PID[5][1][1].Raw);
             Assert.IsType<HL7lite.Fluent.Mutators.SubComponentMutator>(result);
         }
 
@@ -160,7 +160,7 @@ PV1|1|I";
 
             fluent.OBX[1][1][1].Set("NewSegmentValue");
 
-            Assert.Equal("NewSegmentValue", fluent.OBX[1][1][1].Value);
+            Assert.Equal("NewSegmentValue", fluent.OBX[1][1][1].Raw);
             Assert.Equal("NewSegmentValue", fluent.UnderlyingMessage.GetValue("OBX.1.1.1"));
         }
 
@@ -172,7 +172,7 @@ PV1|1|I";
             // Test with repetition index on field level
             fluent.PID[3].Repetition(1)[1][1].Set("FirstRep");
 
-            Assert.Equal("FirstRep", fluent.PID[3].Repetition(1)[1][1].Value);
+            Assert.Equal("FirstRep", fluent.PID[3].Repetition(1)[1][1].Raw);
         }
 
         [Fact]
@@ -186,11 +186,11 @@ PV1|1|I";
                 .Field(7).Set("19851225")
                 .Field(8).Set("M");
 
-            Assert.Equal("LastName", fluent.PID[5][1][1].Value);
-            Assert.Equal("FirstName", fluent.PID[5][1][2].Value);
-            Assert.Equal("GivenName", fluent.PID[5][2].Value);
-            Assert.Equal("19851225", fluent.PID[7].Value);
-            Assert.Equal("M", fluent.PID[8].Value);
+            Assert.Equal("LastName", fluent.PID[5][1][1].Raw);
+            Assert.Equal("FirstName", fluent.PID[5][1][2].Raw);
+            Assert.Equal("GivenName", fluent.PID[5][2].Raw);
+            Assert.Equal("19851225", fluent.PID[7].Raw);
+            Assert.Equal("M", fluent.PID[8].Raw);
         }
 
         #region Navigation Tests

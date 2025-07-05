@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using HL7lite.Fluent.Collections;
 using HL7lite.Fluent.Mutators;
 
@@ -78,9 +79,10 @@ namespace HL7lite.Fluent.Accessors
         }
 
         /// <summary>
-        /// Gets the field value. Returns empty string for non-existent fields, null for explicit HL7 nulls.
+        /// Gets the raw field value with structural delimiters and encoded characters. 
+        /// Returns empty string for non-existent fields, HL7 null ("") for explicit nulls.
         /// </summary>
-        public string Value
+        public string Raw
         {
             get
             {
@@ -110,8 +112,9 @@ namespace HL7lite.Fluent.Accessors
                     // For repetition index 1 on non-repeating fields, use the original field
                     
                     var rawValue = field.Value;
-                    // HL7 null handling is done by the core Field implementation
-                    // Don't convert explicit HL7 nulls to empty string
+                    // Core API converts "" to null, convert back for consistency
+                    if (rawValue == null)
+                        return _message.Encoding.PresentButNull;
                     return rawValue;
                 }
                 catch
@@ -143,7 +146,7 @@ namespace HL7lite.Fluent.Accessors
             {
                 if (!Exists)
                     return false;
-                return Value == null;
+                return Raw == _message.Encoding.PresentButNull;
             }
         }
 
@@ -156,7 +159,7 @@ namespace HL7lite.Fluent.Accessors
             {
                 if (!Exists)
                     return false;
-                var val = Value;
+                var val = Raw;
                 return val != null && val == "";
             }
         }
@@ -170,7 +173,7 @@ namespace HL7lite.Fluent.Accessors
             {
                 if (!Exists)
                     return false;
-                var val = Value;
+                var val = Raw;
                 return val != null && val != "";
             }
         }
@@ -266,7 +269,7 @@ namespace HL7lite.Fluent.Accessors
             if (!HasValue)
                 return null;
 
-            return MessageHelper.ParseDateTime(Value, throwOnError);
+            return MessageHelper.ParseDateTime(Raw, throwOnError);
         }
 
         /// <summary>
@@ -282,7 +285,7 @@ namespace HL7lite.Fluent.Accessors
             if (!HasValue)
                 return null;
 
-            return MessageHelper.ParseDateTime(Value, out offset, throwOnError);
+            return MessageHelper.ParseDateTime(Raw, out offset, throwOnError);
         }
 
         /// <summary>
@@ -317,14 +320,14 @@ namespace HL7lite.Fluent.Accessors
         }
 
         /// <summary>
-        /// Sets the field value with HL7 delimiter encoding. Shortcut for Set().SetEncoded(value).
-        /// Use this method when your value contains HL7 delimiter characters that need to be safely encoded.
+        /// Sets the field to a raw HL7 value. Shortcut for Set().SetRaw(value).
+        /// Use this for pre-encoded data or when building structured values.
         /// </summary>
-        /// <param name="value">The value to encode and set</param>
+        /// <param name="value">The raw HL7 value to set</param>
         /// <returns>A FieldMutator for method chaining</returns>
-        public FieldMutator SetEncoded(string value)
+        public FieldMutator SetRaw(string value)
         {
-            return Set().SetEncoded(value);
+            return Set().SetRaw(value);
         }
 
         /// <summary>Sets multiple field components. Shortcut for Set().SetComponents().</summary>
@@ -364,6 +367,41 @@ namespace HL7lite.Fluent.Accessors
         internal int GetRepetitionIndex()
         {
             return _repetitionIndex;
+        }
+        
+        /// <summary>
+        /// Returns a human-readable representation of the field value.
+        /// Decodes any encoded delimiters and replaces structural delimiters with spaces.
+        /// HL7 null values are displayed as "&lt;null&gt;".
+        /// </summary>
+        public override string ToString()
+        {
+            var rawValue = this.Raw;
+            
+            // Handle empty/missing
+            if (string.IsNullOrEmpty(rawValue))
+                return "";
+            
+            // First replace structural delimiters with spaces (before decoding)
+            // For fields, we replace component (^), repetition (~), and subcomponent (&) delimiters
+            var delimiters = new[] {
+                _message.Encoding.ComponentDelimiter,
+                _message.Encoding.RepeatDelimiter,
+                _message.Encoding.SubComponentDelimiter
+            };
+            
+            var processed = rawValue;
+            // Replace any sequence of structural delimiters with a single space
+            var delimiterPattern = "[" + Regex.Escape(new string(delimiters)) + "]+";
+            processed = Regex.Replace(processed, delimiterPattern, " ");
+            
+            // Then decode encoded delimiters (e.g., \T\ → &) - these become literal characters
+            var decoded = _message.Encoding.Decode(processed);
+            
+            // Replace HL7 nulls with readable placeholder
+            decoded = decoded.Replace(_message.Encoding.PresentButNull, "<null>");
+            
+            return decoded.Trim();
         }
     }
 }

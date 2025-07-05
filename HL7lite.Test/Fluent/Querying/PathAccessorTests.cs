@@ -32,7 +32,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act
-            var result = fluent.Path("PID.5.1").Value;
+            var result = fluent.Path("PID.5.1").Raw;
 
             // Assert
             Assert.Equal("Doe", result);
@@ -45,9 +45,9 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act
-            var familyName = fluent.Path("PID.5.1").Value;
-            var givenName = fluent.Path("PID.5.2").Value;
-            var middleName = fluent.Path("PID.5.3").Value;
+            var familyName = fluent.Path("PID.5.1").Raw;
+            var givenName = fluent.Path("PID.5.2").Raw;
+            var middleName = fluent.Path("PID.5.3").Raw;
 
             // Assert
             Assert.Equal("Doe", familyName);
@@ -62,7 +62,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act
-            var fullName = fluent.Path("PID.5").Value;
+            var fullName = fluent.Path("PID.5").Raw;
 
             // Assert
             Assert.Equal("Doe^John^M^Jr", fullName);
@@ -75,8 +75,8 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act
-            var firstId = fluent.Path("PID.3[1]").Value;
-            var secondId = fluent.Path("PID.3[2]").Value;
+            var firstId = fluent.Path("PID.3[1]").Raw;
+            var secondId = fluent.Path("PID.3[2]").Raw;
 
             // Assert
             Assert.Equal("12345^^^MRN", firstId);
@@ -90,8 +90,8 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act
-            var firstPhone = fluent.Path("PID.13[1]").Value;
-            var secondPhone = fluent.Path("PID.13[2]").Value;
+            var firstPhone = fluent.Path("PID.13[1]").Raw;
+            var secondPhone = fluent.Path("PID.13[2]").Raw;
 
             // Assert
             Assert.Equal("5551234567", firstPhone);
@@ -105,8 +105,8 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act
-            var doctorId = fluent.Path("PV1.7[1].1").Value;
-            var doctorName = fluent.Path("PV1.7[2].1").Value;
+            var doctorId = fluent.Path("PV1.7[1].1").Raw;
+            var doctorName = fluent.Path("PV1.7[2].1").Raw;
 
             // Assert
             Assert.Equal("1447312459", doctorId);
@@ -120,7 +120,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act
-            var result = fluent.Path("ZZZ.999").Value;
+            var result = fluent.Path("ZZZ.999").Raw;
 
             // Assert
             Assert.Equal("", result);
@@ -133,7 +133,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act
-            var result = fluent.Path("PID.99").Value;
+            var result = fluent.Path("PID.99").Raw;
 
             // Assert
             Assert.Equal("", result);
@@ -190,14 +190,14 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
         {
             // Arrange
             var (fluent, message) = CreateTestMessagePair();
-            var originalValue = fluent.Path("PID.5.1").Value;
+            var originalValue = fluent.Path("PID.5.1").Raw;
             Assert.Equal("Doe", originalValue);
 
             // Act
             fluent.Path("PID.5.1").Set("Smith");
 
             // Assert
-            Assert.Equal("Smith", fluent.Path("PID.5.1").Value);
+            Assert.Equal("Smith", fluent.Path("PID.5.1").Raw);
         }
 
         [Fact]
@@ -212,8 +212,8 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
 
             // Assert
             Assert.Same(fluent, result);
-            Assert.Equal("Smith", fluent.Path("PID.5.1").Value);
-            Assert.Equal("Jane", fluent.Path("PID.5.2").Value);
+            Assert.Equal("Smith", fluent.Path("PID.5.1").Raw);
+            Assert.Equal("Jane", fluent.Path("PID.5.2").Raw);
         }
 
         [Fact]
@@ -228,7 +228,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
 
             // Assert
             Assert.True(fluent.Path("PID.39").Exists);
-            Assert.Equal("NewValue", fluent.Path("PID.39").Value);
+            Assert.Equal("NewValue", fluent.Path("PID.39").Raw);
         }
 
         [Fact]
@@ -236,14 +236,14 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
         {
             // Arrange
             var (fluent, message) = CreateTestMessagePair();
-            var originalValue = fluent.Path("PID.5.1").Value;
+            var originalValue = fluent.Path("PID.5.1").Raw;
             Assert.Equal("Doe", originalValue);
 
             // Act
             fluent.Path("PID.5.1").Set("UpdatedValue");
 
             // Assert
-            Assert.Equal("UpdatedValue", fluent.Path("PID.5.1").Value);
+            Assert.Equal("UpdatedValue", fluent.Path("PID.5.1").Raw);
         }
 
         [Fact]
@@ -256,7 +256,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             fluent.Path("PID.5.1").SetIf("ConditionalValue", true);
 
             // Assert
-            Assert.Equal("ConditionalValue", fluent.Path("PID.5.1").Value);
+            Assert.Equal("ConditionalValue", fluent.Path("PID.5.1").Raw);
         }
 
         [Fact]
@@ -264,13 +264,13 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
         {
             // Arrange
             var (fluent, message) = CreateTestMessagePair();
-            var originalValue = fluent.Path("PID.5.1").Value;
+            var originalValue = fluent.Path("PID.5.1").Raw;
 
             // Act
             fluent.Path("PID.5.1").SetIf("ConditionalValue", false);
 
             // Assert
-            Assert.Equal(originalValue, fluent.Path("PID.5.1").Value);
+            Assert.Equal(originalValue, fluent.Path("PID.5.1").Raw);
         }
 
         [Fact]
@@ -285,7 +285,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
 
             // Assert
             Assert.True(fluent.Path("PID.40").Exists);
-            Assert.Equal("ConditionalValue", fluent.Path("PID.40").Value);
+            Assert.Equal("ConditionalValue", fluent.Path("PID.40").Raw);
         }
 
         [Fact]
@@ -315,10 +315,10 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
                   .Path("PID.43").Set("CustomValue");
 
             // Assert
-            Assert.Equal("Smith", fluent.Path("PID.5.1").Value);
-            Assert.Equal("Jane", fluent.Path("PID.5.2").Value);
-            Assert.Equal("19900315", fluent.Path("PID.7").Value);
-            Assert.Equal("CustomValue", fluent.Path("PID.43").Value);
+            Assert.Equal("Smith", fluent.Path("PID.5.1").Raw);
+            Assert.Equal("Jane", fluent.Path("PID.5.2").Raw);
+            Assert.Equal("19900315", fluent.Path("PID.7").Raw);
+            Assert.Equal("CustomValue", fluent.Path("PID.43").Raw);
         }
 
         [Fact]
@@ -332,7 +332,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
         }
 
         [Fact]
-        public void ToString_ReturnsPathString()
+        public void ToString_ReturnsHumanReadableValue()
         {
             // Arrange
             var (fluent, message) = CreateTestMessagePair();
@@ -341,8 +341,8 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             // Act
             var result = pathAccessor.ToString();
 
-            // Assert
-            Assert.Equal("PID.5.1", result);
+            // Assert - Should return the decoded value, not the path
+            Assert.Equal("Doe", result); // Expected human-readable value from PID.5.1
         }
 
         [Fact]
@@ -352,19 +352,19 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
 
             // Act & Assert - Basic field access
-            Assert.Equal("ADT^A01", fluent.Path("MSH.9").Value);
+            Assert.Equal("ADT^A01", fluent.Path("MSH.9").Raw);
             
             // Act & Assert - Component access
-            Assert.Equal("ADT", fluent.Path("MSH.9.1").Value);
-            Assert.Equal("A01", fluent.Path("MSH.9.2").Value);
+            Assert.Equal("ADT", fluent.Path("MSH.9.1").Raw);
+            Assert.Equal("A01", fluent.Path("MSH.9.2").Raw);
             
             // Act & Assert - Field with repetitions
-            Assert.Equal("12345^^^MRN", fluent.Path("PID.3[1]").Value);
-            Assert.Equal("67890^^^SSN", fluent.Path("PID.3[2]").Value);
+            Assert.Equal("12345^^^MRN", fluent.Path("PID.3[1]").Raw);
+            Assert.Equal("67890^^^SSN", fluent.Path("PID.3[2]").Raw);
             
             // Act & Assert - Component within repetition  
-            Assert.Equal("12345", fluent.Path("PID.3[1].1").Value);
-            Assert.Equal("67890", fluent.Path("PID.3[2].1").Value);
+            Assert.Equal("12345", fluent.Path("PID.3[1].1").Raw);
+            Assert.Equal("67890", fluent.Path("PID.3[2].1").Raw);
         }
 
         [Fact]
@@ -435,7 +435,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithDelimiters = "Smith|John^Middle~Name\\Test&Co";
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(valueWithDelimiters);
+            fluent.Path("PID.5.1").Set(valueWithDelimiters);
             
             // Assert
             // GetValue() automatically decodes, so check decoded value matches
@@ -463,7 +463,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithFieldSeparator = "Test|Field|Separator";
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(valueWithFieldSeparator);
+            fluent.Path("PID.5.1").Set(valueWithFieldSeparator);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -487,7 +487,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithComponentSeparator = "Test^Component^Separator";
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(valueWithComponentSeparator);
+            fluent.Path("PID.5.1").Set(valueWithComponentSeparator);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -511,7 +511,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithRepetitionSeparator = "Test~Repetition~Separator";
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(valueWithRepetitionSeparator);
+            fluent.Path("PID.5.1").Set(valueWithRepetitionSeparator);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -535,7 +535,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithEscapeCharacter = "Test\\Escape\\Character";
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(valueWithEscapeCharacter);
+            fluent.Path("PID.5.1").Set(valueWithEscapeCharacter);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -558,7 +558,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithSubComponentSeparator = "Test&SubComponent&Separator";
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(valueWithSubComponentSeparator);
+            fluent.Path("PID.5.1").Set(valueWithSubComponentSeparator);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -581,7 +581,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(null);
+            fluent.Path("PID.5.1").Set(null);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -595,7 +595,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded("");
+            fluent.Path("PID.5.1").Set("");
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -610,7 +610,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var normalText = "Smith John Middle";
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(normalText);
+            fluent.Path("PID.5.1").Set(normalText);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -624,7 +624,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
             
             // Act
-            var result = fluent.Path("PID.5.1").SetEncoded("Test|Value");
+            var result = fluent.Path("PID.5.1").Set("Test|Value");
             
             // Assert
             Assert.Same(fluent, result);
@@ -637,7 +637,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded("Smith|John^Middle")
+            fluent.Path("PID.5.1").Set("Smith|John^Middle")
                   .Path("PID.7").Set("19850315")
                   .Path("PID.8").Set("M");
             
@@ -656,7 +656,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var complexValue = "http://domain.com/resource?Action=1&ID=2|Special^Value~Test\\Path&More";
             
             // Act
-            fluent.Path("PID.5.1").SetEncoded(complexValue);
+            fluent.Path("PID.5.1").Set(complexValue);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -689,7 +689,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithDelimiters = "Test|Value^With~Delimiters";
             
             // Act
-            fluent.Path("PID.5.1").SetEncodedIf(valueWithDelimiters, true);
+            fluent.Path("PID.5.1").SetIf(valueWithDelimiters, true);
             
             // Assert
             var decodedValue = message.GetValue("PID.5.1");
@@ -705,7 +705,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithDelimiters = "Test|Value^With~Delimiters";
             
             // Act
-            fluent.Path("PID.5.1").SetEncodedIf(valueWithDelimiters, false);
+            fluent.Path("PID.5.1").SetIf(valueWithDelimiters, false);
             
             // Assert
             var currentValue = message.GetValue("PID.5.1");
@@ -719,7 +719,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var (fluent, message) = CreateTestMessagePair();
             
             // Act
-            var result = fluent.Path("PID.5.1").SetEncodedIf("Test|Value", true);
+            var result = fluent.Path("PID.5.1").SetIf("Test|Value", true);
             
             // Assert
             Assert.Same(fluent, result);
@@ -733,7 +733,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             var valueWithDelimiters = "New|Field^Value~With\\Delimiters&More";
             
             // Act - Set value on non-existent path
-            fluent.Path("PID.99").SetEncoded(valueWithDelimiters);
+            fluent.Path("PID.99").Set(valueWithDelimiters);
             
             // Assert
             var decodedValue = message.GetValue("PID.99");
@@ -765,7 +765,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Check if the value was set
             Assert.True(fluent.Path("ZZ1.1").Exists);
-            Assert.Equal("TestValue", fluent.Path("ZZ1.1").Value);
+            Assert.Equal("TestValue", fluent.Path("ZZ1.1").Raw);
             Assert.True(fluent["ZZ1"].Exists);
         }
 
@@ -784,7 +784,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Assert
             Assert.True(fluent.Path("ZZ2.99.5").Exists);
-            Assert.Equal("ComplexValue", fluent.Path("ZZ2.99.5").Value);
+            Assert.Equal("ComplexValue", fluent.Path("ZZ2.99.5").Raw);
             Assert.True(fluent["ZZ2"].Exists);
         }
 
@@ -802,7 +802,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Assert
             Assert.True(fluent.Path("DG1[3].1").Exists);
-            Assert.Equal("ThirdDiagnosis", fluent.Path("DG1[3].1").Value);
+            Assert.Equal("ThirdDiagnosis", fluent.Path("DG1[3].1").Raw);
             Assert.True(fluent.Segments("DG1").Count >= 3);
         }
 
@@ -821,13 +821,13 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Assert
             Assert.True(fluent.Path("ZZ3[2].5.1").Exists);
-            Assert.Equal("SecondRepetitionValue", fluent.Path("ZZ3[2].5.1").Value);
+            Assert.Equal("SecondRepetitionValue", fluent.Path("ZZ3[2].5.1").Raw);
             Assert.True(fluent["ZZ3"].Exists);
             Assert.Equal(2, fluent.Segments("ZZ3").Count); // Should create 2 segments (repetitions 1 and 2)
             
             // First repetition should exist but be empty
             Assert.True(fluent.Path("ZZ3[1].1").Exists);
-            Assert.Equal("", fluent.Path("ZZ3[1].1").Value);
+            Assert.Equal("", fluent.Path("ZZ3[1].1").Raw);
         }
 
         [Fact]
@@ -845,7 +845,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Assert
             Assert.True(fluent.Path("ZZ4.10").Exists);
-            Assert.Equal("ConditionalValue", fluent.Path("ZZ4.10").Value);
+            Assert.Equal("ConditionalValue", fluent.Path("ZZ4.10").Raw);
             Assert.True(fluent["ZZ4"].Exists);
         }
 
@@ -868,7 +868,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
         }
 
         [Fact]
-        public void SetEncoded_WithMissingSegment_CreatesSegmentAndEncodesValue()
+        public void Set_WithMissingSegment_CreatesSegmentAndEncodesValue()
         {
             // Arrange
             var (fluent, message) = CreateTestMessagePair();
@@ -878,15 +878,18 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             Assert.False(fluent.Path("ZZ6.1").Exists);
             Assert.False(fluent["ZZ6"].Exists);
             
-            // Act - This would normally throw "Segment name not available"
-            fluent.Path("ZZ6.1").SetEncoded(valueWithDelimiters);
+            // Act - Set() now automatically encodes
+            fluent.Path("ZZ6.1").Set(valueWithDelimiters);
             
             // Assert
             Assert.True(fluent.Path("ZZ6.1").Exists);
-            Assert.Equal(valueWithDelimiters, fluent.Path("ZZ6.1").Value);
+            // Raw should now return the encoded raw value
+            Assert.Equal("Test\\F\\Value\\S\\With\\R\\Delimiters\\T\\More", fluent.Path("ZZ6.1").Raw);
+            // ToString should return the decoded format (same as original input since Set() encoded it)
+            Assert.Equal("Test|Value^With~Delimiters&More", fluent.Path("ZZ6.1").ToString());
             Assert.True(fluent["ZZ6"].Exists);
             
-            // Verify encoding worked
+            // Verify encoding worked - core API still returns decoded values
             var decodedValue = message.GetValue("ZZ6.1");
             Assert.Equal(valueWithDelimiters, decodedValue);
         }
@@ -928,15 +931,15 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Assert
             Assert.True(fluent.Path("AB1.1").Exists);
-            Assert.Equal("FirstValue", fluent.Path("AB1.1").Value);
+            Assert.Equal("FirstValue", fluent.Path("AB1.1").Raw);
             Assert.True(fluent["AB1"].Exists);
             
             Assert.True(fluent.Path("CD2.5").Exists);
-            Assert.Equal("SecondValue", fluent.Path("CD2.5").Value);
+            Assert.Equal("SecondValue", fluent.Path("CD2.5").Raw);
             Assert.True(fluent["CD2"].Exists);
             
             Assert.True(fluent.Path("EF3.10.2").Exists);
-            Assert.Equal("ThirdValue", fluent.Path("EF3.10.2").Value);
+            Assert.Equal("ThirdValue", fluent.Path("EF3.10.2").Raw);
             Assert.True(fluent["EF3"].Exists);
         }
 
@@ -967,7 +970,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Assert
             Assert.True(fluent.Path("PID.99").Exists);
-            Assert.Equal("NewFieldValue", fluent.Path("PID.99").Value);
+            Assert.Equal("NewFieldValue", fluent.Path("PID.99").Raw);
         }
 
         [Fact]
@@ -980,15 +983,15 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Simple segment.field
             fluent.Path("TST.1").Set("Test1");
-            Assert.Equal("Test1", fluent.Path("TST.1").Value);
+            Assert.Equal("Test1", fluent.Path("TST.1").Raw);
             
             // Segment with repetition
             fluent.Path("TST[2].1").Set("Test2");
-            Assert.Equal("Test2", fluent.Path("TST[2].1").Value);
+            Assert.Equal("Test2", fluent.Path("TST[2].1").Raw);
             
             // Complex path with component
             fluent.Path("TST[3].5.2").Set("Test3");
-            Assert.Equal("Test3", fluent.Path("TST[3].5.2").Value);
+            Assert.Equal("Test3", fluent.Path("TST[3].5.2").Raw);
             
             // Verify segment repetitions were created correctly
             Assert.True(fluent["TST"].Exists);
@@ -1010,7 +1013,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             
             // Assert
             Assert.True(fluent.Path("ZZ2[2].99[2].99").Exists);
-            Assert.Equal("Value2b", fluent.Path("ZZ2[2].99[2].99").Value);
+            Assert.Equal("Value2b", fluent.Path("ZZ2[2].99[2].99").Raw);
             
             // Verify the structure was created correctly
             var segments = fluent.Segments("ZZ2");
@@ -1022,7 +1025,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             Assert.Equal(2, field.RepetitionCount);
             
             var secondRepetition = field.Repetition(2);
-            Assert.Equal("Value2b", secondRepetition[99].Value);
+            Assert.Equal("Value2b", secondRepetition[99].Raw);
         }
 
         [Fact]
@@ -1039,11 +1042,11 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             fluent.Path("DG1[3].3[1].1").Set("Diagnosis3a");
             
             // Assert
-            Assert.Equal("Diagnosis1a", fluent.Path("DG1[1].3[1].1").Value);
-            Assert.Equal("Diagnosis1b", fluent.Path("DG1[1].3[2].1").Value);
-            Assert.Equal("Diagnosis2a", fluent.Path("DG1[2].3[1].1").Value);
-            Assert.Equal("Diagnosis2b", fluent.Path("DG1[2].3[2].1").Value);
-            Assert.Equal("Diagnosis3a", fluent.Path("DG1[3].3[1].1").Value);
+            Assert.Equal("Diagnosis1a", fluent.Path("DG1[1].3[1].1").Raw);
+            Assert.Equal("Diagnosis1b", fluent.Path("DG1[1].3[2].1").Raw);
+            Assert.Equal("Diagnosis2a", fluent.Path("DG1[2].3[1].1").Raw);
+            Assert.Equal("Diagnosis2b", fluent.Path("DG1[2].3[2].1").Raw);
+            Assert.Equal("Diagnosis3a", fluent.Path("DG1[3].3[1].1").Raw);
             
             // Verify structure
             var dg1Segments = fluent.Segments("DG1");
@@ -1065,7 +1068,7 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             fluent.Path("ZZ1[3].50[3].5").Set("HighFieldValue");
             
             // Assert
-            Assert.Equal("HighFieldValue", fluent.Path("ZZ1[3].50[3].5").Value);
+            Assert.Equal("HighFieldValue", fluent.Path("ZZ1[3].50[3].5").Raw);
             
             // Verify the segment was created
             var segments = fluent.Segments("ZZ1");
@@ -1077,21 +1080,25 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             Assert.Equal(3, field50.RepetitionCount);
             
             // Verify the value is in the correct location
-            Assert.Equal("HighFieldValue", field50.Repetition(3)[5].Value);
+            Assert.Equal("HighFieldValue", field50.Repetition(3)[5].Raw);
         }
 
         [Fact]
-        public void SetEncoded_WithSegmentAndFieldRepetitions_ShouldHandleDelimiters()
+        public void Set_WithSegmentAndFieldRepetitions_ShouldHandleDelimiters()
         {
             // Arrange
             var (fluent, message) = CreateTestMessagePair();
             
-            // Act - Set encoded value with delimiters on non-first segment with field repetitions
-            fluent.Path("OBX[2].5[2].1").SetEncoded("Result|With^Delimiters~And&More");
+            // Act - Set value with delimiters on non-first segment with field repetitions (Set() now encodes automatically)
+            fluent.Path("OBX[2].5[2].1").Set("Result|With^Delimiters~And&More");
             
-            // Assert - Value should be properly encoded
-            var retrievedValue = fluent.Path("OBX[2].5[2].1").Value;
-            Assert.Equal("Result|With^Delimiters~And&More", retrievedValue);
+            // Assert - Raw should now return the raw encoded value
+            var retrievedValue = fluent.Path("OBX[2].5[2].1").Raw;
+            Assert.Equal("Result\\F\\With\\S\\Delimiters\\R\\And\\T\\More", retrievedValue);
+            
+            // ToString should return the decoded format (same as original input since Set() encoded it)
+            var decodedValue = fluent.Path("OBX[2].5[2].1").ToString();
+            Assert.Equal("Result|With^Delimiters~And&More", decodedValue);
             
             // Verify the raw stored value has encoded delimiters
             var segments = fluent.Segments("OBX");
@@ -1112,16 +1119,16 @@ PV1||O|NWSLED^^^NYULHLI^^^^^LI NW SLEEP DISORDER^^DEPID||||1447312459^DOE^MICHAE
             fluent.Path("AL1[2].3.1").Set("Allergy2");
             
             // Assert - All should be accessible in correct order
-            Assert.Equal("Allergy1", fluent.Path("AL1[1].3.1").Value);
-            Assert.Equal("Allergy2", fluent.Path("AL1[2].3.1").Value);
-            Assert.Equal("Allergy3", fluent.Path("AL1[3].3.1").Value);
+            Assert.Equal("Allergy1", fluent.Path("AL1[1].3.1").Raw);
+            Assert.Equal("Allergy2", fluent.Path("AL1[2].3.1").Raw);
+            Assert.Equal("Allergy3", fluent.Path("AL1[3].3.1").Raw);
             
             // Verify segment order
             var segments = fluent.Segments("AL1");
             Assert.Equal(3, segments.Count);
-            Assert.Equal("Allergy1", segments[0][3][1].Value);
-            Assert.Equal("Allergy2", segments[1][3][1].Value);
-            Assert.Equal("Allergy3", segments[2][3][1].Value);
+            Assert.Equal("Allergy1", segments[0][3][1].Raw);
+            Assert.Equal("Allergy2", segments[1][3][1].Raw);
+            Assert.Equal("Allergy3", segments[2][3][1].Raw);
         }
 
         #endregion

@@ -46,7 +46,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var subComponent = new SubComponentAccessor(message, "PID", 3, 1, 1);
             
             // Act
-            var value = subComponent.Value;
+            var value = subComponent.Raw;
             
             // Assert
             Assert.Equal("Part1", value);
@@ -60,7 +60,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var subComponent = new SubComponentAccessor(message, "PID", 3, 1, 2);
             
             // Act
-            var value = subComponent.Value;
+            var value = subComponent.Raw;
             
             // Assert
             Assert.Equal("Sub1", value);
@@ -74,7 +74,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var subComponent = new SubComponentAccessor(message, "PID", 3, 1, 3);
             
             // Act
-            var value = subComponent.Value;
+            var value = subComponent.Raw;
             
             // Assert
             Assert.Equal("Sub2", value);
@@ -88,7 +88,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var subComponent = new SubComponentAccessor(message, "PID", 3, 1, 99);
             
             // Act
-            var value = subComponent.Value;
+            var value = subComponent.Raw;
             
             // Assert
             Assert.Equal("", value);
@@ -102,7 +102,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var subComponent = new SubComponentAccessor(message, "PID", 3, 99, 1);
             
             // Act
-            var value = subComponent.Value;
+            var value = subComponent.Raw;
             
             // Assert
             Assert.Equal("", value);
@@ -241,7 +241,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var subComponent = new SubComponentAccessor(message, "PID", 13, 1, subComponentIndex);
             
             // Act
-            var value = subComponent.Value;
+            var value = subComponent.Raw;
             
             // Assert
             Assert.Equal(expected, value);
@@ -254,9 +254,9 @@ namespace HL7lite.Test.Fluent.Accessors
             var message = CreateTestMessage();
             
             // Act & Assert - Component 2 subcomponents
-            Assert.Equal("Part2", new SubComponentAccessor(message, "PID", 3, 2, 1).Value);
-            Assert.Equal("Sub3", new SubComponentAccessor(message, "PID", 3, 2, 2).Value);
-            Assert.Equal("Sub4", new SubComponentAccessor(message, "PID", 3, 2, 3).Value);
+            Assert.Equal("Part2", new SubComponentAccessor(message, "PID", 3, 2, 1).Raw);
+            Assert.Equal("Sub3", new SubComponentAccessor(message, "PID", 3, 2, 2).Raw);
+            Assert.Equal("Sub4", new SubComponentAccessor(message, "PID", 3, 2, 3).Raw);
         }
 
         [Fact]
@@ -267,7 +267,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var subComponent = new SubComponentAccessor(message, "PID", 3, 3, 1);  // Part3 has no subcomponents
             
             // Act
-            var value = subComponent.Value;
+            var value = subComponent.Raw;
             
             // Assert
             Assert.Equal("Part3", value);
@@ -281,7 +281,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var subComponent = new SubComponentAccessor(message, "PID", 3, 3, 2);  // Part3 has no subcomponents
             
             // Act
-            var value = subComponent.Value;
+            var value = subComponent.Raw;
             
             // Assert
             Assert.Equal("", value);

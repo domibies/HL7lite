@@ -82,7 +82,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
 
             // Act
-            var value = fluentMessage["PID"][3].Value; // Patient ID field
+            var value = fluentMessage["PID"][3].Raw; // Patient ID field
 
             // Assert
             Assert.Equal(expectedPatientId, value);
@@ -99,7 +99,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
 
             // Act
-            var value = fluentMessage["PID"][99].Value; // Non-existent field
+            var value = fluentMessage["PID"][99].Raw; // Non-existent field
 
             // Assert
             Assert.Equal("", value);
@@ -116,14 +116,14 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
 
             // Act
-            var value = fluentMessage["ZZZ"][1].Value; // Non-existent segment
+            var value = fluentMessage["ZZZ"][1].Raw; // Non-existent segment
 
             // Assert
             Assert.Equal("", value);
         }
 
         [Fact]
-        public void Value_WhenFieldIsExplicitNull_ShouldReturnNull()
+        public void Value_WhenFieldIsExplicitNull_ShouldReturnHL7Null()
         {
             // Arrange
             var messageString = TestMessages.NullValues; // Contains explicit null values
@@ -132,10 +132,10 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
 
             // Act
-            var value = fluentMessage["PID"][7].Value; // Date of birth (explicitly null)
+            var value = fluentMessage["PID"][7].Raw; // Date of birth (explicitly null)
 
-            // Assert
-            Assert.Null(value);
+            // Assert - Value now returns HL7 null string instead of C# null
+            Assert.Equal("\"\"", value); // HL7 null representation
         }
 
 
@@ -187,6 +187,26 @@ namespace HL7lite.Test.Fluent.Accessors
 
             // Assert
             Assert.False(isNull);
+        }
+
+        [Fact]
+        public void ToString_WithEncodedAndStructuralDelimiters_ShouldHandleCorrectly()
+        {
+            // Arrange
+            var message = new Message();
+            var fluent = new HL7lite.Fluent.FluentMessage(message);
+            
+            // Set a field with both encoded delimiters (that should remain as literals) 
+            // and structural delimiters (that should become spaces)
+            fluent.PID[5].SetRaw("B\\T\\B^2nd");  // \T\ = encoded &, ^ = structural component separator
+            
+            // Act
+            var displayValue = fluent.PID[5].ToString();
+            var rawValue = fluent.PID[5].Raw;
+            
+            // Assert
+            Assert.Equal("B\\T\\B^2nd", rawValue);        // Raw value unchanged
+            Assert.Equal("B&B 2nd", displayValue);        // Encoded & preserved, ^ becomes space
         }
 
         [Fact]
@@ -276,7 +296,7 @@ namespace HL7lite.Test.Fluent.Accessors
                 Assert.NotNull(accessor);
                 // Check the property without asserting specific values (graceful handling)
                 var _ = accessor.Exists;
-                var __ = accessor.Value;
+                var __ = accessor.Raw;
             }
         }
 
@@ -327,11 +347,11 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
             
             // Act & Assert
-            Assert.Equal("Smith", fluentMessage.PID[5][1].Value);
-            Assert.Equal("John", fluentMessage.PID[5][2].Value);
-            Assert.Equal("M", fluentMessage.PID[5][3].Value);
-            Assert.Equal("Jr", fluentMessage.PID[5][4].Value);
-            Assert.Equal("Dr", fluentMessage.PID[5][5].Value);
+            Assert.Equal("Smith", fluentMessage.PID[5][1].Raw);
+            Assert.Equal("John", fluentMessage.PID[5][2].Raw);
+            Assert.Equal("M", fluentMessage.PID[5][3].Raw);
+            Assert.Equal("Jr", fluentMessage.PID[5][4].Raw);
+            Assert.Equal("Dr", fluentMessage.PID[5][5].Raw);
         }
 
         [Fact]
@@ -345,7 +365,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
             
             // Act
-            var value = fluentMessage.PID[5][99].Value;
+            var value = fluentMessage.PID[5][99].Raw;
             
             // Assert
             Assert.Equal("", value);
@@ -380,7 +400,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fluentMessage = new HL7lite.Fluent.FluentMessage(message);
             
             // Act
-            var subValue = fluentMessage.PID[13][1][2].Value;
+            var subValue = fluentMessage.PID[13][1][2].Raw;
             
             // Assert
             Assert.Equal("123", subValue);
@@ -495,9 +515,9 @@ namespace HL7lite.Test.Fluent.Accessors
             var rep3 = accessor.Repetition(3);
             
             // Assert
-            Assert.Equal("ID001", rep1.Value);
-            Assert.Equal("ID002", rep2.Value);
-            Assert.Equal("ID003", rep3.Value);
+            Assert.Equal("ID001", rep1.Raw);
+            Assert.Equal("ID002", rep2.Raw);
+            Assert.Equal("ID003", rep3.Raw);
         }
 
         [Fact]
@@ -531,7 +551,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var rep = accessor.Repetition(5);
             
             // Assert
-            Assert.Equal("", rep.Value);
+            Assert.Equal("", rep.Raw);
             Assert.False(rep.Exists);
         }
 
@@ -567,8 +587,8 @@ namespace HL7lite.Test.Fluent.Accessors
             var accessor = fluent.PID[3];
             
             // Act
-            var type1 = accessor.Repetition(1)[2].Value;
-            var type2 = accessor.Repetition(2)[2].Value;
+            var type1 = accessor.Repetition(1)[2].Raw;
+            var type2 = accessor.Repetition(2)[2].Raw;
             
             // Assert
             Assert.Equal("Type1", type1);
@@ -587,7 +607,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var accessor = fluent.PID[3];
             
             // Act
-            var defaultValue = accessor.Value;
+            var defaultValue = accessor.Raw;
             
             // Assert
             Assert.Equal("ID001", defaultValue); // Should get first repetition
@@ -650,7 +670,7 @@ namespace HL7lite.Test.Fluent.Accessors
             accessor.Set("ID002");
             
             // Assert
-            Assert.Equal("ID002", accessor.Value);
+            Assert.Equal("ID002", accessor.Raw);
         }
 
         #endregion
@@ -674,12 +694,12 @@ namespace HL7lite.Test.Fluent.Accessors
             fluent.PID[3].Repetition(2)[2].Set("UpdatedSystem2");
             
             // Assert
-            Assert.Equal("ID001", fluent.PID[3].Repetition(1)[1].Value);
-            Assert.Equal("System1", fluent.PID[3].Repetition(1)[2].Value);
-            Assert.Equal("ID002", fluent.PID[3].Repetition(2)[1].Value);
-            Assert.Equal("UpdatedSystem2", fluent.PID[3].Repetition(2)[2].Value);
-            Assert.Equal("ID003", fluent.PID[3].Repetition(3)[1].Value);
-            Assert.Equal("System3", fluent.PID[3].Repetition(3)[2].Value);
+            Assert.Equal("ID001", fluent.PID[3].Repetition(1)[1].Raw);
+            Assert.Equal("System1", fluent.PID[3].Repetition(1)[2].Raw);
+            Assert.Equal("ID002", fluent.PID[3].Repetition(2)[1].Raw);
+            Assert.Equal("UpdatedSystem2", fluent.PID[3].Repetition(2)[2].Raw);
+            Assert.Equal("ID003", fluent.PID[3].Repetition(3)[1].Raw);
+            Assert.Equal("System3", fluent.PID[3].Repetition(3)[2].Raw);
         }
 
         [Fact]
@@ -696,8 +716,8 @@ namespace HL7lite.Test.Fluent.Accessors
             fluent.PID[3].Repetitions[1][2].Set("NewSystem");
             
             // Assert
-            Assert.Equal("System1", fluent.PID[3].Repetitions[0][2].Value);
-            Assert.Equal("NewSystem", fluent.PID[3].Repetitions[1][2].Value);
+            Assert.Equal("System1", fluent.PID[3].Repetitions[0][2].Raw);
+            Assert.Equal("NewSystem", fluent.PID[3].Repetitions[1][2].Raw);
         }
 
         [Fact]
@@ -715,9 +735,9 @@ namespace HL7lite.Test.Fluent.Accessors
             
             // Assert - All repetitions should still exist
             Assert.Equal(3, fluent.PID[3].RepetitionCount);
-            Assert.Equal("ID001", fluent.PID[3].Repetition(1).Value);
-            Assert.Equal("UPDATED", fluent.PID[3].Repetition(2).Value);
-            Assert.Equal("ID003", fluent.PID[3].Repetition(3).Value);
+            Assert.Equal("ID001", fluent.PID[3].Repetition(1).Raw);
+            Assert.Equal("UPDATED", fluent.PID[3].Repetition(2).Raw);
+            Assert.Equal("ID003", fluent.PID[3].Repetition(3).Raw);
         }
 
 
@@ -739,7 +759,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var fieldAccessor = fluent.PID[3];
             
             // Act - Check initial state
-            var initialValue = fieldAccessor.Value;
+            var initialValue = fieldAccessor.Raw;
             var initialHasRepetitions = fieldAccessor.HasRepetitions;
             var initialRepetitionCount = fieldAccessor.RepetitionCount;
             
@@ -747,7 +767,7 @@ namespace HL7lite.Test.Fluent.Accessors
             fieldAccessor.Repetitions.Add("ID002");
             
             // Check state after adding repetition
-            var afterValue = fieldAccessor.Value;
+            var afterValue = fieldAccessor.Raw;
             var afterHasRepetitions = fieldAccessor.HasRepetitions;
             var afterRepetitionCount = fieldAccessor.RepetitionCount;
             

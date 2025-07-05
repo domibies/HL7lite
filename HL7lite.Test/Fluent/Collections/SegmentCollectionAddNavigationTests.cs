@@ -29,19 +29,19 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(4, segments.Count); // Should have 4 ZZ1 segments
 
             // First segment (created by fluent["ZZ1"][2][3].Set("CustomValue"))
-            Assert.Equal("CustomValue", segments[0][2][3].Value);
+            Assert.Equal("CustomValue", segments[0][2][3].Raw);
 
             // Second segment (created by .Add().Field(4).Set("CustomValue1"))
-            Assert.Equal("CustomValue1", segments[1][4].Value);
+            Assert.Equal("CustomValue1", segments[1][4].Raw);
 
             // Third segment (created by .Add().Field(4).Component(3).Set("CustomValue2"))
             // BUG: This should be in segment 2 (index 2), not segment 0
-            Assert.Equal("CustomValue2", segments[2][4][3].Value);
+            Assert.Equal("CustomValue2", segments[2][4][3].Raw);
             // The bug would put it in segments[0][4][3] instead
 
             // Fourth segment (created by .Add().Field(4).Component(3).SubComponent(2).Set("CustomValue3"))
             // BUG: This should be in segment 3 (index 3), not segment 0
-            Assert.Equal("CustomValue3", segments[3][4][3][2].Value);
+            Assert.Equal("CustomValue3", segments[3][4][3][2].Raw);
             // The bug would put it in segments[0][4][3][2] instead
         }
 
@@ -64,8 +64,8 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(2, segments.Count);
 
             // If the bug exists, both values will be in the first segment
-            var firstSegmentValue = segments[0][4][3].Value;
-            var secondSegmentValue = segments[1][4][3].Value;
+            var firstSegmentValue = segments[0][4][3].Raw;
+            var secondSegmentValue = segments[1][4][3].Raw;
 
             // Expected behavior: each segment should have its own value
             // Buggy behavior: second value overwrites first segment
@@ -93,9 +93,9 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(3, segments.Count);
 
             // Each segment should have its own value
-            Assert.Equal("Diagnosis1_Sub1", segments[0][3][1][1].Value);
-            Assert.Equal("Diagnosis2_Sub1", segments[1][3][1][1].Value);
-            Assert.Equal("Diagnosis3_Sub2", segments[2][3][1][2].Value);
+            Assert.Equal("Diagnosis1_Sub1", segments[0][3][1][1].Raw);
+            Assert.Equal("Diagnosis2_Sub1", segments[1][3][1][1].Raw);
+            Assert.Equal("Diagnosis3_Sub2", segments[2][3][1][2].Raw);
         }
 
         [Fact]
@@ -121,10 +121,10 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(3, segments.Count);
 
             // Check that direct method worked
-            Assert.Equal("DirectMethod", segments[1][5][1].Value);
+            Assert.Equal("DirectMethod", segments[1][5][1].Raw);
 
             // Check that chained method targeted the correct (third) segment
-            Assert.Equal("ChainedMethod", segments[2][5][1].Value);
+            Assert.Equal("ChainedMethod", segments[2][5][1].Raw);
             
             // If bug exists, ChainedMethod might be in segments[0] or segments[1] instead
         }
@@ -150,12 +150,12 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(1, segments.Count);
 
             var newSegment = segments[0];
-            Assert.Equal("1", newSegment[1].Value);
-            Assert.Equal("ST", newSegment[2].Value);
-            Assert.Equal("GLUCOSE", newSegment[3][1].Value);
-            Assert.Equal("Glucose Level", newSegment[3][2].Value);
-            Assert.Equal("95", newSegment[5].Value);
-            Assert.Equal("mg/dL", newSegment[6].Value);
+            Assert.Equal("1", newSegment[1].Raw);
+            Assert.Equal("ST", newSegment[2].Raw);
+            Assert.Equal("GLUCOSE", newSegment[3][1].Raw);
+            Assert.Equal("Glucose Level", newSegment[3][2].Raw);
+            Assert.Equal("95", newSegment[5].Raw);
+            Assert.Equal("mg/dL", newSegment[6].Raw);
         }
 
         [Fact]
@@ -191,15 +191,15 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(2, countAfterSecond);
             
             var segments = fluent.Segments("ZZ1");
-            var firstValue = segments[0][4][3].Value;
-            var secondValue = segments[1][4][3].Value;
+            var firstValue = segments[0][4][3].Raw;
+            var secondValue = segments[1][4][3].Raw;
             
             // Debug output - this will show in test output
             var rawMessage = message.SerializeMessage(false);
             
             // This test is specifically for field-level targeting, which should work
-            var testFieldFirst = segments[0][4].Value;
-            var testFieldSecond = segments[1][4].Value;
+            var testFieldFirst = segments[0][4].Raw;
+            var testFieldSecond = segments[1][4].Raw;
             
             Assert.Equal("FIRST_SEGMENT", firstValue);
             Assert.Equal("SECOND_SEGMENT", secondValue);
@@ -219,8 +219,8 @@ namespace HL7lite.Test.Fluent.Collections
 
             var segments = fluent.Segments("ZZ1");
             Assert.Equal(2, segments.Count);
-            Assert.Equal("FIRST_FIELD", segments[0][4].Value);
-            Assert.Equal("SECOND_FIELD", segments[1][4].Value);
+            Assert.Equal("FIRST_FIELD", segments[0][4].Raw);
+            Assert.Equal("SECOND_FIELD", segments[1][4].Raw);
         }
 
         [Fact]
@@ -239,7 +239,7 @@ namespace HL7lite.Test.Fluent.Collections
             // Check message state after first
             var segments1 = fluent.Segments("ZZ1");
             var count1 = segments1.Count;
-            var value1 = segments1[0][4][3].Value;
+            var value1 = segments1[0][4][3].Raw;
             
             // Add second segment and set component
             var secondSegmentAccessor = fluent.Segments("ZZ1").Add();
@@ -249,8 +249,8 @@ namespace HL7lite.Test.Fluent.Collections
             // Check final state
             var segments2 = fluent.Segments("ZZ1");
             var count2 = segments2.Count;
-            var finalValue1 = segments2[0][4][3].Value;
-            var finalValue2 = segments2[1][4][3].Value;
+            var finalValue1 = segments2[0][4][3].Raw;
+            var finalValue2 = segments2[1][4][3].Raw;
             
             // Assert step by step
             Assert.Equal(1, count1);

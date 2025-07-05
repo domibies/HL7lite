@@ -247,7 +247,7 @@ namespace HL7lite.Fluent.Querying
                 // If only field level requested
                 if (parsed.IsFieldLevel)
                 {
-                    var fieldValue = fieldAccessor.Value;
+                    var fieldValue = fieldAccessor.Raw;
                     return fieldValue == null ? message.Encoding.PresentButNull : fieldValue;
                 }
                     
@@ -257,13 +257,13 @@ namespace HL7lite.Fluent.Querying
                 // If only component level requested
                 if (parsed.IsComponentLevel)
                 {
-                    var componentValue = componentAccessor.Value;
+                    var componentValue = componentAccessor.Raw;
                     return componentValue == null ? message.Encoding.PresentButNull : componentValue;
                 }
                     
                 // Navigate to subcomponent using fluent API
                 var subComponentAccessor = componentAccessor[parsed.SubComponentNumber.Value];
-                var subComponentValue = subComponentAccessor.Value;
+                var subComponentValue = subComponentAccessor.Raw;
                 return subComponentValue == null ? message.Encoding.PresentButNull : subComponentValue;
             }
             catch
@@ -427,92 +427,6 @@ namespace HL7lite.Fluent.Querying
             }
         }
         
-        /// <summary>
-        /// Sets the encoded value at the specified path in the message using the enhanced parser.
-        /// The value is encoded to handle HL7 delimiter characters safely.
-        /// </summary>
-        /// <param name="message">The HL7 message to write to</param>
-        /// <param name="path">The path to write</param>
-        /// <param name="value">The value to encode and set</param>
-        /// <returns>True if the value was set successfully</returns>
-        public static bool SetEncodedValue(Message message, string path, string value)
-        {
-            if (message == null || string.IsNullOrEmpty(path))
-                return false;
-                
-            var parsed = Parse(path);
-            if (parsed == null)
-                return false; // Invalid path format
-                
-            try
-            {
-                var fluentMessage = new FluentMessage(message);
-                
-                // Ensure segment exists and navigate to it using fluent API
-                var segmentAccessor = EnsureSegment(fluentMessage, parsed.SegmentName, parsed.SegmentRepetition, message);
-                
-                // If only segment level requested
-                if (parsed.IsSegmentLevel)
-                {
-                    return segmentAccessor.Exists;
-                }
-                    
-                // Create FieldMutator directly with proper segment instance
-                var segmentInstanceIndex = parsed.SegmentRepetition - 1; // Convert to 0-based
-                FieldMutator fieldMutator;
-                
-                if (parsed.FieldRepetition > 1)
-                {
-                    // For field repetitions > 1, use direct field manipulation to avoid endless loop
-                    // Get the specific segment instance
-                    var segment = GetSegmentInstance(message, parsed.SegmentName, parsed.SegmentRepetition - 1);
-                    if (segment == null)
-                    {
-                        // This shouldn't happen as EnsureSegment was called, but handle gracefully
-                        return false;
-                    }
-                    
-                    // Directly ensure the field and repetitions exist using Segment.EnsureField
-                    // This method properly handles repetitions on the correct segment instance
-                    var field = segment.EnsureField(parsed.FieldNumber.Value, parsed.FieldRepetition);
-                    
-                    // Create FieldMutator for the specific repetition
-                    fieldMutator = new FieldMutator(message, parsed.SegmentName, parsed.FieldNumber.Value, 
-                        parsed.FieldRepetition, segmentInstanceIndex);
-                }
-                else
-                {
-                    // Create FieldMutator for the first repetition or non-repeated field
-                    fieldMutator = new FieldMutator(message, parsed.SegmentName, parsed.FieldNumber.Value, 
-                        null, segmentInstanceIndex);
-                }
-                    
-                // If only field level requested
-                if (parsed.IsFieldLevel)
-                {
-                    fieldMutator.SetEncoded(value);
-                    return true;
-                }
-                    
-                // If only component level requested
-                if (parsed.IsComponentLevel)
-                {
-                    // Use direct field manipulation on the specific segment instance
-                    // Don't encode null values - let them pass through as null
-                    var encodedValue = value == null ? null : message.Encoding.Encode(value);
-                    return SetFieldComponentValue(message, parsed, encodedValue);
-                }
-                    
-                // Navigate to subcomponent
-                // Don't encode null values - let them pass through as null
-                var subComponentEncodedValue = value == null ? null : message.Encoding.Encode(value);
-                return SetFieldSubComponentValue(message, parsed, subComponentEncodedValue);
-            }
-            catch
-            {
-                return false;
-            }
-        }
         
         /// <summary>
         /// Ensures that a segment exists in the message, creating it if necessary.
@@ -580,12 +494,11 @@ namespace HL7lite.Fluent.Querying
 
             try
             {
-                // Ensure the field exists
-                var field = segment.EnsureField(parsed.FieldNumber.Value, parsed.FieldRepetition);
-                
-                // Ensure the component exists 
-                var component = field.EnsureComponent(parsed.ComponentNumber.Value);
-                component.Value = value ?? string.Empty;
+                // Use ComponentMutator to ensure proper encoding
+                var segmentInstanceIndex = parsed.SegmentRepetition - 1;
+                var componentMutator = new ComponentMutator(message, parsed.SegmentName, 
+                    parsed.FieldNumber.Value, parsed.ComponentNumber.Value, parsed.FieldRepetition, segmentInstanceIndex);
+                componentMutator.Set(value);
                 
                 return true;
             }
@@ -606,15 +519,12 @@ namespace HL7lite.Fluent.Querying
 
             try
             {
-                // Ensure the field exists
-                var field = segment.EnsureField(parsed.FieldNumber.Value, parsed.FieldRepetition);
-                
-                // Ensure the component exists
-                var component = field.EnsureComponent(parsed.ComponentNumber.Value);
-                
-                // Ensure the subcomponent exists
-                var subComponent = component.EnsureSubComponent(parsed.SubComponentNumber.Value);
-                subComponent.Value = value ?? string.Empty;
+                // Use SubComponentMutator to ensure proper encoding
+                var segmentInstanceIndex = parsed.SegmentRepetition - 1;
+                var subComponentMutator = new SubComponentMutator(message, parsed.SegmentName, 
+                    parsed.FieldNumber.Value, parsed.ComponentNumber.Value, parsed.SubComponentNumber.Value, 
+                    parsed.FieldRepetition, segmentInstanceIndex);
+                subComponentMutator.Set(value);
                 
                 return true;
             }

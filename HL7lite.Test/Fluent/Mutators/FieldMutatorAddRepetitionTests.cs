@@ -36,13 +36,13 @@ namespace HL7lite.Test.Fluent.Mutators
             // Assert
             Assert.NotNull(mutator);
             Assert.Equal(2, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Value);
-            Assert.Equal("SecondID", fluent.PID[3].Repetitions[1].Value);
+            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Raw);
+            Assert.Equal("SecondID", fluent.PID[3].Repetitions[1].Raw);
             
             // Verify mutator points to the new repetition
             mutator.Set("UpdatedSecondID");
-            Assert.Equal("UpdatedSecondID", fluent.PID[3].Repetitions[1].Value);
-            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Value); // First unchanged
+            Assert.Equal("UpdatedSecondID", fluent.PID[3].Repetitions[1].Raw);
+            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Raw); // First unchanged
         }
 
         [Fact]
@@ -59,12 +59,12 @@ namespace HL7lite.Test.Fluent.Mutators
             // Assert
             Assert.NotNull(mutator);
             Assert.Equal(2, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Value);
-            Assert.Equal("", fluent.PID[3].Repetitions[1].Value);
+            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Raw);
+            Assert.Equal("", fluent.PID[3].Repetitions[1].Raw);
             
             // Verify mutator points to the new repetition
             mutator.SetComponents("MRN", "001", "HOSPITAL");
-            Assert.Equal("MRN^001^HOSPITAL", fluent.PID[3].Repetitions[1].Value);
+            Assert.Equal("MRN^001^HOSPITAL", fluent.PID[3].Repetitions[1].Raw);
         }
 
         [Fact]
@@ -83,12 +83,12 @@ namespace HL7lite.Test.Fluent.Mutators
 
             // Assert
             Assert.Equal(3, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Value);
-            Assert.Equal("SecondID", fluent.PID[3].Repetitions[1].Value);
-            Assert.Equal("ThirdID", fluent.PID[3].Repetitions[2].Value);
-            Assert.Equal("Smith^John^M", fluent.PID[5].Value);
-            Assert.Equal("19850315", fluent.PID[7].Value);
-            Assert.Equal("M", fluent.PID[8].Value);
+            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Raw);
+            Assert.Equal("SecondID", fluent.PID[3].Repetitions[1].Raw);
+            Assert.Equal("ThirdID", fluent.PID[3].Repetitions[2].Raw);
+            Assert.Equal("Smith^John^M", fluent.PID[5].Raw);
+            Assert.Equal("19850315", fluent.PID[7].Raw);
+            Assert.Equal("M", fluent.PID[8].Raw);
         }
 
         [Fact]
@@ -107,10 +107,10 @@ namespace HL7lite.Test.Fluent.Mutators
 
             // Assert
             Assert.Equal(3, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("SimpleID", fluent.PID[3].Repetitions[0].Value);
-            Assert.Equal("MRN^001^HOSPITAL", fluent.PID[3].Repetitions[1].Value);
-            Assert.Equal("ENC^123^VISIT", fluent.PID[3].Repetitions[2].Value);
-            Assert.Equal("19850315", fluent.PID[7].Value);
+            Assert.Equal("SimpleID", fluent.PID[3].Repetitions[0].Raw);
+            Assert.Equal("MRN^001^HOSPITAL", fluent.PID[3].Repetitions[1].Raw);
+            Assert.Equal("ENC^123^VISIT", fluent.PID[3].Repetitions[2].Raw);
+            Assert.Equal("19850315", fluent.PID[7].Raw);
         }
 
         [Fact]
@@ -129,11 +129,11 @@ namespace HL7lite.Test.Fluent.Mutators
 
             // Assert
             Assert.Equal(4, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("ID1", fluent.PID[3].Repetitions[0].Value);
-            Assert.Equal("SimpleID2", fluent.PID[3].Repetitions[1].Value);
-            Assert.Equal("MRN^789^LAB", fluent.PID[3].Repetitions[2].Value);
-            Assert.Equal("SimpleID4", fluent.PID[3].Repetitions[3].Value);
-            Assert.Equal("Doe^Jane", fluent.PID[5].Value);
+            Assert.Equal("ID1", fluent.PID[3].Repetitions[0].Raw);
+            Assert.Equal("SimpleID2", fluent.PID[3].Repetitions[1].Raw);
+            Assert.Equal("MRN^789^LAB", fluent.PID[3].Repetitions[2].Raw);
+            Assert.Equal("SimpleID4", fluent.PID[3].Repetitions[3].Raw);
+            Assert.Equal("Doe^Jane", fluent.PID[5].Raw);
         }
 
         [Fact]
@@ -149,8 +149,8 @@ namespace HL7lite.Test.Fluent.Mutators
 
             // Assert
             Assert.Equal(1, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("FirstID", fluent.PID[3].Value);
-            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Value);
+            Assert.Equal("FirstID", fluent.PID[3].Raw);
+            Assert.Equal("FirstID", fluent.PID[3].Repetitions[0].Raw);
         }
 
         [Fact]
@@ -171,12 +171,12 @@ namespace HL7lite.Test.Fluent.Mutators
 
             // Assert
             Assert.Equal(4, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("ID1", fluent.PID[3].Repetitions[0].Value);
-            Assert.Equal("ID2", fluent.PID[3].Repetitions[1].Value);
-            Assert.Null(fluent.PID[3].Repetitions[2].Value); // HL7 null
-            Assert.Equal("ID4", fluent.PID[3].Repetitions[3].Value);
-            Assert.Equal("Smith^John", fluent.PID[5].Value);
-            Assert.Equal("19850315", fluent.PID[7].Value);
+            Assert.Equal("ID1", fluent.PID[3].Repetitions[0].Raw);
+            Assert.Equal("ID2", fluent.PID[3].Repetitions[1].Raw);
+            Assert.Equal("\"\"", fluent.PID[3].Repetitions[2].Raw); // HL7 null
+            Assert.Equal("ID4", fluent.PID[3].Repetitions[3].Raw);
+            Assert.Equal("Smith^John", fluent.PID[5].Raw);
+            Assert.Equal("19850315", fluent.PID[7].Raw);
         }
 
         [Fact]
@@ -197,10 +197,10 @@ namespace HL7lite.Test.Fluent.Mutators
 
             // Assert
             Assert.Equal(4, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("First", fluent.PID[3].Repetitions[0].Value);
-            Assert.Equal("Second^Updated", fluent.PID[3].Repetitions[1].Value);
-            Assert.Equal("Third^Updated", fluent.PID[3].Repetitions[2].Value);
-            Assert.Equal("Fourth^Updated", fluent.PID[3].Repetitions[3].Value);
+            Assert.Equal("First", fluent.PID[3].Repetitions[0].Raw);
+            Assert.Equal("Second^Updated", fluent.PID[3].Repetitions[1].Raw);
+            Assert.Equal("Third^Updated", fluent.PID[3].Repetitions[2].Raw);
+            Assert.Equal("Fourth^Updated", fluent.PID[3].Repetitions[3].Raw);
         }
 
         [Fact]
@@ -218,10 +218,10 @@ namespace HL7lite.Test.Fluent.Mutators
 
             // Assert - Both patterns should work together
             Assert.Equal(4, fluent.PID[3].Repetitions.Count);
-            Assert.Equal("ID1", fluent.PID[3].Repetitions[0].Value);
-            Assert.Equal("ID2", fluent.PID[3].Repetitions[1].Value);
-            Assert.Equal("ID3", fluent.PID[3].Repetitions[2].Value);
-            Assert.Equal("ID4", fluent.PID[3].Repetitions[3].Value);
+            Assert.Equal("ID1", fluent.PID[3].Repetitions[0].Raw);
+            Assert.Equal("ID2", fluent.PID[3].Repetitions[1].Raw);
+            Assert.Equal("ID3", fluent.PID[3].Repetitions[2].Raw);
+            Assert.Equal("ID4", fluent.PID[3].Repetitions[3].Raw);
         }
 
         [Fact]
@@ -231,8 +231,8 @@ namespace HL7lite.Test.Fluent.Mutators
             var fluent = CreateTestMessage();
 
             // Act - Real-world patient identifier scenario
-            fluent.PID[1].Set("1")
-                .Field(3).Set("12345^^^MRN^MR")         // Primary MRN
+            fluent.PID[1].SetRaw("1")
+                .Field(3).SetRaw("12345^^^MRN^MR")         // Primary MRN
                     .AddRepetition()                     // Add SSN
                         .SetComponents("987654321", "", "", "SS")
                     .AddRepetition()                     // Add encounter number
@@ -240,16 +240,16 @@ namespace HL7lite.Test.Fluent.Mutators
                     .AddRepetition("OLD-MRN-99999")      // Legacy ID as simple string
                 .Field(5).SetComponents("Johnson", "Mary", "Elizabeth", "Jr", "Dr")
                 .Field(7).SetDate(DateTime.Today.AddYears(-45))
-                .Field(8).Set("F");
+                .Field(8).SetRaw("F");
 
             // Assert
             var ids = fluent.PID[3].Repetitions.ToList();
             Assert.Equal(4, ids.Count);
-            Assert.Equal("12345^^^MRN^MR", ids[0].Value);
-            Assert.Equal("987654321^^^SS", ids[1].Value);
-            Assert.Equal("E2024001^^^VN^VISIT", ids[2].Value);
-            Assert.Equal("OLD-MRN-99999", ids[3].Value);
-            Assert.Equal("Johnson^Mary^Elizabeth^Jr^Dr", fluent.PID[5].Value);
+            Assert.Equal("12345^^^MRN^MR", ids[0].Raw);
+            Assert.Equal("987654321^^^SS", ids[1].Raw);
+            Assert.Equal("E2024001^^^VN^VISIT", ids[2].Raw);
+            Assert.Equal("OLD-MRN-99999", ids[3].Raw);
+            Assert.Equal("Johnson^Mary^Elizabeth^Jr^Dr", fluent.PID[5].Raw);
         }
     }
 }

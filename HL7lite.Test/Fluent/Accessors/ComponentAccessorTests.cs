@@ -45,7 +45,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var component = new ComponentAccessor(message, "PID", 5, 1);
             
             // Act
-            var value = component.Value;
+            var value = component.Raw;
             
             // Assert
             Assert.Equal("Smith", value);
@@ -59,7 +59,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var component = new ComponentAccessor(message, "PID", 5, 2);
             
             // Act
-            var value = component.Value;
+            var value = component.Raw;
             
             // Assert
             Assert.Equal("John", value);
@@ -73,7 +73,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var component = new ComponentAccessor(message, "PID", 5, 99);
             
             // Act
-            var value = component.Value;
+            var value = component.Raw;
             
             // Assert
             Assert.Equal("", value);
@@ -87,7 +87,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var component = new ComponentAccessor(message, "PID", 99, 1);
             
             // Act
-            var value = component.Value;
+            var value = component.Raw;
             
             // Assert
             Assert.Equal("", value);
@@ -101,7 +101,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var component = new ComponentAccessor(message, "ZZZ", 1, 1);
             
             // Act
-            var value = component.Value;
+            var value = component.Raw;
             
             // Assert
             Assert.Equal("", value);
@@ -267,9 +267,9 @@ namespace HL7lite.Test.Fluent.Accessors
             var component = new ComponentAccessor(message, "PID", 15, 1);  // Part1&Sub1&Sub2
             
             // Act
-            var value1 = component[1].Value;
-            var value2 = component[2].Value;
-            var value3 = component[3].Value;
+            var value1 = component[1].Raw;
+            var value2 = component[2].Raw;
+            var value3 = component[3].Raw;
             
             // Assert
             Assert.Equal("Part1", value1);
@@ -303,7 +303,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var component = new ComponentAccessor(builder, "PID", 5, 1);
             
             // Act
-            var value = component.Value;
+            var value = component.Raw;
             
             // Assert
             Assert.Equal("Smith&Jones", value);  // Should return full value when not properly encoded
@@ -320,7 +320,7 @@ namespace HL7lite.Test.Fluent.Accessors
             var component = new ComponentAccessor(message, "PID", 5, componentIndex);
             
             // Act
-            var value = component.Value;
+            var value = component.Raw;
             
             // Assert
             Assert.Equal(expected, value);
@@ -333,13 +333,13 @@ namespace HL7lite.Test.Fluent.Accessors
             var message = CreateTestMessage();
             
             // Act & Assert - Access all name components
-            Assert.Equal("Smith", new ComponentAccessor(message, "PID", 5, 1).Value);
-            Assert.Equal("John", new ComponentAccessor(message, "PID", 5, 2).Value);
-            Assert.Equal("M", new ComponentAccessor(message, "PID", 5, 3).Value);
-            Assert.Equal("Jr", new ComponentAccessor(message, "PID", 5, 4).Value);
-            Assert.Equal("Dr", new ComponentAccessor(message, "PID", 5, 5).Value);
-            Assert.Equal("MD", new ComponentAccessor(message, "PID", 5, 6).Value);
-            Assert.Equal("L", new ComponentAccessor(message, "PID", 5, 7).Value);
+            Assert.Equal("Smith", new ComponentAccessor(message, "PID", 5, 1).Raw);
+            Assert.Equal("John", new ComponentAccessor(message, "PID", 5, 2).Raw);
+            Assert.Equal("M", new ComponentAccessor(message, "PID", 5, 3).Raw);
+            Assert.Equal("Jr", new ComponentAccessor(message, "PID", 5, 4).Raw);
+            Assert.Equal("Dr", new ComponentAccessor(message, "PID", 5, 5).Raw);
+            Assert.Equal("MD", new ComponentAccessor(message, "PID", 5, 6).Raw);
+            Assert.Equal("L", new ComponentAccessor(message, "PID", 5, 7).Raw);
         }
 
         [Fact]
@@ -368,7 +368,7 @@ namespace HL7lite.Test.Fluent.Accessors
             accessor.Set("Jane");
             
             // Assert
-            Assert.Equal("Jane", accessor.Value);
+            Assert.Equal("Jane", accessor.Raw);
         }
     }
 }

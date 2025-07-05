@@ -107,7 +107,7 @@ namespace HL7lite.Test.Fluent.Collections
 
             // Assert
             Assert.NotNull(first);
-            Assert.Equal("1", first[1].Value);  // DG1.1 = Set ID
+            Assert.Equal("1", first[1].Raw);  // DG1.1 = Set ID
         }
 
         [Fact]
@@ -122,7 +122,7 @@ namespace HL7lite.Test.Fluent.Collections
 
             // Assert
             Assert.NotNull(last);
-            Assert.Equal("2", last[1].Value);  // DG1.1 = Set ID
+            Assert.Equal("2", last[1].Raw);  // DG1.1 = Set ID
         }
 
         [Fact]
@@ -170,8 +170,8 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert
             Assert.NotNull(firstSegment);
             Assert.NotNull(secondSegment);
-            Assert.Equal("1", firstSegment[1].Value);
-            Assert.Equal("2", secondSegment[1].Value);
+            Assert.Equal("1", firstSegment[1].Raw);
+            Assert.Equal("2", secondSegment[1].Raw);
         }
 
         [Fact]
@@ -204,7 +204,7 @@ namespace HL7lite.Test.Fluent.Collections
             var group = new SegmentGroup(segments, "DG1");
 
             // Act
-            var segmentIds = group.Select(s => s[1].Value).ToList();
+            var segmentIds = group.Select(s => s[1].Raw).ToList();
 
             // Assert
             Assert.Equal(2, segmentIds.Count);
@@ -223,14 +223,14 @@ namespace HL7lite.Test.Fluent.Collections
             var count = group.Count();
             var hasAny = group.Any();
             var first = group.First();
-            var diabetesSegment = group.FirstOrDefault(s => s[3][2].Value.Contains("Diabetes"));
+            var diabetesSegment = group.FirstOrDefault(s => s[3][2].Raw.Contains("Diabetes"));
 
             // Assert
             Assert.Equal(3, count);
             Assert.True(hasAny);
             Assert.NotNull(first);
             Assert.NotNull(diabetesSegment);
-            Assert.Equal("1", diabetesSegment[1].Value);
+            Assert.Equal("1", diabetesSegment[1].Raw);
         }
     }
 }

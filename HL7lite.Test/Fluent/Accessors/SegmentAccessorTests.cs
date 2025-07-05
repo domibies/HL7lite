@@ -403,19 +403,19 @@ namespace HL7lite.Test.Fluent.Accessors
             Assert.True(thirdDG1.Exists);
 
             // Verify field values are different for each instance
-            Assert.Equal("1", firstDG1[1].Value);   // DG1.1 (Set ID) should be "1"
-            Assert.Equal("2", secondDG1[1].Value);  // DG1.1 (Set ID) should be "2"  
-            Assert.Equal("3", thirdDG1[1].Value);   // DG1.1 (Set ID) should be "3"
+            Assert.Equal("1", firstDG1[1].Raw);   // DG1.1 (Set ID) should be "1"
+            Assert.Equal("2", secondDG1[1].Raw);  // DG1.1 (Set ID) should be "2"  
+            Assert.Equal("3", thirdDG1[1].Raw);   // DG1.1 (Set ID) should be "3"
 
             // Verify diagnosis codes are different
-            Assert.Equal("250.00", firstDG1[3][1].Value);   // First diagnosis code
-            Assert.Equal("401.9", secondDG1[3][1].Value);   // Second diagnosis code
-            Assert.Equal("272.4", thirdDG1[3][1].Value);    // Third diagnosis code
+            Assert.Equal("250.00", firstDG1[3][1].Raw);   // First diagnosis code
+            Assert.Equal("401.9", secondDG1[3][1].Raw);   // Second diagnosis code
+            Assert.Equal("272.4", thirdDG1[3][1].Raw);    // Third diagnosis code
 
             // Verify diagnosis descriptions are different
-            Assert.Equal("Diabetes", firstDG1[3][2].Value);      // First diagnosis description
-            Assert.Equal("Hypertension", secondDG1[3][2].Value); // Second diagnosis description
-            Assert.Equal("Hyperlipidemia", thirdDG1[3][2].Value); // Third diagnosis description
+            Assert.Equal("Diabetes", firstDG1[3][2].Raw);      // First diagnosis description
+            Assert.Equal("Hypertension", secondDG1[3][2].Raw); // Second diagnosis description
+            Assert.Equal("Hyperlipidemia", thirdDG1[3][2].Raw); // Third diagnosis description
         }
 
         [Fact]

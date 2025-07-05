@@ -36,14 +36,14 @@ namespace HL7lite.Test.Fluent
 
             // Assert
             Assert.True(fluent.MSH.Exists);
-            Assert.Equal("MyApp", fluent.MSH[3].Value);
-            Assert.Equal("MyFacility", fluent.MSH[4].Value);
-            Assert.Equal("TheirApp", fluent.MSH[5].Value);
-            Assert.Equal("TheirFacility", fluent.MSH[6].Value);
-            Assert.Equal("ADT^A01", fluent.MSH[9].Value);
-            Assert.Equal("12345", fluent.MSH[10].Value);
-            Assert.Equal("P", fluent.MSH[11].Value); // Default processing ID
-            Assert.Equal("2.5", fluent.MSH[12].Value); // Default version
+            Assert.Equal("MyApp", fluent.MSH[3].Raw);
+            Assert.Equal("MyFacility", fluent.MSH[4].Raw);
+            Assert.Equal("TheirApp", fluent.MSH[5].Raw);
+            Assert.Equal("TheirFacility", fluent.MSH[6].Raw);
+            Assert.Equal("ADT^A01", fluent.MSH[9].Raw);
+            Assert.Equal("12345", fluent.MSH[10].Raw);
+            Assert.Equal("P", fluent.MSH[11].Raw); // Default processing ID
+            Assert.Equal("2.5", fluent.MSH[12].Raw); // Default version
         }
 
         [Fact]
@@ -63,7 +63,7 @@ namespace HL7lite.Test.Fluent
 
             // Assert
             Assert.True(fluent.MSH.Exists);
-            var controlId = fluent.MSH[10].Value;
+            var controlId = fluent.MSH[10].Raw;
             Assert.NotNull(controlId);
             Assert.NotEmpty(controlId);
             Assert.True(controlId.Length >= 14); // Should be timestamp (14) + random (4)
@@ -88,7 +88,7 @@ namespace HL7lite.Test.Fluent
                 .ControlId("123")
                 .Production()
                 .Build();
-            Assert.Equal("P", fluent1.MSH[11].Value);
+            Assert.Equal("P", fluent1.MSH[11].Raw);
 
             // Act & Assert - Test
             fluent2.CreateMSH
@@ -98,7 +98,7 @@ namespace HL7lite.Test.Fluent
                 .ControlId("123")
                 .Test()
                 .Build();
-            Assert.Equal("T", fluent2.MSH[11].Value);
+            Assert.Equal("T", fluent2.MSH[11].Raw);
 
             // Act & Assert - Debug
             fluent3.CreateMSH
@@ -108,7 +108,7 @@ namespace HL7lite.Test.Fluent
                 .ControlId("123")
                 .Debug()
                 .Build();
-            Assert.Equal("D", fluent3.MSH[11].Value);
+            Assert.Equal("D", fluent3.MSH[11].Raw);
         }
 
         [Fact]
@@ -128,7 +128,7 @@ namespace HL7lite.Test.Fluent
                 .Build();
 
             // Assert
-            Assert.Equal("X", fluent.MSH[11].Value);
+            Assert.Equal("X", fluent.MSH[11].Raw);
         }
 
         [Fact]
@@ -148,7 +148,7 @@ namespace HL7lite.Test.Fluent
                 .Build();
 
             // Assert
-            Assert.Equal("2.8", fluent.MSH[12].Value);
+            Assert.Equal("2.8", fluent.MSH[12].Raw);
         }
 
         [Fact]
@@ -168,7 +168,7 @@ namespace HL7lite.Test.Fluent
                 .Build();
 
             // Assert
-            Assert.Equal("SECRET", fluent.MSH[8].Value);
+            Assert.Equal("SECRET", fluent.MSH[8].Raw);
         }
 
         [Fact]
@@ -291,7 +291,7 @@ namespace HL7lite.Test.Fluent
             var afterTime = DateTime.Now.AddSeconds(1);
 
             // Assert
-            var timestampStr = fluent.MSH[7].Value;
+            var timestampStr = fluent.MSH[7].Raw;
             Assert.NotNull(timestampStr);
             Assert.NotEmpty(timestampStr);
 
@@ -322,14 +322,14 @@ namespace HL7lite.Test.Fluent
 
             // Assert
             Assert.True(fluent.MSH.Exists);
-            Assert.Equal("HIS", fluent.MSH[3].Value);
-            Assert.Equal("Hospital", fluent.MSH[4].Value);
-            Assert.Equal("Lab", fluent.MSH[5].Value);
-            Assert.Equal("MainLab", fluent.MSH[6].Value);
-            Assert.Equal("TEST", fluent.MSH[8].Value);
-            Assert.Equal("ORU^R01", fluent.MSH[9].Value);
-            Assert.Equal("D", fluent.MSH[11].Value);
-            Assert.Equal("2.8", fluent.MSH[12].Value);
+            Assert.Equal("HIS", fluent.MSH[3].Raw);
+            Assert.Equal("Hospital", fluent.MSH[4].Raw);
+            Assert.Equal("Lab", fluent.MSH[5].Raw);
+            Assert.Equal("MainLab", fluent.MSH[6].Raw);
+            Assert.Equal("TEST", fluent.MSH[8].Raw);
+            Assert.Equal("ORU^R01", fluent.MSH[9].Raw);
+            Assert.Equal("D", fluent.MSH[11].Raw);
+            Assert.Equal("2.8", fluent.MSH[12].Raw);
         }
 
         [Fact]
@@ -349,7 +349,7 @@ namespace HL7lite.Test.Fluent
                 .Build();
 
             // Assert
-            Assert.Equal("MANUAL123", fluent.MSH[10].Value);
+            Assert.Equal("MANUAL123", fluent.MSH[10].Raw);
         }
 
         [Fact]
@@ -369,7 +369,7 @@ namespace HL7lite.Test.Fluent
                 .Build();
 
             // Assert
-            var controlId = fluent.MSH[10].Value;
+            var controlId = fluent.MSH[10].Raw;
             Assert.NotEqual("FIRST", controlId);
             Assert.True(controlId.Length >= 14); // Should be auto-generated
         }

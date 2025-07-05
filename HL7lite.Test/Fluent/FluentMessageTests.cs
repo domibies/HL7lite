@@ -380,14 +380,14 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             Assert.True(ackMessage["MSA"].Exists);
             
             // Verify swapped sender/receiver
-            Assert.Equal("RECEIVER", ackMessage.MSH[3].Value); // Original receiver becomes sender
-            Assert.Equal("RFACILITY", ackMessage.MSH[4].Value);
-            Assert.Equal("SENDER", ackMessage.MSH[5].Value); // Original sender becomes receiver
-            Assert.Equal("SFACILITY", ackMessage.MSH[6].Value);
+            Assert.Equal("RECEIVER", ackMessage.MSH[3].Raw); // Original receiver becomes sender
+            Assert.Equal("RFACILITY", ackMessage.MSH[4].Raw);
+            Assert.Equal("SENDER", ackMessage.MSH[5].Raw); // Original sender becomes receiver
+            Assert.Equal("SFACILITY", ackMessage.MSH[6].Raw);
             
             // Verify MSA segment
-            Assert.Equal("AA", ackMessage["MSA"][1].Value); // Application Accept
-            Assert.Equal("12345", ackMessage["MSA"][2].Value); // Original message control ID
+            Assert.Equal("AA", ackMessage["MSA"][1].Raw); // Application Accept
+            Assert.Equal("12345", ackMessage["MSA"][2].Raw); // Original message control ID
         }
 
         [Fact]
@@ -410,15 +410,15 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             Assert.True(nackMessage["MSA"].Exists);
             
             // Verify swapped sender/receiver
-            Assert.Equal("RECEIVER", nackMessage.MSH[3].Value);
-            Assert.Equal("RFACILITY", nackMessage.MSH[4].Value);
-            Assert.Equal("SENDER", nackMessage.MSH[5].Value);
-            Assert.Equal("SFACILITY", nackMessage.MSH[6].Value);
+            Assert.Equal("RECEIVER", nackMessage.MSH[3].Raw);
+            Assert.Equal("RFACILITY", nackMessage.MSH[4].Raw);
+            Assert.Equal("SENDER", nackMessage.MSH[5].Raw);
+            Assert.Equal("SFACILITY", nackMessage.MSH[6].Raw);
             
             // Verify MSA segment
-            Assert.Equal("AR", nackMessage["MSA"][1].Value); // Application Reject
-            Assert.Equal("12345", nackMessage["MSA"][2].Value); // Original message control ID
-            Assert.Equal("Invalid patient ID", nackMessage["MSA"][3].Value); // Error message
+            Assert.Equal("AR", nackMessage["MSA"][1].Raw); // Application Reject
+            Assert.Equal("12345", nackMessage["MSA"][2].Raw); // Original message control ID
+            Assert.Equal("Invalid patient ID", nackMessage["MSA"][3].Raw); // Error message
         }
 
         [Fact]
@@ -476,7 +476,7 @@ OBX|1|NM|WBC^WHITE BLOOD COUNT^L||7.5|10*3/uL|4.0-11.0|N|||F||";
 
             // Assert
             Assert.NotNull(ackMessage);
-            Assert.Equal("ACK", ackMessage.MSH[9].Value);
+            Assert.Equal("ACK", ackMessage.MSH[9].Raw);
         }
 
         [Fact]
@@ -495,11 +495,11 @@ PID|1||12345^^^MRN||DOE^JOHN^M||19800101|M|||123 MAIN ST^^CITY^ST^12345||5551234
             var aeNack = fluentMessage.GetNack("AE", "Application Error");
 
             // Assert
-            Assert.Equal("AR", arNack["MSA"][1].Value);
-            Assert.Equal("Application Reject", arNack["MSA"][3].Value);
+            Assert.Equal("AR", arNack["MSA"][1].Raw);
+            Assert.Equal("Application Reject", arNack["MSA"][3].Raw);
             
-            Assert.Equal("AE", aeNack["MSA"][1].Value);
-            Assert.Equal("Application Error", aeNack["MSA"][3].Value);
+            Assert.Equal("AE", aeNack["MSA"][1].Raw);
+            Assert.Equal("Application Error", aeNack["MSA"][3].Raw);
         }
     }
 }

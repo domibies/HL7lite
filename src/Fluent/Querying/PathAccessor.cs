@@ -38,21 +38,23 @@ namespace HL7lite.Fluent.Querying
         }
 
         /// <summary>
-        /// Gets the value at the specified path. Returns null for HL7 null values, empty string for non-existent paths.
+        /// Gets the raw value at the specified path with structural delimiters and encoded characters.
+        /// For human-readable format, use ToString(). Returns empty string for non-existent paths.
         /// Uses the enhanced path parser supporting segment and field repetitions.
         /// </summary>
-        public string Value
+        public string Raw
         {
             get
             {
                 var value = PathParser.GetValue(_message, _path);
                 
-                // Convert HL7 null to actual null (consistent with fluent API)
-                if (value == _message.Encoding.PresentButNull)
-                    return null;
+                // PathParser may return values from core API which converts "" to null
+                // Convert back to maintain consistency with fluent API
+                if (value == null)
+                    return _message.Encoding.PresentButNull;
                     
-                // Decode any HL7-encoded delimiter characters
-                return string.IsNullOrEmpty(value) ? value : _message.Encoding.Decode(value);
+                // Return raw value without decoding (consistent with other fluent accessors)
+                return value;
             }
         }
 
@@ -98,58 +100,65 @@ namespace HL7lite.Fluent.Querying
         }
 
         /// <summary>
-        /// Sets the value at the specified path, creating missing elements automatically.
-        /// This method never throws exceptions for valid paths and maintains consistency
-        /// with the rest of the fluent API.
+        /// Sets the value at the specified path, automatically encoding any HL7 delimiter characters.
+        /// Creates missing elements automatically. This method never throws exceptions for valid paths
+        /// and maintains consistency with the rest of the fluent API.
         /// </summary>
-        /// <param name="value">The value to set</param>
+        /// <param name="value">The value to set. Delimiter characters will be automatically encoded.</param>
         /// <returns>The FluentMessage for method chaining</returns>
         public FluentMessage Set(string value)
         {
-            return SetPathValueInternal(_path, value, false);
+            PathParser.SetValue(_message, _path, value);
+            return _fluentMessage;
         }
 
         /// <summary>
         /// Conditionally sets the value at the specified path, creating missing elements if needed.
-        /// Only sets the value if the condition is true.
+        /// Only sets the value if the condition is true. Delimiter characters are automatically encoded.
         /// </summary>
-        /// <param name="value">The value to set</param>
+        /// <param name="value">The value to set if condition is true. Delimiter characters will be automatically encoded.</param>
         /// <param name="condition">The condition that must be true to set the value</param>
         /// <returns>The FluentMessage for method chaining</returns>
         public FluentMessage SetIf(string value, bool condition)
         {
             if (condition)
             {
-                return SetPathValueInternal(_path, value, false);
+                PathParser.SetValue(_message, _path, value);
             }
             return _fluentMessage;
         }
 
         /// <summary>
-        /// Sets the value at the specified path after encoding any HL7 delimiter characters.
-        /// Use this method when your value contains characters like |, ^, ~, \, or &amp;
-        /// that need to be safely stored in the HL7 message.
+        /// Sets the raw HL7 value at the specified path with validation based on the target level.
+        /// This method validates that the value doesn't contain invalid delimiters for the target element type.
+        /// Use this for pre-encoded data or when building structured values.
         /// </summary>
-        /// <param name="value">The value to encode and set</param>
+        /// <param name="value">The raw HL7 value to set</param>
         /// <returns>The FluentMessage for method chaining</returns>
-        public FluentMessage SetEncoded(string value)
+        /// <exception cref="ArgumentException">If value contains delimiters invalid for the target level</exception>
+        public FluentMessage SetRaw(string value)
         {
-            return SetPathValueInternal(_path, value, true);
-        }
-
-        /// <summary>
-        /// Conditionally sets the encoded value at the specified path, creating missing elements if needed.
-        /// Only sets the value if the condition is true. The value is encoded before setting.
-        /// </summary>
-        /// <param name="value">The value to encode and set</param>
-        /// <param name="condition">The condition that must be true to set the value</param>
-        /// <returns>The FluentMessage for method chaining</returns>
-        public FluentMessage SetEncodedIf(string value, bool condition)
-        {
-            if (condition)
+            // Basic validation - more detailed validation would require parsing the path
+            // to determine the target level (field, component, or subcomponent)
+            if (value != null)
             {
-                return SetPathValueInternal(_path, value, true);
+                // Always validate against field and repetition delimiters regardless of target level
+                if (value.Contains(_message.Encoding.FieldDelimiter.ToString()))
+                {
+                    throw new ArgumentException(
+                        $"Path value cannot contain field delimiter '{_message.Encoding.FieldDelimiter}'. " +
+                        "Use separate path assignments or encode the delimiter.");
+                }
+                
+                if (value.Contains(_message.Encoding.RepeatDelimiter.ToString()))
+                {
+                    throw new ArgumentException(
+                        $"Path value cannot contain repetition delimiter '{_message.Encoding.RepeatDelimiter}'. " +
+                        "Use separate repetitions or encode the delimiter.");
+                }
             }
+            
+            PathParser.SetValue(_message, _path, value);
             return _fluentMessage;
         }
 
@@ -159,30 +168,44 @@ namespace HL7lite.Fluent.Querying
         /// <returns>The FluentMessage for method chaining</returns>
         public FluentMessage SetNull()
         {
-            return SetPathValueInternal(_path, _message.Encoding.PresentButNull, false);
+            PathParser.SetValue(_message, _path, _message.Encoding.PresentButNull);
+            return _fluentMessage;
         }
 
         /// <summary>
-        /// Returns the path string for debugging purposes.
+        /// Returns a human-readable representation of the value at this path.
+        /// Decodes any encoded delimiters and replaces structural delimiters with spaces.
+        /// HL7 null values are displayed as "&lt;null&gt;".
         /// </summary>
-        public override string ToString() => _path;
-        
-        /// <summary>
-        /// Internal method that handles path value setting with automatic segment creation.
-        /// Implements DRY principle for all Set operations using the enhanced PathParser.
-        /// </summary>
-        /// <param name="path">The path to set</param>
-        /// <param name="value">The value to set</param>
-        /// <param name="isEncoded">Whether the value should be encoded</param>
-        /// <returns>The FluentMessage for method chaining</returns>
-        private FluentMessage SetPathValueInternal(string path, string value, bool isEncoded)
+        public override string ToString()
         {
-            bool success = isEncoded 
-                ? PathParser.SetEncodedValue(_message, path, value)
-                : PathParser.SetValue(_message, path, value);
-                
-            // Always return the fluent message for chaining (consistent with fluent API behavior)
-            return _fluentMessage;
+            var rawValue = this.Raw;
+            
+            // Handle empty/missing
+            if (string.IsNullOrEmpty(rawValue))
+                return "";
+            
+            // First replace structural delimiters with spaces (before decoding)
+            var delimiters = new[] {
+                _message.Encoding.FieldDelimiter,
+                _message.Encoding.ComponentDelimiter,
+                _message.Encoding.RepeatDelimiter,
+                _message.Encoding.SubComponentDelimiter
+            };
+            
+            var processed = rawValue;
+            // Replace any sequence of structural delimiters with a single space
+            var delimiterPattern = "[" + Regex.Escape(new string(delimiters)) + "]+";
+            processed = Regex.Replace(processed, delimiterPattern, " ");
+            
+            // Then decode encoded delimiters (e.g., \T\ → &) - these become literal characters
+            var decoded = _message.Encoding.Decode(processed);
+            
+            // Replace HL7 nulls with readable placeholder
+            decoded = decoded.Replace(_message.Encoding.PresentButNull, "<null>");
+            
+            return decoded.Trim();
         }
+        
     }
 }

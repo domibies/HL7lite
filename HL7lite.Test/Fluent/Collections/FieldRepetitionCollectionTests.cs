@@ -76,7 +76,7 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert
             Assert.NotNull(field);
             Assert.IsType<FieldAccessor>(field);
-            Assert.Equal("ID002", field.Value);
+            Assert.Equal("ID002", field.Raw);
         }
 
         [Fact]
@@ -105,7 +105,7 @@ namespace HL7lite.Test.Fluent.Collections
             var collection = new FieldRepetitionCollection(message, "PID", 3);
             
             // Act
-            var values = collection.Select(f => f.Value).ToList();
+            var values = collection.Select(f => f.Raw).ToList();
             
             // Assert
             Assert.Equal(3, values.Count);
@@ -125,7 +125,7 @@ namespace HL7lite.Test.Fluent.Collections
             var collection = new FieldRepetitionCollection(message, "PID", 3);
             
             // Act
-            var upperCaseIds = collection.Select(f => f.Value.ToUpper()).ToArray();
+            var upperCaseIds = collection.Select(f => f.Raw.ToUpper()).ToArray();
             
             // Assert
             Assert.Equal(new[] { "ID001", "ID002", "ID003" }, upperCaseIds);
@@ -142,7 +142,7 @@ namespace HL7lite.Test.Fluent.Collections
             var collection = new FieldRepetitionCollection(message, "PID", 3);
             
             // Act
-            var filteredIds = collection.Where(f => f.Value.EndsWith("2")).Select(f => f.Value).ToList();
+            var filteredIds = collection.Where(f => f.Raw.EndsWith("2")).Select(f => f.Raw).ToList();
             
             // Assert
             Assert.Single(filteredIds);
@@ -163,7 +163,7 @@ namespace HL7lite.Test.Fluent.Collections
             var first = collection.First();
             
             // Assert
-            Assert.Equal("ID001", first.Value);
+            Assert.Equal("ID001", first.Raw);
         }
 
         [Fact]
@@ -263,8 +263,8 @@ namespace HL7lite.Test.Fluent.Collections
             var collection = new FieldRepetitionCollection(message, "PID", 3);
             
             // Act
-            var firstIdType = collection[0][2].Value; // First repetition, second component
-            var secondIdType = collection[1][2].Value; // Second repetition, second component
+            var firstIdType = collection[0][2].Raw; // First repetition, second component
+            var secondIdType = collection[1][2].Raw; // Second repetition, second component
             
             // Assert
             Assert.Equal("Type1", firstIdType);

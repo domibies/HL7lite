@@ -109,8 +109,8 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.NotNull(secondGroup);
             Assert.Equal(2, firstGroup.Count);
             Assert.Equal(2, secondGroup.Count);
-            Assert.Equal("1", firstGroup.First[1].Value);
-            Assert.Equal("3", secondGroup.First[1].Value);
+            Assert.Equal("1", firstGroup.First[1].Raw);
+            Assert.Equal("3", secondGroup.First[1].Raw);
         }
 
         [Fact]
@@ -230,8 +230,8 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(secondGroup.Count, groups[1].Count);
             
             // Verify group content consistency
-            Assert.Equal(firstGroup.First[1].Value, groups[0].First[1].Value);
-            Assert.Equal(secondGroup.First[1].Value, groups[1].First[1].Value);
+            Assert.Equal(firstGroup.First[1].Raw, groups[0].First[1].Raw);
+            Assert.Equal(secondGroup.First[1].Raw, groups[1].First[1].Raw);
         }
 
         [Fact]
@@ -269,10 +269,10 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(1, groups[1].Count);  // Second group has 1 segment
             Assert.Equal(1, groups[2].Count);  // Third group has 1 segment
             
-            Assert.Equal("1", groups[0][0][1].Value);  // First group: DG1.1 = "1"
-            Assert.Equal("2", groups[0][1][1].Value);  // First group: DG1.1 = "2"
-            Assert.Equal("3", groups[1][0][1].Value);  // Second group: DG1.1 = "3"
-            Assert.Equal("4", groups[2][0][1].Value);  // Third group: DG1.1 = "4"
+            Assert.Equal("1", groups[0][0][1].Raw);  // First group: DG1.1 = "1"
+            Assert.Equal("2", groups[0][1][1].Raw);  // First group: DG1.1 = "2"
+            Assert.Equal("3", groups[1][0][1].Raw);  // Second group: DG1.1 = "3"
+            Assert.Equal("4", groups[2][0][1].Raw);  // Third group: DG1.1 = "4"
         }
     }
 }

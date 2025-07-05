@@ -36,7 +36,6 @@ dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage
 reportgenerator -reports:coverage/**/coverage.cobertura.xml -targetdir:coverage/report -reporttypes:"Cobertura;HtmlSummary;Badges"
 ```
 
-
 ## Architecture Overview
 
 HL7lite is a lightweight HL7 2.x message parser following a hierarchical structure:
@@ -54,29 +53,10 @@ Message
 ### Core Components
 
 **Message**: Root container for HL7 message
-- Contains segments in order
-- Provides encoding rules for delimiters
-- Original API: `GetValue()`, `SetValue()`, `PutValue()`
-
 **Segment**: Individual HL7 segments (MSH, PID, etc.)
-- Contains fields
-- Can have multiple instances (repeating segments)
-- Original API: `FieldList` property
-
-**Field**: Individual data fields within segments
-- Can contain components or simple values
-- Support repetitions (multiple values)
-- 1-based indexing in HL7 standard
-
-**Component**: Sub-parts of complex fields
-- Separated by ^ (component separator)
-- Can contain subcomponents
-- 1-based indexing
-
-**SubComponent**: Finest granularity level
-- Separated by & (subcomponent separator)
-- Contains actual values
-- 1-based indexing
+**Field**: Individual data fields within segments (1-based indexing)
+**Component**: Sub-parts of complex fields (1-based indexing)
+**SubComponent**: Finest granularity level (1-based indexing)
 
 ## Fluent API Architecture
 
@@ -85,54 +65,36 @@ The Fluent API provides a modern, intuitive interface built on top of the existi
 ### Key Design Principles
 
 1. **Non-breaking**: All existing Message API functionality preserved
-2. **Null-safe**: Invalid access returns empty values instead of exceptions
-3. **Fluent**: Method chaining for intuitive operations
-4. **1-based indexing**: Follows HL7 standard (fields, components, subcomponents)
-5. **0-based collections**: LINQ-compatible collections use 0-based indexing
-6. **Cached accessors**: Performance optimization through caching
+2. **Safe-by-default**: Set() methods automatically encode HL7 delimiters
+3. **Clear data distinction**: Raw property for HL7 data, ToString() for display
+4. **Null-safe**: Invalid access returns empty values instead of exceptions
+5. **Fluent**: Method chaining for intuitive operations
+6. **1-based indexing**: Follows HL7 standard (fields, components, subcomponents)
+7. **0-based collections**: LINQ-compatible collections use 0-based indexing
+8. **Cached accessors**: Performance optimization through caching
 
 ### Fluent API Components
 
 **FluentMessage**: Main entry point
-```csharp
-var fluent = new FluentMessage(message);
-// or
-var fluent = hl7String.ToFluentMessage();
-```
-
-**Accessors** (Read-only operations):
-- `SegmentAccessor`: Access to segments (`fluent.PID`, `fluent["MSH"]`)
-- `FieldAccessor`: Access to fields (`fluent.PID[3]`)
-- `ComponentAccessor`: Access to components (`fluent.PID[5][1]`)
-- `SubComponentAccessor`: Access to subcomponents (`fluent.PID[5][1][1]`)
-
-**Mutators** (Write operations):
-- `FieldMutator`: Field mutations (`fluent.PID[3].Set()`)
-- `ComponentMutator`: Component mutations (`fluent.PID[5][1].Set()`)
-- `SubComponentMutator`: Subcomponent mutations (`fluent.PID[5][1][1].Set()`)
-
-**Collections** (LINQ support):
-- `SegmentCollection`: Multiple segments (`fluent.Segments("DG1")`)
-- `FieldRepetitionCollection`: Field repetitions (`fluent.PID[3].Repetitions`)
-
-**Special Features**:
-- `PathAccessor`: String-based access (`fluent.Path("PID.5.1")`)
-- `MSHBuilder`: Fluent MSH header creation
-- Encoding support for HL7 delimiter characters
-- DateTime utilities for HL7 date/time formats
+**Accessors** (Read-only): SegmentAccessor, FieldAccessor, ComponentAccessor, SubComponentAccessor
+**Mutators** (Write operations): FieldMutator, ComponentMutator, SubComponentMutator
+**Collections** (LINQ support): SegmentCollection, FieldRepetitionCollection
+**Special Features**: PathAccessor, MSHBuilder, automatic encoding support
 
 ### Error Handling Philosophy
 
 **Accessors** (reading):
-- Invalid segment/field/component access returns empty accessor
-- `.Value` returns `null` for HL7 null values (`""`)
+- Invalid access returns empty accessor
+- `.Raw` returns raw HL7 data with structural delimiters and encoded characters
+- `.ToString()` returns human-readable format (decoded with spaces replacing delimiters)
 - `.Exists` checks if element actually exists
 - Never throws exceptions for invalid access
 
 **Mutators** (writing):
+- `Set()` methods automatically encode HL7 delimiter characters for safety
+- `SetRaw()` methods accept raw values with validation against invalid delimiters
 - Create missing segments/fields/components automatically
 - Validate indices (negative indices throw ArgumentException)
-- Use message encoding for null values
 - Support method chaining
 
 ### Polymorphism and Inheritance Principle
@@ -143,29 +105,7 @@ When creating derived classes that need to override base class behavior:
 - **Base class**: Mark properties and methods as `virtual`
 - **Derived class**: Use `override` keyword, NOT `new`
 
-The `new` keyword creates a new member that hides the base member, breaking polymorphism:
-```csharp
-// ❌ WRONG - Using 'new' breaks polymorphism
-public class Base { 
-    public bool Exists => true; 
-}
-public class Derived : Base { 
-    public new bool Exists => false;  // Won't be called through base reference!
-}
-
-// ✅ CORRECT - Using virtual/override enables polymorphism
-public class Base { 
-    public virtual bool Exists => true; 
-}
-public class Derived : Base { 
-    public override bool Exists => false;  // Will be called correctly
-}
-```
-
-**In HL7lite context**: 
-- `SegmentAccessor` properties (`Exists`, `HasMultiple`, `Count`, `IsSingle`, `_segment`) must be `virtual`
-- `SpecificInstanceSegmentAccessor` must use `override` for these properties
-- This ensures correct behavior when accessing specific segment instances through base class references
+The `new` keyword creates a new member that hides the base member, breaking polymorphism.
 
 ### Indexing Strategy
 
@@ -181,7 +121,7 @@ public class Derived : Base {
 
 ### HL7 Encoding Support
 
-All mutators support automatic encoding of HL7 delimiter characters:
+The fluent API provides safe-by-default encoding and explicit raw value support:
 
 **Standard Delimiters**:
 - `|` (field separator) → `\F\`
@@ -190,87 +130,75 @@ All mutators support automatic encoding of HL7 delimiter characters:
 - `\` (escape character) → `\E\`
 - `&` (subcomponent separator) → `\T\`
 
-**Usage**:
+**Safe Encoding (Recommended)**:
 ```csharp
-// Automatic encoding
-fluent.PID[5].SetEncoded("Smith|John^Medical^Center");
-fluent.PID[5][1].SetEncoded("Name|With^Delimiters");
-fluent.PID[5][1][1].SetEncoded("Value|With^Special&Characters");
-fluent.Path("PID.5.1").SetEncoded("Complex|Value^With~Delimiters");
+// Set() methods automatically encode delimiters for safety
+fluent.PID[5].Set("Smith|John^Medical^Center");        // Automatically encoded
+fluent.PID[5][1].Set("Name|With^Delimiters");          // Automatically encoded  
+fluent.PID[5][1][1].Set("Value|With^Special&Characters"); // Automatically encoded
+fluent.Path("PID.5.1").Set("Complex|Value^With~Delimiters"); // Automatically encoded
 ```
 
-### Performance Considerations
+**Raw Value Handling (Advanced)**:
+```csharp
+// SetRaw() methods for pre-structured HL7 data with validation
+fluent.PID[5].SetRaw("Smith^John^M");           // Direct HL7 structure
+fluent.PID[5][1].SetRaw("Smith");               // Component data (no ^ or | allowed)
+fluent.PID[5][1][1].SetRaw("Smith");            // SubComponent data (no delimiters allowed)
+fluent.Path("PID.5.1").SetRaw("Smith");         // Path-based raw setting
 
-**Caching**:
-- Accessors are cached per FluentMessage instance
-- Reduces object allocation for repeated access
-- Thread-safe caching implementation
-
-**Lazy Evaluation**:
-- Segments/fields/components created only when accessed
-- Collections built on-demand
-- Minimal memory overhead
-
-**Direct API Usage**:
-- FieldAccessor uses `Message.GetValue()` for reliability
-- Mutations use direct FieldList manipulation for performance
-- Encoding/decoding handled by existing Message API
-
-### Test Coverage Strategy
-
-**TDD Approach**:
-- Tests written before implementation
-- Edge cases covered (null values, missing segments, invalid indices)
-- Both positive and negative test cases
-
-**Coverage Targets**:
-- Line coverage: >85%
-- Branch coverage: >80%
-- All public API methods tested
-- Error conditions validated
-
-**Test Organization**:
-- Separate test classes per component
-- Descriptive test method names
-- Arrange-Act-Assert pattern
-- Comprehensive edge case coverage
-
-**IMPORTANT Testing Notes**:
-- **CRITICAL: Always create new test files within existing test projects** - standalone test files are not automatically included in the test discovery
-- **DO NOT create separate .cs files for testing - they will not work with `dotnet test`**
-- Add new test classes to `/HL7lite.Test/` with proper namespace `HL7lite.Test.*`
-- Use descriptive test class names ending in `Tests` (e.g. `FieldSetVsAddRepetitionTests`)
-- Test files must be in the same project structure to be discovered by `dotnet test`
-
-### Integration Points
-
-**Legacy API Compatibility**:
-- All existing `Message` methods work unchanged
-- `GetValue()`, `SetValue()`, `PutValue()` preserved
-- Field/Component/Segment classes unchanged
-- No breaking changes to public API
-
-**Fluent API Extensions**:
-- `ToFluentMessage()` extension method
-- `GetAck()` / `GetNack()` fluent wrappers
-- `RemoveTrailingDelimiters()` utility
-- Deep copy functionality
+// SetRaw() validates against invalid delimiters for the hierarchy level:
+fluent.PID[5].SetRaw("Value|Invalid");          // ❌ Throws: field cannot contain |
+fluent.PID[5][1].SetRaw("Value^Invalid");       // ❌ Throws: component cannot contain ^ or |
+fluent.PID[5][1][1].SetRaw("Value&Invalid");    // ❌ Throws: subcomponent cannot contain any delimiters
+```
 
 ### Common Usage Patterns
 
 **Reading Values**:
 ```csharp
 var fluent = message.ToFluentMessage();
-string patientId = fluent.PID[3].Value;
-string lastName = fluent.PID[5][1].Value;
-string suffix = fluent.PID[5][1][2].Value ?? "";
+string patientId = fluent.PID[3].Raw;          // Raw HL7 data with structural delimiters
+string lastName = fluent.PID[5][1].Raw;        // Raw component data
+string suffix = fluent.PID[5][1][2].Raw ?? "";  // Raw subcomponent data
 ```
 
-**Setting Values**:
+**Human-Readable Display**:
 ```csharp
-fluent.PID[3].Set("12345");
-fluent.PID[5].SetComponents("Smith", "John", "M");
-fluent.PID[5][1][2].Set("Jr");
+// Use ToString() for display/logging purposes
+string displayName = fluent.PID[5].ToString();         // "Smith John M" (decoded with spaces)
+string displayId = fluent.PID[3].ToString();           // Clean display format
+string displayNull = fluent.PID[6].ToString();         // "<null>" for HL7 nulls
+
+// Comparison: Raw vs ToString()
+fluent.PID[5].Raw;          // "Smith^John^M" (raw with structural delimiters)
+fluent.PID[5].ToString();   // "Smith John M" (human-readable with spaces)
+
+// With encoded delimiters in data (when using Set())
+fluent.PID[5].Set("Smith|Hospital^Medical");
+fluent.PID[5].Raw;          // "Smith\\F\\Hospital\\S\\Medical" (raw encoded)  
+fluent.PID[5].ToString();   // "Smith|Hospital^Medical" (decoded back to original)
+```
+
+**Setting Values (Safe Encoding)**:
+```csharp
+// Set() methods automatically encode delimiters
+fluent.PID[3].Set("12345");                    // Simple value
+fluent.PID[5].Set("Smith|Hospital^Medical");   // Delimiters automatically encoded
+fluent.PID[5].SetComponents("Smith", "John", "M"); // Components assembled safely
+fluent.PID[5][1][2].Set("Jr");                 // Subcomponent value
+
+// For data that might contain user input with delimiters
+string userInput = "Company|Name^Department";
+fluent.PID[5].Set(userInput);                  // Safe - delimiters encoded automatically
+```
+
+**Setting Raw HL7 Structure (Advanced)**:
+```csharp
+// SetRaw() for pre-structured HL7 data
+fluent.PID[5].SetRaw("Smith^John^M");          // Direct HL7 component structure
+fluent.PID[3].SetRaw("ID001~ID002");           // Field repetitions with ~ delimiter
+fluent.Path("PID.5").SetRaw("Smith^John^M^Jr^Dr"); // Path-based raw setting
 ```
 
 **Method Chaining**:
@@ -284,16 +212,21 @@ fluent.PID[5].Set()
 **LINQ Operations**:
 ```csharp
 var diagnoses = fluent.Segments("DG1")
-    .Where(dg1 => dg1[3][1].Value.Contains("Diabetes"))
-    .Select(dg1 => dg1[3][1].Value)
+    .Where(dg1 => dg1[3][1].Raw.Contains("Diabetes"))
+    .Select(dg1 => dg1[3][1].Raw)
     .ToList();
 ```
 
 **Path-based Access**:
 ```csharp
-fluent.Path("PID.5.1").Set("Smith");
+// Safe encoding
+fluent.Path("PID.5.1").Set("Smith|Company");    // Delimiters encoded automatically
 fluent.Path("PID.5.2").Set("John");
-string name = fluent.Path("PID.5").Value;
+string name = fluent.Path("PID.5").Raw;         // Raw HL7 data
+
+// Raw structure
+fluent.Path("PID.5").SetRaw("Smith^John^M");    // Direct HL7 structure
+string displayName = fluent.Path("PID.5").ToString(); // "Smith John M" (human-readable)
 ```
 
 **Field Repetitions - Fluent API Pattern**:
@@ -306,13 +239,6 @@ fluent.PID[3].Set("FirstID")
         .SetComponents("ENC", "123", "VISIT")    // Set components on this repetition
     .Field(7).Set("19850315");                  // Continue fluent chain to other fields
 
-// Pattern variations
-fluent.PID[3].Set("ID1")
-    .AddRepetition("SimpleID2")                 // Simple value
-    .AddRepetition()                            // Empty for components
-        .SetComponents("MRN", "789", "LAB")     // Complex structure
-    .AddRepetition("SimpleID4");                // Back to simple
-
 // IMPORTANT: Set() resets the entire field, losing all repetitions
 fluent.PID[3].AddRepetition("FirstID");
 fluent.PID[3].AddRepetition("SecondID");        // Now has 2 repetitions
@@ -323,6 +249,15 @@ fluent.PID[3].Set("FirstID")
     .AddRepetition("SecondID")
     .AddRepetition("ThirdID");
 ```
+
+### Testing Notes
+
+**IMPORTANT Testing Notes**:
+- **CRITICAL: Always create new test files within existing test projects** - standalone test files are not automatically included in the test discovery
+- **DO NOT create separate .cs files for testing - they will not work with `dotnet test`**
+- Add new test classes to `/HL7lite.Test/` with proper namespace `HL7lite.Test.*`
+- Use descriptive test class names ending in `Tests` (e.g. `FieldSetVsAddRepetitionTests`)
+- Test files must be in the same project structure to be discovered by `dotnet test`
 
 ## XML Documentation Guidelines
 - Keep XML documentation comments concise and focused

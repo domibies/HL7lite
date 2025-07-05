@@ -51,15 +51,16 @@ namespace HL7lite.Fluent.Mutators
         }
 
         /// <summary>
-        /// Sets the component to the specified value. Creates the segment, field, and component if they don't exist.
+        /// Sets the component to the specified value, automatically encoding any HL7 delimiter characters.
+        /// Creates the segment, field, and component if they don't exist.
         /// Null values are converted to empty strings. For explicit HL7 null values, use the SetNull() method.
         /// </summary>
-        /// <param name="value">The value to set. Null values are converted to empty strings.</param>
+        /// <param name="value">The value to set. Delimiter characters will be automatically encoded.</param>
         /// <returns>The ComponentMutator for method chaining</returns>
         /// <example>
         /// <code>
-        /// // Set component value
-        /// fluent.PID[5][1].Set("Smith");
+        /// // Set component value (delimiters automatically encoded)
+        /// fluent.PID[5][1].Set("Smith &amp; Jones");  // &amp; automatically encoded to \T\
         /// 
         /// // Chain multiple operations
         /// fluent.PID[5][1].Set("Smith")
@@ -67,6 +68,120 @@ namespace HL7lite.Fluent.Mutators
         /// </code>
         /// </example>
         public ComponentMutator Set(string value)
+        {
+            // Encode the value if not null
+            var encodedValue = value != null ? _message.Encoding.Encode(value) : null;
+            // Get the specific segment instance
+            Segment targetSegment = null;
+            
+            if (_message.SegmentList.ContainsKey(_segmentCode))
+            {
+                var segments = _message.SegmentList[_segmentCode];
+                if (_segmentInstanceIndex < segments.Count)
+                {
+                    targetSegment = segments[_segmentInstanceIndex];
+                }
+            }
+            
+            if (targetSegment == null)
+            {
+                // Segment instance doesn't exist, create it if it's the first instance
+                if (_segmentInstanceIndex == 0)
+                {
+                    var newSegment = new Segment(_message.Encoding)
+                    {
+                        Name = _segmentCode,
+                        Value = _segmentCode
+                    };
+                    _message.AddNewSegment(newSegment);
+                    targetSegment = newSegment;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Cannot set component on segment instance {_segmentInstanceIndex} that doesn't exist.");
+                }
+            }
+            
+            // Set the component value directly on the target segment
+            var field = targetSegment.Fields(_fieldIndex);
+            if (field == null)
+            {
+                targetSegment.AddNewField(string.Empty, _fieldIndex);
+                field = targetSegment.Fields(_fieldIndex);
+            }
+            
+            // Handle field repetitions if needed
+            if (_repetitionIndex > 1)
+            {
+                field = field.EnsureRepetition(_repetitionIndex);
+            }
+            
+            // Ensure component exists and set its value
+            var component = field.EnsureComponent(_componentIndex);
+            component.Value = encodedValue ?? string.Empty;
+            
+            // Mark field as componentized so it serializes properly
+            field.IsComponentized = true;
+            
+            // Force rebuild of field value from components
+            var fieldValue = field.SerializeValue();
+            field.Value = fieldValue;
+            
+            return this;
+        }
+
+        /// <summary>
+        /// Sets the component to a raw HL7 value that may contain subcomponent delimiters and encoded characters.
+        /// This method validates that the value doesn't contain invalid delimiters for the component level.
+        /// Use this for pre-encoded data or when building structured values.
+        /// </summary>
+        /// <param name="value">The raw HL7 value to set</param>
+        /// <returns>The ComponentMutator for method chaining</returns>
+        /// <exception cref="ArgumentException">If value contains field, repetition, or component delimiters</exception>
+        /// <example>
+        /// <code>
+        /// // Set pre-encoded value with subcomponents
+        /// fluent.PID[5][1].SetRaw("Smith\\T\\Jones&amp;Jr");  // \T\ is encoded &amp;, &amp; is subcomponent separator
+        /// 
+        /// // Invalid - contains component delimiter
+        /// fluent.PID[5][1].SetRaw("Value^Other");  // Throws ArgumentException
+        /// </code>
+        /// </example>
+        public ComponentMutator SetRaw(string value)
+        {
+            // Validate the value doesn't contain invalid delimiters
+            if (value != null)
+            {
+                if (value.Contains(_message.Encoding.FieldDelimiter))
+                {
+                    throw new ArgumentException(
+                        $"Component value cannot contain field delimiter '{_message.Encoding.FieldDelimiter}'. " +
+                        "Use separate field assignments or encode the delimiter.");
+                }
+                
+                if (value.Contains(_message.Encoding.RepeatDelimiter))
+                {
+                    throw new ArgumentException(
+                        $"Component value cannot contain repetition delimiter '{_message.Encoding.RepeatDelimiter}'. " +
+                        "Use separate repetitions or encode the delimiter.");
+                }
+                
+                if (value.Contains(_message.Encoding.ComponentDelimiter))
+                {
+                    throw new ArgumentException(
+                        $"Component value cannot contain component delimiter '{_message.Encoding.ComponentDelimiter}'. " +
+                        "Use separate component assignments or encode the delimiter.");
+                }
+            }
+            
+            // Now set the raw value without encoding
+            return SetRawInternal(value);
+        }
+        
+        /// <summary>
+        /// Internal method to set raw value without encoding
+        /// </summary>
+        private ComponentMutator SetRawInternal(string value)
         {
             // Get the specific segment instance
             Segment targetSegment = null;
@@ -127,34 +242,6 @@ namespace HL7lite.Fluent.Mutators
             return this;
         }
 
-        /// <summary>
-        /// Sets the component value after encoding any HL7 delimiter characters.
-        /// Use this method when your value contains characters like |, ^, ~, \, or &amp;
-        /// that need to be safely stored in the HL7 message.
-        /// </summary>
-        /// <param name="value">The value to encode and set</param>
-        /// <returns>The ComponentMutator for method chaining</returns>
-        /// <example>
-        /// <code>
-        /// // Set component with special characters
-        /// fluent.PID[5][1].SetEncoded("Smith|Jones");
-        /// 
-        /// // Chain with other operations
-        /// fluent.PID[5][1].SetEncoded("Complex^Value")
-        ///     .Component(2).Set("Simple");
-        /// </code>
-        /// </example>
-        public ComponentMutator SetEncoded(string value)
-        {
-            if (value == null)
-            {
-                return Set(null);
-            }
-
-            var encodedValue = _message.Encoding.Encode(value);
-            return Set(encodedValue);
-        }
-
 
         /// <summary>
         /// Sets the component to HL7 null value.
@@ -186,14 +273,14 @@ namespace HL7lite.Fluent.Mutators
 
         /// <summary>
         /// Sets multiple subcomponent values in a single operation.
-        /// Subcomponents are joined with the HL7 subcomponent separator (&amp;).
+        /// Subcomponents are automatically encoded and joined with the HL7 subcomponent separator (&amp;).
         /// </summary>
-        /// <param name="subComponents">The subcomponent values to set</param>
+        /// <param name="subComponents">The subcomponent values to set. Delimiter characters will be automatically encoded.</param>
         /// <returns>The ComponentMutator for method chaining</returns>
         /// <example>
         /// <code>
-        /// // Set phone number subcomponents
-        /// fluent.PID[13][1].SetSubComponents("555", "123-4567", "Home");
+        /// // Set phone number subcomponents (delimiters automatically encoded)
+        /// fluent.PID[13][1].SetSubComponents("555", "123-4567", "Home &amp; Office");
         /// 
         /// // Chain with other operations
         /// fluent.PID[13][1].SetSubComponents("555", "123-4567")
@@ -209,9 +296,13 @@ namespace HL7lite.Fluent.Mutators
 
             var encoding = _message.Encoding;
             var subComponentSeparator = encoding.SubComponentDelimiter;
-            var value = string.Join(subComponentSeparator.ToString(), subComponents.Select(s => s ?? string.Empty));
             
-            return Set(value);
+            // Encode each subcomponent individually to handle delimiter characters
+            var encodedSubComponents = subComponents.Select(s => s != null ? encoding.Encode(s) : string.Empty);
+            var value = string.Join(subComponentSeparator.ToString(), encodedSubComponents);
+            
+            // Use SetRawInternal since subcomponents are already encoded and we've added structural delimiters
+            return SetRawInternal(value);
         }
 
         /// <summary>

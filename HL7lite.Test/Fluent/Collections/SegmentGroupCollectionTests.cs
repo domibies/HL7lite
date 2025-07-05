@@ -134,7 +134,7 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert
             Assert.NotNull(firstGroup);
             Assert.True(firstGroup.Count >= 1);  // First group has segments
-            Assert.Equal("1", firstGroup.First[1].Value);  // First group starts with DG1.1 = "1"
+            Assert.Equal("1", firstGroup.First[1].Raw);  // First group starts with DG1.1 = "1"
         }
 
         [Fact]
@@ -170,8 +170,8 @@ namespace HL7lite.Test.Fluent.Collections
             // Assert
             Assert.NotNull(firstGroup);
             Assert.NotNull(secondGroup);
-            Assert.Equal("1", firstGroup.First[1].Value);
-            Assert.Equal("3", secondGroup.First[1].Value);
+            Assert.Equal("1", firstGroup.First[1].Raw);
+            Assert.Equal("3", secondGroup.First[1].Raw);
         }
 
         [Fact]
@@ -257,12 +257,12 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(2, secondGroup.Count);
             
             // Verify first group contains segments with Set IDs 1 and 2
-            Assert.Equal("1", firstGroup[0][1].Value);
-            Assert.Equal("2", firstGroup[1][1].Value);
+            Assert.Equal("1", firstGroup[0][1].Raw);
+            Assert.Equal("2", firstGroup[1][1].Raw);
             
             // Verify second group contains segments with Set IDs 3 and 4
-            Assert.Equal("3", secondGroup[0][1].Value);
-            Assert.Equal("4", secondGroup[1][1].Value);
+            Assert.Equal("3", secondGroup[0][1].Raw);
+            Assert.Equal("4", secondGroup[1][1].Raw);
         }
 
         [Fact]
@@ -274,8 +274,8 @@ namespace HL7lite.Test.Fluent.Collections
             // Act & Assert
             Assert.Equal(1, groups.Count);
             Assert.Equal(2, groups[0].Count);
-            Assert.Equal("1", groups[0][0][1].Value);
-            Assert.Equal("2", groups[0][1][1].Value);
+            Assert.Equal("1", groups[0][0][1].Raw);
+            Assert.Equal("2", groups[0][1][1].Raw);
         }
 
         [Fact]
@@ -324,7 +324,7 @@ namespace HL7lite.Test.Fluent.Collections
             for (int i = 0; i < allDG1Segments.Count; i++)
             {
                 var segment = allDG1Segments[i];
-                var setId = segment[1].Value ?? "null";
+                var setId = segment[1].Raw ?? "null";
                 dg1Info.Add($"DG1[{i}].SetID={setId}");
             }
             
@@ -352,12 +352,12 @@ namespace HL7lite.Test.Fluent.Collections
             Assert.Equal(2, groups[1].Count);
             
             // Verify first group has segments with SetID 1 and 2
-            Assert.Equal("1", groups[0][0][1].Value);
-            Assert.Equal("2", groups[0][1][1].Value);
+            Assert.Equal("1", groups[0][0][1].Raw);
+            Assert.Equal("2", groups[0][1][1].Raw);
             
             // Verify second group has segments with SetID 3 and 4  
-            Assert.Equal("3", groups[1][0][1].Value);
-            Assert.Equal("4", groups[1][1][1].Value);
+            Assert.Equal("3", groups[1][0][1].Raw);
+            Assert.Equal("4", groups[1][1][1].Raw);
         }
 
     }

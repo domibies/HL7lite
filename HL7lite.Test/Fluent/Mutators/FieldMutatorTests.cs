@@ -245,9 +245,9 @@ PV1|1|I";
             var fluent = new FluentMessage(message);
             
             // Test that mutator works correctly when accessed through fluent API
-            fluent.PID[5].Set("NewName^Test");
+            fluent.PID[5].SetRaw("NewName^Test");
             
-            Assert.Equal("NewName^Test", fluent.PID[5].Value);
+            Assert.Equal("NewName^Test", fluent.PID[5].Raw);
             Assert.Equal("NewName^Test", message.GetValue("PID.5"));
         }
 
@@ -361,10 +361,10 @@ PV1|1|I";
                 .Field(5).Set("120");
             
             // Assert
-            Assert.Equal("1", fluent.Segments("OBX")[0][1].Value);
-            Assert.Equal("NM", fluent.Segments("OBX")[0][2].Value);
-            Assert.Equal("GLUCOSE", fluent.Segments("OBX")[0][3].Value);
-            Assert.Equal("120", fluent.Segments("OBX")[0][5].Value);
+            Assert.Equal("1", fluent.Segments("OBX")[0][1].Raw);
+            Assert.Equal("NM", fluent.Segments("OBX")[0][2].Raw);
+            Assert.Equal("GLUCOSE", fluent.Segments("OBX")[0][3].Raw);
+            Assert.Equal("120", fluent.Segments("OBX")[0][5].Raw);
         }
 
         #endregion
@@ -380,7 +380,7 @@ PV1|1|I";
             var valueWithDelimiters = "Smith|John^Middle~Name\\Test&Co";
             
             // Act
-            mutator.SetEncoded(valueWithDelimiters);
+            mutator.Set(valueWithDelimiters);
             
             // Assert
             // GetValue() automatically decodes, so we need to check the raw field value
@@ -409,7 +409,7 @@ PV1|1|I";
             var valueWithFieldSeparator = "Test|Field|Separator";
             
             // Act
-            mutator.SetEncoded(valueWithFieldSeparator);
+            mutator.Set(valueWithFieldSeparator);
             
             // Assert
             // GetValue() automatically decodes, so we need to check the raw field value
@@ -434,7 +434,7 @@ PV1|1|I";
             var valueWithComponentSeparator = "Test^Component^Separator";
             
             // Act
-            mutator.SetEncoded(valueWithComponentSeparator);
+            mutator.Set(valueWithComponentSeparator);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -458,7 +458,7 @@ PV1|1|I";
             var valueWithRepetitionSeparator = "Test~Repetition~Separator";
             
             // Act
-            mutator.SetEncoded(valueWithRepetitionSeparator);
+            mutator.Set(valueWithRepetitionSeparator);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -482,7 +482,7 @@ PV1|1|I";
             var valueWithEscapeCharacter = "Test\\Escape\\Character";
             
             // Act
-            mutator.SetEncoded(valueWithEscapeCharacter);
+            mutator.Set(valueWithEscapeCharacter);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -505,7 +505,7 @@ PV1|1|I";
             var valueWithSubComponentSeparator = "Test&SubComponent&Separator";
             
             // Act
-            mutator.SetEncoded(valueWithSubComponentSeparator);
+            mutator.Set(valueWithSubComponentSeparator);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -528,7 +528,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 5);
             
             // Act
-            mutator.SetEncoded(null);
+            mutator.Set(null);
             
             // Assert
             var storedValue = message.GetValue("PID.5");
@@ -544,7 +544,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 5);
             
             // Act
-            mutator.SetEncoded("");
+            mutator.Set("");
             
             // Assert
             var storedValue = message.GetValue("PID.5");
@@ -560,7 +560,7 @@ PV1|1|I";
             var normalText = "Smith John Middle";
             
             // Act
-            mutator.SetEncoded(normalText);
+            mutator.Set(normalText);
             
             // Assert
             var storedValue = message.GetValue("PID.5");
@@ -575,7 +575,7 @@ PV1|1|I";
             var mutator = new FieldMutator(message, "PID", 5);
             
             // Act
-            var result = mutator.SetEncoded("Test|Value");
+            var result = mutator.Set("Test|Value");
             
             // Assert
             Assert.Same(mutator, result);
@@ -590,7 +590,7 @@ PV1|1|I";
             
             // Act
             mutator
-                .SetEncoded("Smith|John^Middle")
+                .Set("Smith|John^Middle")
                 .Field(7).Set("19850315")
                 .Field(8).Set("M");
             
@@ -614,7 +614,7 @@ PV1|1|I";
             var complexValue = "http://domain.com/resource?Action=1&ID=2|Special^Value~Test\\Path&More";
             
             // Act
-            mutator.SetEncoded(complexValue);
+            mutator.Set(complexValue);
             
             // Assert
             var pidSegment = message.DefaultSegment("PID");
@@ -648,14 +648,14 @@ PV1|1|I";
             var valueWithDelimiters = "Test|Field^Component~Rep\\Escape&Sub";
             
             // Act - Access through fluent API
-            fluent.PID[5].SetEncoded(valueWithDelimiters);
+            fluent.PID[5].Set(valueWithDelimiters);
             
             // Assert
-            var fluentValue = fluent.PID[5].Value;
+            var fluentValue = fluent.PID[5].Raw;
             var pidSegment = message.DefaultSegment("PID");
             var field5 = pidSegment.Fields(5);
             var rawValue = field5.Value;
-            
+
             // The fluent API returns the raw encoded value (same as field.Value)
             Assert.Equal(rawValue, fluentValue);
             

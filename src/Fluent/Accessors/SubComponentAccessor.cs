@@ -53,9 +53,10 @@ namespace HL7lite.Fluent.Accessors
         }
 
         /// <summary>
-        /// Gets the value of the subcomponent. Returns null for HL7 null values ("") and empty string for non-existent subcomponents.
+        /// Gets the raw subcomponent value with encoded characters. 
+        /// Returns HL7 null ("") for explicit nulls and empty string for non-existent subcomponents.
         /// </summary>
-        public string Value
+        public string Raw
         {
             get
             {
@@ -99,7 +100,9 @@ namespace HL7lite.Fluent.Accessors
                     var subComponent = component.SubComponentList[_subComponentIndex - 1];
                     var rawValue = subComponent.Value;
                     
-                    // HL7 null handling is done by the core SubComponent implementation
+                    // Core API converts "" to null, convert back for consistency
+                    if (rawValue == null)
+                        return _message.Encoding.PresentButNull;
                     return rawValue;
                 }
                 catch
@@ -162,7 +165,7 @@ namespace HL7lite.Fluent.Accessors
         /// <summary>
         /// Gets whether the subcomponent is explicitly set to HL7 null ("").
         /// </summary>
-        public bool IsNull => Value == null && Exists;
+        public bool IsNull => Raw == _message.Encoding.PresentButNull && Exists;
 
         /// <summary>
         /// Gets whether the subcomponent exists but contains an empty string.
@@ -173,7 +176,7 @@ namespace HL7lite.Fluent.Accessors
             {
                 if (!Exists)
                     return false;
-                var val = Value;
+                var val = Raw;
                 return val != null && val == "";
             }
         }
@@ -185,7 +188,7 @@ namespace HL7lite.Fluent.Accessors
         {
             get
             {
-                var val = Value;
+                var val = Raw;
                 return val != null && val != "";
             }
         }
@@ -222,14 +225,14 @@ namespace HL7lite.Fluent.Accessors
         }
 
         /// <summary>
-        /// Sets the subcomponent value with HL7 delimiter encoding. Shortcut for Set().SetEncoded(value).
-        /// Use this method when your value contains HL7 delimiter characters that need to be safely encoded.
+        /// Sets the subcomponent to a raw HL7 value. Shortcut for Set().SetRaw(value).
+        /// Use this for pre-encoded data or when building structured values.
         /// </summary>
-        /// <param name="value">The value to encode and set</param>
+        /// <param name="value">The raw HL7 value to set</param>
         /// <returns>A SubComponentMutator for method chaining</returns>
-        public SubComponentMutator SetEncoded(string value)
+        public SubComponentMutator SetRaw(string value)
         {
-            return Set().SetEncoded(value);
+            return Set().SetRaw(value);
         }
 
         /// <summary>Sets the subcomponent to HL7 null (""). Shortcut for Set().SetNull().</summary>
@@ -242,6 +245,29 @@ namespace HL7lite.Fluent.Accessors
         public SubComponentMutator SetIf(string value, bool condition)
         {
             return Set().SetIf(value, condition);
+        }
+        
+        /// <summary>
+        /// Returns a human-readable representation of the subcomponent value.
+        /// Decodes any encoded delimiters. Subcomponents don't contain structural delimiters.
+        /// HL7 null values are displayed as "&lt;null&gt;".
+        /// </summary>
+        public override string ToString()
+        {
+            var rawValue = this.Raw;
+            
+            // Handle empty/missing
+            if (string.IsNullOrEmpty(rawValue))
+                return "";
+            
+            // Decode encoded delimiters (e.g., \T\ → &)
+            var decoded = _message.Encoding.Decode(rawValue);
+            
+            // Replace HL7 nulls with readable placeholder
+            decoded = decoded.Replace(_message.Encoding.PresentButNull, "<null>");
+            
+            // Subcomponents don't contain structural delimiters, so just return decoded value
+            return decoded;
         }
     }
 }

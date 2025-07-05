@@ -26,6 +26,8 @@
 ### Modern Fluent API ![NEW](https://img.shields.io/badge/NEW-brightgreen?style=flat-square)
 *New in v2.0.0-rc.1 - A complete reimplementation of the HL7 parsing experience*
 
+- **Safe-by-Default Encoding** - Set() methods automatically encode HL7 delimiters, SetRaw() for structured data
+- **Raw vs Display Separation** - Clear distinction between Raw (HL7 data) and ToString() (human-readable)
 - **Fluent Navigation** - Navigate and modify data across all hierarchy levels with method chaining  
 - **Safe Data Access** - No more null reference exceptions - missing elements return empty values  
 - **Auto-creation** - Missing segments, fields, and components are created automatically when needed  
@@ -39,7 +41,7 @@
 - **Lightweight** - Minimal dependencies keep your application lean  
 - **Battle-tested** - Powers integrations at Belgium's largest hospital group ([ZAS](https://www.zas.be))  
 - **Backwards Compatible** - Existing code using the 1.x API continues to work unchanged  
-- **Encoding Support** - Automatic handling of HL7 delimiter characters in your data  
+- **Smart Encoding** - Automatic handling and validation of HL7 delimiter characters  
 - **Universal .NET** - Compatibility across .NET Framework, .NET Core, and .NET 5+
 - **Bug Fixes** - Important [core API fixes](#core-hl7lite-fixes) for field repetitions and segment copying
 
@@ -49,8 +51,11 @@
 ### Installation
 
 
-> ⚠️ The fluent API is currently in Release Candidate (RC) and is considered a preview.
-> For production use, the legacy API remains fully supported (some [fixes](#core-hl7lite-fixes))
+> ⚠️ **PRE-RELEASE**: The fluent API (v2.0.0-rc.1) is in Release Candidate status and could benefit from real-world testing before the stable v2.0 release. 
+> 
+> **Use with caution in production** - while thoroughly tested, minor API refinements may occur based on community feedback.
+> 
+> **For maximum stability**, the legacy API (v1.x) remains rock-solid and fully supported with important [core fixes](#core-hl7lite-fixes).
 
 
 ```bash
@@ -89,16 +94,22 @@ if (!result.IsSuccess)
 var message = result.Message;
 
 // Get patient information
-string patientId = message.PID[3].Value;           // Single field value
-string lastName = message.PID[5][1].Value;         // First component 
-string firstName = message.PID[5][2].Value;        // Second component 
-string fullName = message.PID[5].Value;            // Entire field: "Smith^John^M^Jr"
+string patientId = message.PID[3].ToString();      // Single field value
+string lastName = message.PID[5][1].ToString();    // First component 
+string firstName = message.PID[5][2].ToString();   // Second component 
+string fullName = message.PID[5].ToString();       // Entire field: "Smith John M Jr"
 DateTime? dateOfBirth = message.PID[7].AsDate();   // DateTime support
 
-// .Value returns entire structure with HL7 separators:
-// - Field.Value includes all components: "Smith^John^M"
-// - Field.Value with repetitions: returns only first repetition "ID1" (use .Repetitions for all)
-// - Component.Value includes subcomponents: "Home&555-1234"
+// .ToString() returns human-readable display format:
+// - Structural delimiters (^) become spaces: "Smith John M"
+// - Encoded delimiters (\T\) are decoded to literal characters: "Johnson & Associates"
+// - Perfect for display, logging, and most business logic
+
+// .Raw returns raw HL7 data (use when working with HL7 structure):
+string structuralData = message.PID[5].Raw;        // "Smith^John^M^Jr" (with HL7 delimiters)
+// - Use when copying between messages or parsing components manually
+// - Contains structural delimiters and encoded characters
+// - Equivalent to legacy API's message.GetValue("PID.5")
 
 // Parse dates and timestamps
 DateTime? birthDate = message.PID[7].AsDate();           // Parse "19850315" -> DateTime
@@ -106,26 +117,26 @@ DateTime? timestamp = message.EVN[2].AsDateTime();       // Parse "2024062414302
 DateTime? timestampWithTz = message.EVN[2].AsDateTime(out TimeSpan offset); // Include timezone
 
 // Access with safe navigation - never throws
-string gender = message.PID[8].Value ?? ""; // Handle HL7 null("") with null-coalescing
-string missing = message.PID[99].Value;     // Non-existing field returns empty string, doesn't throw
+string gender = message.PID[8].ToString(); // Safe access to gender field
+string missing = message.PID[99].ToString(); // Non-existing field returns empty string, doesn't throw
 
 // Use path-based access
-string ssn = message.Path("PID.19").Value;
-string phone = message.Path("PID.13[1].1").Value;
+string ssn = message.Path("PID.19").ToString();
+string phone = message.Path("PID.13[1].1").ToString();
 
 // Check field repetitions
 if (message.PID[3].HasRepetitions) {
     var ids = message.PID[3].Repetitions
-        .Select(r => r[1].Value) // first component of field
+        .Select(r => r[1].ToString()) // first component of field
         .ToList();
 }
 
 // Query multiple segments
 var diagnoses = message.Segments("DG1")
     .Select(dg1 => new {
-        Code = dg1[3][1].Value,
-        Description = dg1[4].Value,
-        Type = dg1[6].Value
+        Code = dg1[3][1].ToString(),
+        Description = dg1[4].ToString(),
+        Type = dg1[6].ToString()
     })
     .ToList();
 
@@ -134,9 +145,9 @@ var diagnosisGroups = message.Segments("DG1").Groups();
 foreach (var group in diagnosisGroups)
 {
     Console.WriteLine($"Diagnosis group {group.Count} diagnoses:");
-    var primaryDiagnosis = group.First[3][1].Value;  
+    var primaryDiagnosis = group.First[3][1].ToString();  
     var relatedDiagnoses = group.Skip(1)
-        .Select(dg1 => dg1[3][1].Value)
+        .Select(dg1 => dg1[3][1].ToString())
         .ToList();
         Console.WriteLine($"Primary Diagnosis: {primaryDiagnosis}");
     Console.WriteLine("Related Diagnoses:");
@@ -370,20 +381,20 @@ The Path API provides string-based access to message elements with enhanced synt
 
 ```csharp
 // Basic path access
-string patientName = message.Path("PID.5.1").Value;
+string patientName = message.Path("PID.5.1").ToString();
 message.Path("PID.5.1").Set("NewLastName");
 
 // Full path syntax: SEGMENT[rep].FIELD[rep].COMPONENT.SUBCOMPONENT
 // Repetition indexers [n] are optional and default to [1]
-string value = message.Path("DG1[2].3.2").Value;  // 2nd DG1 segment, field 3, component 2
+string value = message.Path("DG1[2].3.2").ToString();  // 2nd DG1 segment, field 3, component 2
 ```
 
 ### Repetition Support
 
 ```csharp
 // Field repetitions - [n] is optional, defaults to [1]
-string firstId = message.Path("PID.3").Value;      // Same as PID.3[1]
-string secondId = message.Path("PID.3[2]").Value;  // Second repetition
+string firstId = message.Path("PID.3").ToString();      // Same as PID.3[1]
+string secondId = message.Path("PID.3[2]").ToString();  // Second repetition
 
 // Segment repetitions - access multiple instances of the same segment
 message.Path("DG1.3.1").Set("I10");        // First diagnosis (same as DG1[1].3.1)
@@ -453,29 +464,30 @@ The Path API in HL7lite extends the legacy GetValue/SetValue behavior with:
 
 HL7lite automatically handles encoding and decoding of delimiter characters to ensure message integrity.
 
-### Understanding HL7 Encoding
+### Safe-by-Default Encoding
 
-When field values contain HL7 delimiter characters (`|`, `^`, `~`, `\`, `&`), they must be escaped to prevent message corruption. Setting encoded values ensures these characters are properly escaped:
+The fluent API automatically encodes HL7 delimiter characters (`|`, `^`, `~`, `\`, `&`) to ensure message integrity. Set() methods encode by default, while SetRaw() methods work with pre-structured HL7 data:
 
 ```csharp
-// WITHOUT encoding - corrupts the message structure
-message.PID[5][1].Set("Smith & Jones");  // BAD: The & breaks subcomponent separation
+// Set() automatically encodes delimiter characters for safety
+message.PID[5][1].Set("Smith & Jones");  // Automatically becomes "Smith \T\ Jones"
+message.PID[5].Set("Company|Name^Department");  // Delimiters safely encoded
 
-// WITH encoding - properly escaped
-message.PID[5][1].SetEncoded("Smith & Jones");  // GOOD: Becomes "Smith \T\ Jones"
+// SetRaw() for pre-structured HL7 data with validation
+message.PID[5].SetRaw("Smith^John^M");  // Direct HL7 structure
 
-// Best practice: Use structured data when possible
-message.PID[5].SetComponents("Smith-Jones", "Mary");  // BEST: No delimiters needed
+// Best practice: Use structured data for complex values
+message.PID[5].SetComponents("Smith-Jones", "Mary");  // Clear component structure
 ```
 
 ### Real-World Examples
 
 ```csharp
-// URLs with query parameters
-message.OBX[5].SetEncoded("https://lab.hospital.com/results?id=123&type=CBC");
+// URLs with query parameters - Set() encodes automatically
+message.OBX[5].Set("https://lab.hospital.com/results?id=123&type=CBC");
 
-// Medical notes with special characters
-message.NTE[3].SetEncoded("Blood pressure: 120/80 | Temp: 98.6°F");
+// Medical notes with special characters - safe by default
+message.NTE[3].Set("Blood pressure: 120/80 | Temp: 98.6°F");
 
 // Complex addresses using structured data (preferred)
 message.PID[11].SetComponents("123 Main St", "Suite A&B", "Boston", "MA", "02101");
@@ -485,20 +497,24 @@ message.PID[11][2].SetSubComponents("Suite A&B", "Building 5", "East Wing");
 message.OBX[5].SetComponents("95", "mg/dL");
 message.OBX[7].Set("70-100");  // Reference range in separate field
 
-// File paths
-message.OBX[5].SetEncoded("\\\\server\\lab\\results\\patient123.pdf");
+// File paths - automatic encoding handles backslashes
+message.OBX[5].Set("\\\\server\\lab\\results\\patient123.pdf");
+
+// Working with pre-structured HL7 data
+message.PID[5].SetRaw("Smith^John^M^Jr");  // Direct HL7 component structure
 ```
 
 ### Automatic Decoding
 
-When reading values, delimiters are automatically decoded:
+When reading values, encoded delimiters are automatically decoded:
 
 ```csharp
-// Set encoded value
-message.PID[5][1].SetEncoded("Smith & Jones");
+// Set value with delimiters (automatically encoded)
+message.PID[5][1].Set("Smith & Jones");
 
 // Read value - automatically decoded
-string name = message.PID[5][1].Value;  // Returns: "Smith & Jones"
+string name = message.PID[5][1].ToString();  // Returns: "Smith & Jones" (human-readable)
+string raw = message.PID[5][1].Raw;          // Returns: "Smith \T\ Jones" (encoded HL7 data)
 ```
 
 </details>
@@ -584,11 +600,11 @@ string id = legacyMessage.GetValue("PID.3");
 
 // Add fluent wrapper when convenient
 var fluentWrapper = new FluentMessage(legacyMessage);
-string name = fluentWrapper.PID[5][1].Value;
+string name = fluentWrapper.PID[5][1].ToString();
 
 // Both APIs work on the same message
 legacyMessage.SetValue("PID.7", "19850315");
-var dob = fluentWrapper.PID[7].Value;  // "19850315"
+var dob = fluentWrapper.PID[7].ToString();  // "19850315"
 
 // Fluent API auto-creates segments
 fluentWrapper.Path("ZZ1.2.3").Set("value");  // Creates ZZ1 segment automatically
@@ -603,9 +619,10 @@ fluentWrapper.Path("ZZ1.2.3").Set("value");  // Creates ZZ1 segment automaticall
 - **Pure Navigation API** - Crystal clear navigation with natural language-like syntax
 - **Modern Fluent API** - Complete rewrite with intuitive, chainable interface
 - **Enhanced Path API** - Full segment and field repetition support (`DG1[2].3[1].2` syntax)
+- **Raw vs ToString()** - Clear separation between HL7 data (Raw) and display format (ToString())
+- **Safe-by-Default Encoding** - Set() methods automatically encode delimiters, SetRaw() for structured data
 - **Auto-creation** - Automatic segment creation for paths (e.g., `Path("ZZ1.5").Set()` creates ZZ1)
 - **Enhanced Collections** - Full LINQ support for segments and repetitions
-- **Better Encoding** - Improved EncodedValue methods for delimiter handling
 - **Full Compatibility** - Legacy API unchanged and fully supported
 - **Core Bug Fixes** - Important [fixes](#core-hl7lite-fixes) for field repetitions, segment copying, and more
 
@@ -685,7 +702,7 @@ var component = message.PID[5][1];
 ```
 
 **Properties:**
-- `Value` - Field value (null for HL7 nulls "")
+- `Raw` - Raw field value with structural delimiters and encoded delimiter characters ("" for HL7 nulls)
 - `Exists` - True if field exists in message
 - `HasValue` - True if field has actual data (false for empty, null, or HL7 null "")
 - `IsNull` - True for HL7 null values ("")
@@ -697,10 +714,11 @@ var component = message.PID[5][1];
 **Methods:**
 - `Component(int index)` / `this[int index]` - Get component accessor
 - `Repetition(int index)` - Get specific repetition (1-based)
+- `ToString()` - Get human-readable format (decoded, with spaces)
 - `Set()` - Get field mutator
-- `Set(string value)` - Set field value and return mutator
+- `Set(string value)` - Set field value (automatically encodes delimiters) and return mutator
+- `SetRaw(string value)` - Set raw HL7 value with validation and return mutator
 - `SetComponents(params string[] values)` - Set multiple components and return mutator
-- `SetEncoded(string value)` - Set with delimiter encoding and return mutator
 - `SetNull()` - Set HL7 null value and return mutator
 - `SetIf(string value, bool condition)` - Conditional set and return mutator
 - `SetDate(DateTime date)` - Set date (YYYYMMDD) and return mutator
@@ -716,14 +734,15 @@ var component = message.PID[5][1];  // Last name
 ```
 
 **Properties:**
-- Same as FieldAccessor (Value, Exists, etc.)
+- Same as FieldAccessor (Raw, Exists, etc.)
 
 **Methods:**
 - `SubComponent(int index)` / `this[int index]` - Get subcomponent
+- `ToString()` - Get human-readable format (decoded, with spaces)
 - `Set()` - Get component mutator
-- `Set(string value)` - Set component value and return mutator
+- `Set(string value)` - Set component value (automatically encodes delimiters) and return mutator
+- `SetRaw(string value)` - Set raw HL7 value with validation and return mutator
 - `SetSubComponents(params string[] values)` - Set multiple subcomponents and return mutator
-- `SetEncoded(string value)` - Set with delimiter encoding and return mutator
 - `SetNull()` - Set HL7 null value and return mutator
 - `SetIf(string value, bool condition)` - Conditional set and return mutator
 
@@ -735,12 +754,13 @@ var subcomp = message.PID[5][1][2];
 ```
 
 **Properties:**
-- Same as FieldAccessor (Value, Exists, etc.)
+- Same as FieldAccessor (Raw, Exists, etc.)
 
 **Methods:**
+- `ToString()` - Get human-readable format (decoded)
 - `Set()` - Get subcomponent mutator
-- `Set(string value)` - Set subcomponent value and return mutator
-- `SetEncoded(string value)` - Set with delimiter encoding and return mutator
+- `Set(string value)` - Set subcomponent value (automatically encodes delimiters) and return mutator
+- `SetRaw(string value)` - Set raw HL7 value with validation and return mutator
 - `SetNull()` - Set HL7 null value and return mutator
 - `SetIf(string value, bool condition)` - Conditional set and return mutator
 
@@ -765,11 +785,11 @@ message.PID[3].Set("FirstID")
 ```
 
 **Setting Methods:**
-- `Set(string value)` - Set field value
+- `Set(string value)` - Set field value (automatically encodes delimiters)
+- `SetRaw(string value)` - Set raw HL7 value with validation
 - `SetNull()` - Set HL7 null value ("")
 - `Clear()` - Clear field (empty string)
 - `SetComponents(params string[] values)` - Set multiple components
-- `SetEncoded(string value)` - Set with delimiter encoding
 - `SetIf(string value, bool condition)` - Conditional set
 - `SetDate(DateTime date)` - Set date (YYYYMMDD)
 - `SetDateTime(DateTime dateTime)` - Set date/time (YYYYMMDDHHMMSS)
@@ -791,11 +811,11 @@ message.PID[5][1].Set("Smith")
 ```
 
 **Setting Methods:**
-- `Set(string value)` - Set component value
+- `Set(string value)` - Set component value (automatically encodes delimiters)
+- `SetRaw(string value)` - Set raw HL7 value with validation
 - `SetNull()` - Set HL7 null value
 - `Clear()` - Clear component
 - `SetSubComponents(params string[] values)` - Set subcomponents
-- `SetEncoded(string value)` - Set with encoding
 - `SetIf(string value, bool condition)` - Conditional set
 
 **Navigation Methods:**
@@ -813,10 +833,10 @@ message.PID[5][1][1].Set("Smith")
 ```
 
 **Setting Methods:**
-- `Set(string value)` - Set subcomponent value
+- `Set(string value)` - Set subcomponent value (automatically encodes delimiters)
+- `SetRaw(string value)` - Set raw HL7 value with validation
 - `SetNull()` - Set HL7 null value
 - `Clear()` - Clear subcomponent
-- `SetEncoded(string value)` - Set with encoding
 - `SetIf(string value, bool condition)` - Conditional set
 
 **Navigation Methods:**
@@ -902,7 +922,7 @@ foreach (var group in groups)
 {
     foreach (var segment in group)
     {
-        var diagnosis = segment[3][2].Value; // Diagnosis description
+        var diagnosis = segment[3][2].ToString(); // Diagnosis description
     }
 }
 ```
@@ -944,12 +964,13 @@ var path4 = message.Path("OBX[3].5[2].1");       // Combined repetitions
 - All indices are 1-based per HL7 standard
 
 **Properties:**
-- `Value` - Get value at path (null for HL7 nulls)
+- `Value` - Get raw value at path with structural delimiters and encoded characters ("" for HL7 nulls)
 - `Exists` - True if path exists
 - `HasValue` - True if has actual data (false for empty, null, or HL7 null "")
 - `IsNull` - True for HL7 nulls ("")
 
 **Methods:**
+- `ToString()` - Get human-readable format (decoded, with spaces)
 - `Set(string value)` - Set value (auto-creates segments)
 - `SetIf(string value, bool condition)` - Conditional set
 - `SetNull()` - Set HL7 null ("")
@@ -1020,6 +1041,49 @@ var result = hl7String.TryParse();
 if (result.IsSuccess) { var message = result.Message; }
 
 ```
+
+### Raw vs ToString()
+
+Understanding the difference between `Raw` and `ToString()` is crucial for proper HL7 data handling:
+
+**Raw Property** - Returns raw HL7 data for reliable data operations:
+```csharp
+// Raw values preserve HL7 structure and encoding
+field.Raw        // "Smith^John^M" (components separated by ^)
+field.Raw        // "Johnson \\T\\ Associates" (encoded & as \T\)
+field.Raw        // "Lab\\S\\Path^Result" (encoded ^ as \S\)
+
+// Use Raw for:
+// - Copying data between messages
+// - Storing in databases
+// - Sending to other systems
+// - Any data processing operations
+message.PID[5].SetRaw(otherMessage.PID[5].Raw);  // Safe copy
+```
+
+**ToString() Method** - Returns human-readable display format:
+```csharp
+// ToString() converts to readable text
+field.ToString()   // "Smith John M" (^ becomes space)
+field.ToString()   // "Johnson & Associates" (\T\ decoded to &)
+field.ToString()   // "Lab^Path Result" (\S\ decoded to ^)
+
+// Special handling:
+nullField.ToString()   // "<null>" (HL7 nulls shown clearly)
+emptyField.ToString()  // "" (empty remains empty)
+
+// Use ToString() for:
+// - Displaying to users
+// - Generating reports
+// - Logging human-readable data
+Console.WriteLine($"Patient: {message.PID[5].ToString()}");
+```
+
+**Key Differences:**
+- **Raw**: Preserves exact HL7 representation with encoded delimiters
+- **ToString()**: Decodes for human readability, replaces structural delimiters with spaces
+- **HL7 Nulls**: Raw returns `""`, ToString() returns `"<null>"`
+- **Consistency**: All accessor types (Field, Component, SubComponent, Path) follow these rules
 
 ### Utility Methods
 

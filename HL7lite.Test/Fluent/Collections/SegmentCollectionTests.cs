@@ -93,7 +93,7 @@ PV1|1|I";
 
             var segment = collection[0];
             Assert.NotNull(segment);
-            Assert.Equal("250.00", segment[3][1].Value);
+            Assert.Equal("250.00", segment[3][1].Raw);
         }
 
         [Fact]
@@ -103,7 +103,7 @@ PV1|1|I";
             var collection = new SegmentCollection(message, "DG1");
 
             var segment = collection[1];
-            Assert.Equal("401.9", segment[3][1].Value);
+            Assert.Equal("401.9", segment[3][1].Raw);
         }
 
         [Fact]
@@ -136,9 +136,9 @@ PV1|1|I";
 
             var segments = collection.ToList();
             Assert.Equal(3, segments.Count);
-            Assert.Equal("250.00", segments[0][3][1].Value);
-            Assert.Equal("401.9", segments[1][3][1].Value);
-            Assert.Equal("493.90", segments[2][3][1].Value);
+            Assert.Equal("250.00", segments[0][3][1].Raw);
+            Assert.Equal("401.9", segments[1][3][1].Raw);
+            Assert.Equal("493.90", segments[2][3][1].Raw);
         }
 
         [Fact]
@@ -161,10 +161,10 @@ PV1|1|I";
             var message = CreateTestMessage();
             var collection = new SegmentCollection(message, "DG1");
 
-            var filtered = collection.Where(s => s[3][1].Value.Contains("401")).ToList();
+            var filtered = collection.Where(s => s[3][1].Raw.Contains("401")).ToList();
 
             Assert.Single(filtered);
-            Assert.Equal("401.9", filtered[0][3][1].Value);
+            Assert.Equal("401.9", filtered[0][3][1].Raw);
         }
 
         [Fact]
@@ -173,7 +173,7 @@ PV1|1|I";
             var message = CreateTestMessage();
             var collection = new SegmentCollection(message, "DG1");
 
-            var codes = collection.Select(s => s[3][1].Value).ToList();
+            var codes = collection.Select(s => s[3][1].Raw).ToList();
 
             Assert.Equal(3, codes.Count);
             Assert.Contains("250.00", codes);
@@ -190,7 +190,7 @@ PV1|1|I";
             var first = collection.FirstOrDefault();
 
             Assert.NotNull(first);
-            Assert.Equal("250.00", first[3][1].Value);
+            Assert.Equal("250.00", first[3][1].Raw);
         }
 
         [Fact]
@@ -210,11 +210,11 @@ PV1|1|I";
             var message = CreateTestMessage();
             var collection = new SegmentCollection(message, "DG1");
 
-            var sorted = collection.OrderByDescending(s => s[3][1].Value).ToList();
+            var sorted = collection.OrderByDescending(s => s[3][1].Raw).ToList();
 
-            Assert.Equal("493.90", sorted[0][3][1].Value);
-            Assert.Equal("401.9", sorted[1][3][1].Value);
-            Assert.Equal("250.00", sorted[2][3][1].Value);
+            Assert.Equal("493.90", sorted[0][3][1].Raw);
+            Assert.Equal("401.9", sorted[1][3][1].Raw);
+            Assert.Equal("250.00", sorted[2][3][1].Raw);
         }
 
         #endregion
@@ -249,14 +249,14 @@ PV1|1|I";
             
             // TODO: Debug mutation issue with newly created segments
             // For now, just test that we can access the segment without errors
-            var _ = newSegment[1].Value; // Should not throw
-            var __ = newSegment[3][1].Value; // Should not throw
+            var _ = newSegment[1].Raw; // Should not throw
+            var __ = newSegment[3][1].Raw; // Should not throw
             
             // Skip mutation testing until issue is resolved
             // newSegment[1].Set("4");
             // newSegment[3].Set().Components("V58.69", "Long-term medication use", "I9");
-            // Assert.Equal("4", newSegment[1].Value);
-            // Assert.Equal("V58.69", newSegment[3][1].Value);
+            // Assert.Equal("4", newSegment[1].Raw);
+            // Assert.Equal("V58.69", newSegment[3][1].Raw);
         }
 
         [Fact]
@@ -270,7 +270,7 @@ PV1|1|I";
             newSegment[3].Set("250.00");
 
             Assert.Equal(1, collection.Count);
-            Assert.Equal("250.00", collection[0][3].Value);
+            Assert.Equal("250.00", collection[0][3].Raw);
         }
 
         [Fact]
@@ -282,20 +282,20 @@ PV1|1|I";
             
             // Act - Add new DG1 segment and set field values
             var newDG1 = fluent.Segments("DG1").Add();
-            newDG1[1].Set("1");
-            newDG1[3].Set("250.00^Diabetes^I9");
-            newDG1[6].Set("F");
+            newDG1[1].SetRaw("1");
+            newDG1[3].SetRaw("250.00^Diabetes^I9");
+            newDG1[6].SetRaw("F");
             
             // Assert
             Assert.Equal(1, fluent.Segments("DG1").Count);
-            Assert.Equal("1", fluent.DG1[1].Value);
-            Assert.Equal("250.00^Diabetes^I9", fluent.DG1[3].Value);
-            Assert.Equal("F", fluent.DG1[6].Value);
+            Assert.Equal("1", fluent.DG1[1].Raw);
+            Assert.Equal("250.00^Diabetes^I9", fluent.DG1[3].Raw);
+            Assert.Equal("F", fluent.DG1[6].Raw);
             
             // Verify via direct segment access
-            Assert.Equal("250.00", fluent.DG1[3][1].Value);
-            Assert.Equal("Diabetes", fluent.DG1[3][2].Value);
-            Assert.Equal("I9", fluent.DG1[3][3].Value);
+            Assert.Equal("250.00", fluent.DG1[3][1].Raw);
+            Assert.Equal("Diabetes", fluent.DG1[3][2].Raw);
+            Assert.Equal("I9", fluent.DG1[3][3].Raw);
         }
 
         [Fact] 
@@ -313,8 +313,8 @@ PV1|1|I";
             
             // Pattern 2: Add second segment
             var dg1_2 = fluent.Segments("DG1").Add();
-            dg1_2[1].Set("2");
-            dg1_2[3].Set("401.9^Hypertension^I9");
+            dg1_2[1].SetRaw("2");
+            dg1_2[3].SetRaw("401.9^Hypertension^I9");
             
             // Pattern 3: Add custom segment
             var zin = fluent.Segments("ZIN").Add();
@@ -326,18 +326,18 @@ PV1|1|I";
             Assert.Equal(1, fluent.Segments("ZIN").Count);
             
             // Verify first DG1
-            Assert.Equal("1", fluent.Segments("DG1")[0][1].Value);
-            Assert.Equal("250.00", fluent.Segments("DG1")[0][3][1].Value);
-            Assert.Equal("Diabetes", fluent.Segments("DG1")[0][3][2].Value);
+            Assert.Equal("1", fluent.Segments("DG1")[0][1].Raw);
+            Assert.Equal("250.00", fluent.Segments("DG1")[0][3][1].Raw);
+            Assert.Equal("Diabetes", fluent.Segments("DG1")[0][3][2].Raw);
             
             // Verify second DG1
-            Assert.Equal("2", fluent.Segments("DG1")[1][1].Value);
-            Assert.Equal("401.9", fluent.Segments("DG1")[1][3][1].Value);
-            Assert.Equal("Hypertension", fluent.Segments("DG1")[1][3][2].Value);
+            Assert.Equal("2", fluent.Segments("DG1")[1][1].Raw);
+            Assert.Equal("401.9", fluent.Segments("DG1")[1][3][1].Raw);
+            Assert.Equal("Hypertension", fluent.Segments("DG1")[1][3][2].Raw);
             
             // Verify custom segment
-            Assert.Equal("CustomField1", fluent["ZIN"][1].Value);
-            Assert.Equal("CustomField2", fluent["ZIN"][2].Value);
+            Assert.Equal("CustomField1", fluent["ZIN"][1].Raw);
+            Assert.Equal("CustomField2", fluent["ZIN"][2].Raw);
         }
 
         [Fact]
@@ -349,15 +349,15 @@ PV1|1|I";
             
             // Act - Add a 4th DG1 segment
             var newDG1 = fluent.Segments("DG1").Add();
-            newDG1[1].Set("4");
-            newDG1[3].Set("V58.69^Long-term medication^I9");
+            newDG1[1].SetRaw("4");
+            newDG1[3].SetRaw("V58.69^Long-term medication^I9");
             
             // Assert
             Assert.Equal(4, fluent.Segments("DG1").Count);
             
             // Verify we can access it via Instance (Instance uses 0-based index)
-            Assert.Equal("4", fluent.DG1.Instance(3)[1].Value);
-            Assert.Equal("V58.69^Long-term medication^I9", fluent.DG1.Instance(3)[3].Value);
+            Assert.Equal("4", fluent.DG1.Instance(3)[1].Raw);
+            Assert.Equal("V58.69^Long-term medication^I9", fluent.DG1.Instance(3)[3].Raw);
         }
 
         [Fact]
@@ -393,27 +393,27 @@ PV1|1|I";
             Assert.Equal(3, fluent.Segments("OBX").Count);
             
             // First OBX segment
-            Assert.Equal("1", fluent.Segments("OBX")[0][1].Value);
-            Assert.Equal("NM", fluent.Segments("OBX")[0][2].Value);
-            Assert.Equal("GLUCOSE", fluent.Segments("OBX")[0][3].Value);
-            Assert.Equal("120", fluent.Segments("OBX")[0][5].Value);
+            Assert.Equal("1", fluent.Segments("OBX")[0][1].Raw);
+            Assert.Equal("NM", fluent.Segments("OBX")[0][2].Raw);
+            Assert.Equal("GLUCOSE", fluent.Segments("OBX")[0][3].Raw);
+            Assert.Equal("120", fluent.Segments("OBX")[0][5].Raw);
             
             // Second OBX segment
-            Assert.Equal("2", fluent.Segments("OBX")[1][1].Value);
-            Assert.Equal("ST", fluent.Segments("OBX")[1][2].Value);
-            Assert.Equal("COMMENTS", fluent.Segments("OBX")[1][3].Value);
-            Assert.Equal("Normal range", fluent.Segments("OBX")[1][5].Value);
+            Assert.Equal("2", fluent.Segments("OBX")[1][1].Raw);
+            Assert.Equal("ST", fluent.Segments("OBX")[1][2].Raw);
+            Assert.Equal("COMMENTS", fluent.Segments("OBX")[1][3].Raw);
+            Assert.Equal("Normal range", fluent.Segments("OBX")[1][5].Raw);
             
             // Third OBX segment
-            Assert.Equal("3", fluent.Segments("OBX")[2][1].Value);
-            Assert.Equal("NM", fluent.Segments("OBX")[2][2].Value);
-            Assert.Equal("CHOLESTEROL", fluent.Segments("OBX")[2][3].Value);
-            Assert.Equal("180", fluent.Segments("OBX")[2][5].Value);
+            Assert.Equal("3", fluent.Segments("OBX")[2][1].Raw);
+            Assert.Equal("NM", fluent.Segments("OBX")[2][2].Raw);
+            Assert.Equal("CHOLESTEROL", fluent.Segments("OBX")[2][3].Raw);
+            Assert.Equal("180", fluent.Segments("OBX")[2][5].Raw);
             
             // Verify via named segment access as well
-            Assert.Equal("1", fluent.OBX.Instance(0)[1].Value);
-            Assert.Equal("2", fluent.OBX.Instance(1)[1].Value);
-            Assert.Equal("3", fluent.OBX.Instance(2)[1].Value);
+            Assert.Equal("1", fluent.OBX.Instance(0)[1].Raw);
+            Assert.Equal("2", fluent.OBX.Instance(1)[1].Raw);
+            Assert.Equal("3", fluent.OBX.Instance(2)[1].Raw);
         }
 
         #endregion
@@ -428,7 +428,7 @@ PV1|1|I";
 
             var segment = collection.Segment(1);
             Assert.NotNull(segment);
-            Assert.Equal("250.00", segment[3][1].Value);
+            Assert.Equal("250.00", segment[3][1].Raw);
         }
 
         [Fact]
@@ -438,7 +438,7 @@ PV1|1|I";
             var collection = new SegmentCollection(message, "DG1");
 
             var segment = collection.Segment(2);
-            Assert.Equal("401.9", segment[3][1].Value);
+            Assert.Equal("401.9", segment[3][1].Raw);
         }
 
         [Fact]
@@ -497,8 +497,8 @@ PV1|1|I";
             collection.RemoveSegment(2); // Remove second segment (1-based)
 
             Assert.Equal(initialCount - 1, collection.Count);
-            Assert.Equal("250.00", collection[0][3][1].Value);
-            Assert.Equal("493.90", collection[1][3][1].Value);
+            Assert.Equal("250.00", collection[0][3][1].Raw);
+            Assert.Equal("493.90", collection[1][3][1].Raw);
         }
 
         [Fact]
@@ -588,9 +588,9 @@ PV1|1|I";
             Assert.Equal(3, dg1Segments.Count);
             
             // Test accessing specific segment instances
-            Assert.Equal("250.00", dg1Segments[0][3][1].Value);
-            Assert.Equal("401.9", dg1Segments[1][3][1].Value);
-            Assert.Equal("493.90", dg1Segments[2][3][1].Value);
+            Assert.Equal("250.00", dg1Segments[0][3][1].Raw);
+            Assert.Equal("401.9", dg1Segments[1][3][1].Raw);
+            Assert.Equal("493.90", dg1Segments[2][3][1].Raw);
         }
 
         [Fact]
@@ -600,8 +600,8 @@ PV1|1|I";
             var collection = new SegmentCollection(message, "DG1");
 
             var recentDiagnoses = collection
-                .Where(s => s[4].Value.CompareTo("20240101") >= 0)
-                .Select(s => new { Code = s[3][1].Value, Date = s[4].Value })
+                .Where(s => s[4].Raw.CompareTo("20240101") >= 0)
+                .Select(s => new { Code = s[3][1].Raw, Date = s[4].Raw })
                 .OrderBy(d => d.Date)
                 .ToList();
 
@@ -632,8 +632,8 @@ PV1|1|I";
             // Assert
             Assert.Equal(1, targetCollection.Count);
             Assert.NotNull(result);
-            Assert.Equal("250.00", result[3][1].Value);
-            Assert.Equal("Diabetes Mellitus", result[3][2].Value);
+            Assert.Equal("250.00", result[3][1].Raw);
+            Assert.Equal("Diabetes Mellitus", result[3][2].Raw);
         }
 
         [Fact]
@@ -651,9 +651,9 @@ PV1|1|I";
             
             // Assert - Original segment unchanged (check via fluent API)
             var sourceFluent = new FluentMessage(sourceMessage);
-            Assert.Equal("Diabetes Mellitus", sourceFluent.Segments("DG1")[0][3][2].Value);
+            Assert.Equal("Diabetes Mellitus", sourceFluent.Segments("DG1")[0][3][2].Raw);
             // Assert - Copy is modified
-            Assert.Equal("Modified Diagnosis", copiedSegment[3][2].Value);
+            Assert.Equal("Modified Diagnosis", copiedSegment[3][2].Raw);
         }
 
         [Fact]
@@ -671,9 +671,9 @@ PV1|1|I";
             sourceFluent.Segments("DG1")[0][3][2].Set("Changed Original");
             
             // Assert - Copy unchanged
-            Assert.Equal("Diabetes Mellitus", copiedSegment[3][2].Value);
+            Assert.Equal("Diabetes Mellitus", copiedSegment[3][2].Raw);
             // Assert - Original is modified
-            Assert.Equal("Changed Original", sourceFluent.Segments("DG1")[0][3][2].Value);
+            Assert.Equal("Changed Original", sourceFluent.Segments("DG1")[0][3][2].Raw);
         }
 
         [Fact]
@@ -714,15 +714,15 @@ PV1|1|I";
             
             // Add one segment first
             targetCollection.Add();
-            targetCollection[0][3].Set("First^Diagnosis");
+            targetCollection[0][3].SetRaw("First^Diagnosis");
             
             // Act
             var result = targetCollection.AddCopy(sourceSegment);
             
             // Assert
             Assert.Equal(2, targetCollection.Count);
-            Assert.Equal("First^Diagnosis", targetCollection[0][3].Value);
-            Assert.Equal("401.9", result[3][1].Value); // Copied segment data
+            Assert.Equal("First^Diagnosis", targetCollection[0][3].Raw);
+            Assert.Equal("401.9", result[3][1].Raw); // Copied segment data
         }
 
         [Fact]
@@ -742,7 +742,7 @@ PV1|1|I";
             
             // Assert - Should be able to access the new segment without issues
             Assert.NotNull(result);
-            Assert.Equal("250.00", result[3][1].Value);
+            Assert.Equal("250.00", result[3][1].Raw);
         }
 
         [Fact]
@@ -763,15 +763,15 @@ PV1|1|I";
             
             // Assert
             Assert.Equal(3, targetCollection.Count);
-            Assert.Equal("250.00", results[0][3][1].Value);
-            Assert.Equal("401.9", results[1][3][1].Value);
-            Assert.Equal("493.90", results[2][3][1].Value);
+            Assert.Equal("250.00", results[0][3][1].Raw);
+            Assert.Equal("401.9", results[1][3][1].Raw);
+            Assert.Equal("493.90", results[2][3][1].Raw);
             
             // Modify one copy and ensure others unchanged
             results[0][3][2].Set("Modified");
-            Assert.Equal("Modified", results[0][3][2].Value);
-            Assert.Equal("Hypertension", results[1][3][2].Value); // Unchanged
-            Assert.Equal("Asthma", results[2][3][2].Value); // Unchanged
+            Assert.Equal("Modified", results[0][3][2].Raw);
+            Assert.Equal("Hypertension", results[1][3][2].Raw); // Unchanged
+            Assert.Equal("Asthma", results[2][3][2].Raw); // Unchanged
         }
 
         // Helper method to access internal segments for testing
@@ -803,8 +803,8 @@ PV1|1|I";
             // Assert
             Assert.Equal(1, targetCollection.Count);
             Assert.NotNull(result);
-            Assert.Equal("250.00", result[3][1].Value);
-            Assert.Equal("Diabetes Mellitus", result[3][2].Value);
+            Assert.Equal("250.00", result[3][1].Raw);
+            Assert.Equal("Diabetes Mellitus", result[3][2].Raw);
         }
 
         [Fact]
@@ -822,9 +822,9 @@ PV1|1|I";
             copiedAccessor[3][2].Set("Modified Diagnosis");
             
             // Assert - Original unchanged
-            Assert.Equal("Diabetes Mellitus", sourceAccessor[3][2].Value);
+            Assert.Equal("Diabetes Mellitus", sourceAccessor[3][2].Raw);
             // Assert - Copy is modified
-            Assert.Equal("Modified Diagnosis", copiedAccessor[3][2].Value);
+            Assert.Equal("Modified Diagnosis", copiedAccessor[3][2].Raw);
         }
 
         [Fact]
@@ -879,9 +879,9 @@ PV1|1|I";
             var result2 = collection2.AddCopy(sourceSegment);
             
             // Assert - Both copies should have identical content
-            Assert.Equal(result1[3][1].Value, result2[3][1].Value);
-            Assert.Equal(result1[3][2].Value, result2[3][2].Value);
-            Assert.Equal(result1[4].Value, result2[4].Value);
+            Assert.Equal(result1[3][1].Raw, result2[3][1].Raw);
+            Assert.Equal(result1[3][2].Raw, result2[3][2].Raw);
+            Assert.Equal(result1[4].Raw, result2[4].Raw);
         }
 
         [Fact]
@@ -905,24 +905,24 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
             var copiedOBX = targetFluent.Segments("OBX").AddCopy(sourceOBX);
             
             // Assert - Verify all fields were copied
-            Assert.Equal("1", copiedOBX[1].Value);
-            Assert.Equal("TX", copiedOBX[2].Value);
-            Assert.Equal("GLUCOSE", copiedOBX[3].Value);
-            Assert.Equal("1", copiedOBX[4].Value);
-            Assert.Equal("120", copiedOBX[5].Value);
-            Assert.Equal("mg/dl", copiedOBX[6].Value);
-            Assert.Equal("70-100", copiedOBX[7].Value);
-            Assert.Equal("H", copiedOBX[8].Value);
-            Assert.Equal("F", copiedOBX[11].Value);
+            Assert.Equal("1", copiedOBX[1].Raw);
+            Assert.Equal("TX", copiedOBX[2].Raw);
+            Assert.Equal("GLUCOSE", copiedOBX[3].Raw);
+            Assert.Equal("1", copiedOBX[4].Raw);
+            Assert.Equal("120", copiedOBX[5].Raw);
+            Assert.Equal("mg/dl", copiedOBX[6].Raw);
+            Assert.Equal("70-100", copiedOBX[7].Raw);
+            Assert.Equal("H", copiedOBX[8].Raw);
+            Assert.Equal("F", copiedOBX[11].Raw);
             
             // Verify segment exists and has values
             Assert.True(copiedOBX.Exists);
-            Assert.NotNull(copiedOBX[1].Value);
+            Assert.NotNull(copiedOBX[1].Raw);
             
             // Verify independence - modify copy without affecting original
             copiedOBX[5].Set("999");
-            Assert.Equal("999", copiedOBX[5].Value);
-            Assert.Equal("120", sourceOBX[5].Value);
+            Assert.Equal("999", copiedOBX[5].Raw);
+            Assert.Equal("120", sourceOBX[5].Raw);
         }
 
         [Fact]
@@ -943,8 +943,8 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
             
             // Debug: Check source OBX before copy
             Assert.True(sourceOBX.Exists);
-            Assert.Equal("1", sourceOBX[1].Value);
-            Assert.Equal("TX", sourceOBX[2].Value);
+            Assert.Equal("1", sourceOBX[1].Raw);
+            Assert.Equal("TX", sourceOBX[2].Raw);
             
             var copiedOBX = targetFluent.Segments("OBX").AddCopy(sourceOBX);
             
@@ -953,15 +953,15 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
             Assert.True(copiedOBX.Exists, "Copied OBX segment should exist");
             
             // Check if we can get field values (this will tell us if the segment was copied correctly)
-            var field1Value = copiedOBX[1].Value;
-            var field2Value = copiedOBX[2].Value;
+            var field1Value = copiedOBX[1].Raw;
+            var field2Value = copiedOBX[2].Raw;
             Assert.NotNull(field1Value);
             Assert.NotNull(field2Value);
             
             // Most important: Check if fields were copied
-            Assert.Equal("1", copiedOBX[1].Value);
-            Assert.Equal("TX", copiedOBX[2].Value);
-            Assert.Equal("GLUCOSE", copiedOBX[3].Value);
+            Assert.Equal("1", copiedOBX[1].Raw);
+            Assert.Equal("TX", copiedOBX[2].Raw);
+            Assert.Equal("GLUCOSE", copiedOBX[3].Raw);
         }
 
         [Fact]
@@ -993,16 +993,16 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
             Assert.Equal(2, obxSegments.Count());
             
             // First OBX (from Copy())
-            Assert.Equal("1", obxSegments[0][1].Value);
-            Assert.Equal("TX", obxSegments[0][2].Value);
-            Assert.Equal("GLUCOSE", obxSegments[0][3].Value);
-            Assert.Equal("120", obxSegments[0][5].Value);
+            Assert.Equal("1", obxSegments[0][1].Raw);
+            Assert.Equal("TX", obxSegments[0][2].Raw);
+            Assert.Equal("GLUCOSE", obxSegments[0][3].Raw);
+            Assert.Equal("120", obxSegments[0][5].Raw);
             
             // Second OBX (from AddCopy) - This is where user reports it's empty
-            Assert.Equal("1", obxSegments[1][1].Value);
-            Assert.Equal("TX", obxSegments[1][2].Value);
-            Assert.Equal("GLUCOSE", obxSegments[1][3].Value);
-            Assert.Equal("120", obxSegments[1][5].Value);
+            Assert.Equal("1", obxSegments[1][1].Raw);
+            Assert.Equal("TX", obxSegments[1][2].Raw);
+            Assert.Equal("GLUCOSE", obxSegments[1][3].Raw);
+            Assert.Equal("120", obxSegments[1][5].Raw);
         }
 
         [Fact]
@@ -1027,10 +1027,10 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
             Assert.True(obxAccessor.Exists);
             
             // Check if fields are actually copied
-            Assert.Equal("1", obxAccessor[1].Value);
-            Assert.Equal("TX", obxAccessor[2].Value);
-            Assert.Equal("GLUCOSE", obxAccessor[3].Value);
-            Assert.Equal("120", obxAccessor[5].Value);
+            Assert.Equal("1", obxAccessor[1].Raw);
+            Assert.Equal("TX", obxAccessor[2].Raw);
+            Assert.Equal("GLUCOSE", obxAccessor[3].Raw);
+            Assert.Equal("120", obxAccessor[5].Raw);
             
             // Verify we now have 2 OBX segments
             Assert.Equal(2, copy.Segments("OBX").Count);
@@ -1063,7 +1063,7 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
             Assert.True(firstOBX.Exists);
             for (int i = 1; i <= 11; i++)
             {
-                var fieldValue = firstOBX[i].Value;
+                var fieldValue = firstOBX[i].Raw;
                 if (fieldValue != null)
                 {
                     // Field {i} has value: {fieldValue}
@@ -1078,7 +1078,7 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
             var hasAnyContent = false;
             for (int i = 1; i <= 11; i++)
             {
-                var fieldValue = secondOBX[i].Value;
+                var fieldValue = secondOBX[i].Raw;
                 if (!string.IsNullOrEmpty(fieldValue))
                 {
                     hasAnyContent = true;
@@ -1088,9 +1088,9 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
             Assert.True(hasAnyContent, "Second OBX segment has no field content - reproduces user's issue!");
             
             // Specifically check expected fields
-            Assert.Equal("1", secondOBX[1].Value);
-            Assert.Equal("TX", secondOBX[2].Value);
-            Assert.Equal("GLUCOSE", secondOBX[3].Value);
+            Assert.Equal("1", secondOBX[1].Raw);
+            Assert.Equal("TX", secondOBX[2].Raw);
+            Assert.Equal("GLUCOSE", secondOBX[3].Raw);
         }
 
         [Fact]
@@ -1145,9 +1145,9 @@ OBX|1|TX|GLUCOSE|1|120|mg/dl|70-100|H|||F";
                 Assert.True(obxAccessor.Exists);
                 
                 // These should fail if we're reproducing the issue
-                var field1 = obxAccessor[1].Value;
-                var field2 = obxAccessor[2].Value;
-                var field5 = obxAccessor[5].Value;
+                var field1 = obxAccessor[1].Raw;
+                var field2 = obxAccessor[2].Raw;
+                var field5 = obxAccessor[5].Raw;
                 
                 // If these are null/empty, we've reproduced the issue
                 if (string.IsNullOrEmpty(field1) && string.IsNullOrEmpty(field2) && string.IsNullOrEmpty(field5))
