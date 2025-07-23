@@ -471,7 +471,7 @@ The fluent API automatically encodes HL7 delimiter characters (`|`, `^`, `~`, `\
 ```csharp
 // Set() automatically encodes delimiter characters for safety
 message.PID[5][1].Set("Smith & Jones");  // Automatically becomes "Smith \T\ Jones"
-message.PID[5].Set("Company|Name^Department");  // Delimiters safely encoded
+message.OBX[5].Set("Glucose: 95 mg/dL | Normal: 70-100");  // | safely encoded
 
 // SetRaw() for pre-structured HL7 data with validation
 message.PID[5].SetRaw("Smith^John^M");  // Direct HL7 structure
@@ -974,8 +974,6 @@ var path4 = message.Path("OBX[3].5[2].1");       // Combined repetitions
 - `Set(string value)` - Set value (auto-creates segments)
 - `SetIf(string value, bool condition)` - Conditional set
 - `SetNull()` - Set HL7 null ("")
-- `SetEncoded(string value)` - Set with delimiter encoding
-- `SetEncodedIf(string value, bool condition)` - Conditional encoded set
 
 ### Builders
 

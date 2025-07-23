@@ -132,11 +132,33 @@ The fluent API provides safe-by-default encoding and explicit raw value support:
 
 **Safe Encoding (Recommended)**:
 ```csharp
-// Set() methods automatically encode delimiters for safety
-fluent.PID[5].Set("Smith|John^Medical^Center");        // Automatically encoded
-fluent.PID[5][1].Set("Name|With^Delimiters");          // Automatically encoded  
-fluent.PID[5][1][1].Set("Value|With^Special&Characters"); // Automatically encoded
-fluent.Path("PID.5.1").Set("Complex|Value^With~Delimiters"); // Automatically encoded
+// Set() methods automatically encode delimiters for safety in real medical data scenarios
+
+// Lab results with vertical bars in medical notation
+fluent.OBX[5].Set("Glucose: 95 mg/dL | Reference: 70-100 mg/dL");  // | used as separator in results
+fluent.OBX[8].Set("Normal | <70 = Low | >100 = High");              // | used in reference ranges
+fluent.NTE[3].Set("BP: 120/80 | Pulse: 72 | Temp: 98.6°F");       // | separating vital signs
+
+// Medication instructions with pipes
+fluent.RXE[21].Set("Take 2 tablets by mouth | Max 8 per day");     // | in dosing instructions
+fluent.SIG[1].Set("1 tab q4-6h prn | Do not exceed 6/24h");        // | in sig instructions
+
+// Names with ampersands (business/partnership names)
+fluent.PID[5].Set("Smith & Jones");                                 // & in law firm name
+fluent.PID[9].Set("Johnson & Johnson Medical");                     // & in company name
+fluent.PV1[3].Set("Bed & Breakfast Wing");                         // & in location name
+
+// File paths with backslashes
+fluent.OBX[5].Set("\\\\server\\share\\results\\2024\\patient_12345.pdf");  // Network path
+fluent.OBX[5].Set("C:\\PatientData\\Images\\scan_001.jpg");               // Windows file path
+
+// URLs with ampersands in query strings
+fluent.OBX[5].Set("https://lab.hospital.com/results?pid=12345&type=CBC&urgent=true");
+fluent.REF[4].Set("https://portal.health.org/referral?id=789&patient=12345&provider=567");
+
+// Tilde in version numbers or ranges
+fluent.MSH[12].Set("2.5.1~2.8");                                   // HL7 version range
+fluent.OBX[5].Set("Result pending ~ 24-48 hours");                 // ~ as approximation symbol
 ```
 
 **Raw Value Handling (Advanced)**:
@@ -175,22 +197,25 @@ fluent.PID[5].Raw;          // "Smith^John^M" (raw with structural delimiters)
 fluent.PID[5].ToString();   // "Smith John M" (human-readable with spaces)
 
 // With encoded delimiters in data (when using Set())
-fluent.PID[5].Set("Smith|Hospital^Medical");
-fluent.PID[5].Raw;          // "Smith\\F\\Hospital\\S\\Medical" (raw encoded)  
-fluent.PID[5].ToString();   // "Smith|Hospital^Medical" (decoded back to original)
+fluent.OBX[5].Set("Result: Positive | Confidence: 95%");
+fluent.OBX[5].Raw;          // "Result: Positive \\F\\ Confidence: 95%" (raw encoded)  
+fluent.OBX[5].ToString();   // "Result: Positive | Confidence: 95%" (decoded back to original)
 ```
 
 **Setting Values (Safe Encoding)**:
 ```csharp
-// Set() methods automatically encode delimiters
+// Set() methods automatically encode HL7 delimiters (|, ^, ~, \, &)
 fluent.PID[3].Set("12345");                    // Simple value
-fluent.PID[5].Set("Smith|Hospital^Medical");   // Delimiters automatically encoded
-fluent.PID[5].SetComponents("Smith", "John", "M"); // Components assembled safely
-fluent.PID[5][1][2].Set("Jr");                 // Subcomponent value
+fluent.OBX[5].Set("Glucose: 95 | Normal: 70-100");   // | automatically encoded
+fluent.PID[5].Set("Smith & Jones Law Firm");   // & automatically encoded
+fluent.PID[11].Set("\\\\server\\patient\\records");  // \ automatically encoded
 
 // For data that might contain user input with delimiters
-string userInput = "Company|Name^Department";
-fluent.PID[5].Set(userInput);                  // Safe - delimiters encoded automatically
+string labResult = "Result: Positive | Confidence: 95%";
+fluent.OBX[5].Set(labResult);                  // Safe - | encoded automatically
+
+// Components assembled safely
+fluent.PID[5].SetComponents("Smith & Jones", "John", "III");
 ```
 
 **Setting Raw HL7 Structure (Advanced)**:
@@ -220,9 +245,9 @@ var diagnoses = fluent.Segments("DG1")
 **Path-based Access**:
 ```csharp
 // Safe encoding
-fluent.Path("PID.5.1").Set("Smith|Company");    // Delimiters encoded automatically
-fluent.Path("PID.5.2").Set("John");
-string name = fluent.Path("PID.5").Raw;         // Raw HL7 data
+fluent.Path("OBX.5").Set("BP: 120/80 | Pulse: 72");    // | encoded automatically
+fluent.Path("PID.5").Set("Smith & Jones");             // & encoded automatically
+string result = fluent.Path("OBX.5").Raw;              // Raw HL7 data
 
 // Raw structure
 fluent.Path("PID.5").SetRaw("Smith^John^M");    // Direct HL7 structure

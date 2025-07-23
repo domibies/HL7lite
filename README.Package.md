@@ -120,9 +120,9 @@ string value = message.Path("PID.5.1").Value;
 message.Path("PID.5.1").Set("Smith");
 message.Path("OBX.5").Set("120");
 
-// Handle special characters with encoding
-message.Path("PID.5.1").SetEncoded("Smith&Jones");  // Name with ampersand
-message.Path("OBX.5").SetEncoded("http://lab.com/result?id=123&type=CBC");
+// Safe encoding - Set() automatically handles special characters
+message.Path("PID.5").Set("Smith & Jones Law Firm");  // & automatically encoded
+message.Path("OBX.5").Set("https://lab.com/result?id=123&type=CBC");  // & in URL encoded
 
 // Conditional path operations
 message.Path("PID.6").SetIf("MAIDEN", hasMiddleName);
