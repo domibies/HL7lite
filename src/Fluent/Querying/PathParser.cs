@@ -270,8 +270,11 @@ namespace HL7lite.Fluent.Querying
                 var subComponentValue = subComponentAccessor.Raw;
                 return subComponentValue == null ? message.Encoding.PresentButNull : subComponentValue;
             }
-            catch
+            catch (Exception ex)
             {
+                // Log the exception for debugging purposes
+                System.Diagnostics.Debug.WriteLine($"Exception in GetValue (returning empty string): {ex.Message}");
+                System.Diagnostics.Debug.WriteLine(ex.StackTrace);
                 // Any navigation error returns empty string (consistent with fluent API)
                 return "";
             }
