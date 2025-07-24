@@ -96,11 +96,15 @@ namespace HL7lite.Fluent.Querying
     /// </summary>
     public static class PathParser
     {
-        // Regex patterns for parsing path components
-        private static readonly Regex SegmentPattern = new Regex(@"^([A-Z][A-Z][A-Z0-9])(?:\[(\d+)\])?$", RegexOptions.Compiled);
-        private static readonly Regex FieldPattern = new Regex(@"^(\d+)(?:\[(\d+)\])?$", RegexOptions.Compiled);
-        private static readonly Regex ComponentPattern = new Regex(@"^(\d+)$", RegexOptions.Compiled);
-        private static readonly Regex SubComponentPattern = new Regex(@"^(\d+)$", RegexOptions.Compiled);
+        // Lazy-initialized regex patterns for parsing path components
+        private static readonly Lazy<Regex> SegmentPattern = new Lazy<Regex>(() => 
+            new Regex(@"^([A-Z][A-Z][A-Z0-9])(?:\[(\d+)\])?$", RegexOptions.Compiled));
+        private static readonly Lazy<Regex> FieldPattern = new Lazy<Regex>(() => 
+            new Regex(@"^(\d+)(?:\[(\d+)\])?$", RegexOptions.Compiled));
+        private static readonly Lazy<Regex> ComponentPattern = new Lazy<Regex>(() => 
+            new Regex(@"^(\d+)$", RegexOptions.Compiled));
+        private static readonly Lazy<Regex> SubComponentPattern = new Lazy<Regex>(() => 
+            new Regex(@"^(\d+)$", RegexOptions.Compiled));
         
         /// <summary>
         /// Parses an HL7 path string into its constituent components.
@@ -120,7 +124,7 @@ namespace HL7lite.Fluent.Querying
             var result = new ParsedPath();
             
             // Parse segment (required)
-            var segmentMatch = SegmentPattern.Match(parts[0]);
+            var segmentMatch = SegmentPattern.Value.Match(parts[0]);
             if (!segmentMatch.Success)
                 return null;
                 
@@ -134,7 +138,7 @@ namespace HL7lite.Fluent.Querying
             // Parse field (optional)
             if (parts.Length > 1)
             {
-                var fieldMatch = FieldPattern.Match(parts[1]);
+                var fieldMatch = FieldPattern.Value.Match(parts[1]);
                 if (!fieldMatch.Success)
                     return null;
                     
@@ -154,7 +158,7 @@ namespace HL7lite.Fluent.Querying
             // Parse component (optional)
             if (parts.Length > 2)
             {
-                var componentMatch = ComponentPattern.Match(parts[2]);
+                var componentMatch = ComponentPattern.Value.Match(parts[2]);
                 if (!componentMatch.Success)
                     return null;
                     
@@ -168,7 +172,7 @@ namespace HL7lite.Fluent.Querying
             // Parse subcomponent (optional)
             if (parts.Length > 3)
             {
-                var subComponentMatch = SubComponentPattern.Match(parts[3]);
+                var subComponentMatch = SubComponentPattern.Value.Match(parts[3]);
                 if (!subComponentMatch.Success)
                     return null;
                     
