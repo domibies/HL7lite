@@ -397,14 +397,8 @@ namespace HL7lite.Fluent
         /// // Simple serialization to string
         /// string hl7String = fluent.Serialize().ToString();
         /// 
-        /// // Serialize with validation
-        /// string validated = fluent.Serialize()
-        ///     .WithValidation()
-        ///     .ToString();
-        /// 
         /// // Serialize to file with cleanup
         /// fluent.Serialize()
-        ///     .WithValidation()
         ///     .WithoutTrailingDelimiters()
         ///     .ToFile("output.hl7");
         /// 

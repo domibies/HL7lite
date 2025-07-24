@@ -11,7 +11,6 @@ namespace HL7lite.Fluent.Builders
     {
         private readonly Message _message;
         private readonly FluentMessage _fluentMessage;
-        private bool _validate = false;
         private bool _removeTrailingDelimiters = false;
         private MessageElement.RemoveDelimitersOptions _removeDelimitersOptions = MessageElement.RemoveDelimitersOptions.All;
         private Encoding _encoding = Encoding.UTF8;
@@ -22,15 +21,6 @@ namespace HL7lite.Fluent.Builders
             _fluentMessage = fluentMessage ?? throw new ArgumentNullException(nameof(fluentMessage));
         }
 
-        /// <summary>
-        /// Enables validation before serialization.
-        /// </summary>
-        /// <returns>The builder for method chaining</returns>
-        public SerializationBuilder WithValidation()
-        {
-            _validate = true;
-            return this;
-        }
 
         /// <summary>
         /// Removes trailing delimiters from segments before serialization.
@@ -74,7 +64,7 @@ namespace HL7lite.Fluent.Builders
         public override string ToString()
         {
             PrepareMessage();
-            return _message.SerializeMessage(_validate);
+            return _message.SerializeMessage(validate: false);
         }
 
         /// <summary>
@@ -116,33 +106,25 @@ namespace HL7lite.Fluent.Builders
         }
 
         /// <summary>
-        /// Validates the message and returns any validation errors without throwing.
+        /// Attempts to serialize the message and returns any errors without throwing.
         /// </summary>
         /// <param name="serializedMessage">The serialized message output</param>
-        /// <param name="validationError">Validation error message if validation fails</param>
-        /// <returns>True if valid, false if validation errors exist</returns>
-        public bool TrySerialize(out string serializedMessage, out string validationError)
+        /// <param name="error">Error message if serialization fails</param>
+        /// <returns>True if serialization succeeded, false if errors occurred</returns>
+        public bool TrySerialize(out string serializedMessage, out string error)
         {
-            validationError = null;
+            error = null;
             serializedMessage = null;
 
             try
             {
                 PrepareMessage();
-                
-                if (_validate)
-                {
-                    // Try to validate by parsing
-                    var testMessage = new Message(_message.SerializeMessage(false));
-                    testMessage.ParseMessage(validate: true);
-                }
-
-                serializedMessage = _message.SerializeMessage(false);
+                serializedMessage = _message.SerializeMessage(validate: false);
                 return true;
             }
             catch (Exception ex)
             {
-                validationError = ex.Message;
+                error = ex.Message;
                 return false;
             }
         }

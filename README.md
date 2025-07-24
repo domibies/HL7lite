@@ -1017,13 +1017,11 @@ Fluent builder for message serialization.
 ```csharp
 string hl7 = message.Serialize()
     .WithoutTrailingDelimiters()
-    .WithValidation()
     .ToString();
 ```
 
 **Methods:**
 - `WithoutTrailingDelimiters()` - Remove trailing delimiters
-- `WithValidation()` - Validate before serializing
 - `WithEncoding(Encoding)` - Set text encoding
 - `ToString()` - Serialize to string
 - `ToBytes()` - Serialize to byte array

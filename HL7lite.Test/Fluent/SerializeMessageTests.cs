@@ -27,7 +27,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
         }
 
         [Fact]
-        public void Serialize_WithValidation_ReturnsHL7String()
+        public void Serialize_WithParsedMessage_ReturnsHL7String()
         {
             // Arrange
             var testMessage = @"MSH|^~\&|SENDING|FACILITY|RECEIVING|FACILITY|20200101120000||ADT^A01|12345|P|2.5||
@@ -39,7 +39,6 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
 
             // Act
             var serialized = fluent.Serialize()
-                .WithValidation()
                 .ToString();
 
             // Assert

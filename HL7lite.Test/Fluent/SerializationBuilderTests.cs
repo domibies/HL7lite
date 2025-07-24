@@ -52,7 +52,7 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
         }
 
         [Fact]
-        public void Serialize_WithValidation_ValidatesBeforeSerialization()
+        public void Serialize_ToString_ReturnsValidSerializedMessage()
         {
             // Arrange
             var message = new Message(_testMessage);
@@ -61,7 +61,6 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
 
             // Act
             var serialized = fluent.Serialize()
-                .WithValidation()
                 .ToString();
 
             // Assert
@@ -106,7 +105,6 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
 
             // Act
             var result = fluent.Serialize()
-                .WithValidation()
                 .WithoutTrailingDelimiters()
                 .ToFile(tempFile);
 
@@ -217,7 +215,6 @@ PID|1||123456^^^MRN||Doe^John^M||19800101|M|||123 Main St^^City^ST^12345||555123
             fluent.PID[7].Set("19901231");
             fluent
                   .Serialize()
-                      .WithValidation()
                       .WithoutTrailingDelimiters()
                       .ToFile(tempFile);
 

@@ -136,16 +136,16 @@ The fluent API provides safe-by-default encoding and explicit raw value support:
 
 // Lab results with vertical bars in medical notation
 fluent.OBX[5].Set("Glucose: 95 mg/dL | Reference: 70-100 mg/dL");  // | used as separator in results
-fluent.OBX[8].Set("Normal | <70 = Low | >100 = High");              // | used in reference ranges
+fluent.OBX[7].Set("Normal | <70 = Low | >100 = High");              // | used in reference ranges
 fluent.NTE[3].Set("BP: 120/80 | Pulse: 72 | Temp: 98.6°F");       // | separating vital signs
 
 // Medication instructions with pipes
-fluent.RXE[21].Set("Take 2 tablets by mouth | Max 8 per day");     // | in dosing instructions
-fluent.SIG[1].Set("1 tab q4-6h prn | Do not exceed 6/24h");        // | in sig instructions
+fluent.RXE[5].Set("Take 2 tablets by mouth | Max 8 per day");      // | in dosing instructions
+fluent.NTE[3].Set("1 tab q4-6h prn | Do not exceed 6/24h");        // | in medication instructions
 
 // Names with ampersands (business/partnership names)
 fluent.PID[5].Set("Smith & Jones");                                 // & in law firm name
-fluent.PID[9].Set("Johnson & Johnson Medical");                     // & in company name
+fluent.PID[5].Set("Johnson & Johnson Medical");                     // & in company name
 fluent.PV1[3].Set("Bed & Breakfast Wing");                         // & in location name
 
 // File paths with backslashes
@@ -154,7 +154,7 @@ fluent.OBX[5].Set("C:\\PatientData\\Images\\scan_001.jpg");               // Win
 
 // URLs with ampersands in query strings
 fluent.OBX[5].Set("https://lab.hospital.com/results?pid=12345&type=CBC&urgent=true");
-fluent.REF[4].Set("https://portal.health.org/referral?id=789&patient=12345&provider=567");
+fluent.NTE[3].Set("https://portal.health.org/referral?id=789&patient=12345&provider=567");
 
 // Tilde in version numbers or ranges
 fluent.MSH[12].Set("2.5.1~2.8");                                   // HL7 version range
