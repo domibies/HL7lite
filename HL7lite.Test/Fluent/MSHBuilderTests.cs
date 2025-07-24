@@ -415,7 +415,9 @@ namespace HL7lite.Test.Fluent
                 // If timestamps are the same (generated within same second), counters should be sequential
                 if (prevTimestamp == currTimestamp)
                 {
-                    Assert.Equal(prevCounter + 1, currCounter);
+                    // Counter should increment by 1, or wrap around from 9999 to 1
+                    var expectedNext = (prevCounter % 9999) + 1;
+                    Assert.Equal(expectedNext, currCounter);
                 }
                 
                 // All IDs should be unique
