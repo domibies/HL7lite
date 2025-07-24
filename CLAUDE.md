@@ -2,6 +2,14 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Documentation Principles
+
+- **Keep XML documentation concise**: Focus on what the method does, not extensive examples
+- **Avoid verbose examples in XML comments**: Save detailed examples for README/documentation files
+- **One-line summary when possible**: Most methods should have a brief single-line summary
+- **Parameters only when non-obvious**: Don't document obvious parameters like "value" in SetValue(value)
+- **IntelliSense-friendly**: Write for developers using autocomplete, not reading source files
+
 ## Build Commands
 
 ```bash
@@ -42,164 +50,242 @@ Message
 │   └── Repetitions (for repeated segments)
 ```
 
-### Core Class Hierarchy
+### Core Components
 
-- **MessageElement** (abstract base) - Common functionality for all elements
-  - **Message** - Complete HL7 message with segments
-  - **Segment** - Named segment containing fields
-  - **Field** - Can contain components or be simple value
-  - **Component** - Can contain subcomponents or be simple value
-  - **SubComponent** - Leaf node, always simple value
+**Message**: Root container for HL7 message
+**Segment**: Individual HL7 segments (MSH, PID, etc.)
+**Field**: Individual data fields within segments (1-based indexing)
+**Component**: Sub-parts of complex fields (1-based indexing)
+**SubComponent**: Finest granularity level (1-based indexing)
 
-### Key Design Decisions
+## Fluent API Architecture
 
-1. **Path Notation**: Elements accessed via paths like `"PID.5.1"` (1-based indexing)
-2. **MSH Special Handling**: MSH segment has extra field at position 1 for field separator
-3. **Lazy Parsing**: Components/subcomponents parsed on demand
-4. **Auto-creation**: `PutValue()` creates missing elements, `SetValue()` doesn't
-5. **Encoding**: Special characters handled by `HL7Encoding` class
+The Fluent API provides a modern, intuitive interface built on top of the existing Message API:
 
-### Collections
+### Key Design Principles
 
-All collections inherit from `ElementCollection<T>` providing consistent behavior:
-- Add/Insert/Remove operations
-- Access by index (0-based internally, 1-based in paths)
-- Support for repetitions
+1. **Non-breaking**: All existing Message API functionality preserved
+2. **Safe-by-default**: Set() methods automatically encode HL7 delimiters
+3. **Clear data distinction**: Raw property for HL7 data, ToString() for display
+4. **Null-safe**: Invalid access returns empty values instead of exceptions
+5. **Fluent**: Method chaining for intuitive operations
+6. **1-based indexing**: Follows HL7 standard (fields, components, subcomponents)
+7. **0-based collections**: LINQ-compatible collections use 0-based indexing
+8. **Cached accessors**: Performance optimization through caching
 
-## Testing Approach
+### Fluent API Components
 
-- **Framework**: xUnit with .NET 8.0
-- **Test Data**: Sample HL7 messages in `HL7lite.Test/Sample-*.txt`
-- **Coverage**: Coverlet for code coverage, reports uploaded to Codecov
-- **CI/CD**: GitHub Actions runs tests on multiple .NET versions (6.0, 7.0, 8.0)
+**FluentMessage**: Main entry point
+**Accessors** (Read-only): SegmentAccessor, FieldAccessor, ComponentAccessor, SubComponentAccessor
+**Mutators** (Write operations): FieldMutator, ComponentMutator, SubComponentMutator
+**Collections** (LINQ support): SegmentCollection, FieldRepetitionCollection
+**Special Features**: PathAccessor, MSHBuilder, automatic encoding support
 
-### Test Organization and Naming Conventions
+### Error Handling Philosophy
 
-1. **Test File Structure**:
-   - One test file per production class: `{ClassName}Tests.cs`
-   - Group related tests in the same test class
-   - Place test files in `HL7lite.Test/` directory
+**Accessors** (reading):
+- Invalid access returns empty accessor
+- `.Raw` returns raw HL7 data with structural delimiters and encoded characters
+- `.ToString()` returns human-readable format (decoded with spaces replacing delimiters)
+- `.Exists` checks if element actually exists
+- Never throws exceptions for invalid access
 
-2. **Test Naming Conventions**:
-   - Test methods: `MethodName_StateUnderTest_ExpectedBehavior()`
-   - Example: `Constructor_WithMessageAndCode_ShouldSetBothProperties()`
-   - Use descriptive names that explain what is being tested
+**Mutators** (writing):
+- `Set()` methods automatically encode HL7 delimiter characters for safety
+- `SetRaw()` methods accept raw values with validation against invalid delimiters
+- Create missing segments/fields/components automatically
+- Validate indices (negative indices throw ArgumentException)
+- Support method chaining
 
-3. **Test Structure (AAA Pattern)**:
-   ```csharp
-   [Fact]
-   public void MethodName_StateUnderTest_ExpectedBehavior()
-   {
-       // Arrange - Set up test data and dependencies
-       const string expected = "value";
-       
-       // Act - Execute the method being tested
-       var result = target.Method();
-       
-       // Assert - Verify the expected outcome
-       Assert.Equal(expected, result);
-   }
-   ```
+### Polymorphism and Inheritance Principle
 
-4. **Test Categories**:
-   - Use `[Fact]` for single test cases
-   - Use `[Theory]` with `[InlineData]` for parameterized tests
-   - Group related tests within the same test class
+**CRITICAL: Always use virtual/override for polymorphic behavior**
 
-5. **Best Practices**:
-   - Keep tests independent and isolated
-   - Test one thing per test method
-   - Use meaningful constant names for test data
-   - Include edge cases and error scenarios
-   - Aim for high code coverage but focus on meaningful tests
+When creating derived classes that need to override base class behavior:
+- **Base class**: Mark properties and methods as `virtual`
+- **Derived class**: Use `override` keyword, NOT `new`
 
-### Exception Testing Guidelines
+The `new` keyword creates a new member that hides the base member, breaking polymorphism.
 
-1. **Test Error Codes, Not Messages**:
-   ```csharp
-   // Preferred - Test error codes (stable interface)
-   private static void AssertThrowsHL7Exception(Action action, string expectedErrorCode)
-   {
-       var ex = Assert.Throws<HL7Exception>(action);
-       Assert.Equal(expectedErrorCode, ex.ErrorCode);
-   }
-   
-   // Avoid - Testing exact exception messages (brittle)
-   Assert.Equal("Exact error message", ex.Message); // Don't do this
-   ```
+### Indexing Strategy
 
-2. **Exception Test Rationale**:
-   - Error codes are part of the public API contract
-   - Exception messages may change during development/localization
-   - Error codes provide stable integration points for error handling
-   - Testing exact messages creates maintenance burden
+**1-based** (HL7 Standard):
+- Field indices: `fluent.PID[3]` (3rd field)
+- Component indices: `fluent.PID[5][1]` (1st component)  
+- SubComponent indices: `fluent.PID[5][1][1]` (1st subcomponent)
+- Collection methods: `.Repetition(1)`, `.Segment(1)`
 
-3. **When to Test Exact Values**:
-   - **Functional tests**: When verifying encoding/decoding behavior, test exact outputs
-   - **Round-trip tests**: Verify data preservation through parse/serialize cycles
-   - **Data integrity**: Test that specific field values are correctly processed
+**0-based** (LINQ Compatibility):
+- Collection indexers: `fluent.Segments("DG1")[0]`
+- LINQ operations: `.Where()`, `.Select()`, `.First()`
 
-4. **Helper Methods**:
-   ```csharp
-   // Create reusable assertion helpers to reduce duplication
-   private static void AssertThrowsHL7Exception(Action action, string expectedErrorCode)
-   {
-       var ex = Assert.Throws<HL7Exception>(action);
-       Assert.Equal(expectedErrorCode, ex.ErrorCode);
-   }
-   
-   private static void AssertThrowsHL7Exception(Action action)
-   {
-       Assert.Throws<HL7Exception>(action);
-   }
-   ```
+### HL7 Encoding Support
 
-### Round-Trip Testing
+The fluent API provides safe-by-default encoding and explicit raw value support:
 
-For encoding functionality, always include round-trip tests:
+**Standard Delimiters**:
+- `|` (field separator) → `\F\`
+- `^` (component separator) → `\S\`  
+- `~` (repetition separator) → `\R\`
+- `\` (escape character) → `\E\`
+- `&` (subcomponent separator) → `\T\`
+
+**Safe Encoding (Recommended)**:
 ```csharp
-[Fact]
-public void Message_FullRoundTrip_StandardToCustomToStandard_PreservesContent()
-{
-    // 1. Parse with standard encoding
-    // 2. Change to custom encoding and serialize
-    // 3. Parse custom encoded message
-    // 4. Change back to standard encoding and serialize
-    // 5. Compare original and final messages
-    Assert.Equal(originalMessage.TrimEnd('\r', '\n'), finalMessage.TrimEnd('\r', '\n'));
-}
+// Set() methods automatically encode delimiters for safety in real medical data scenarios
+
+// Lab results with vertical bars in medical notation
+fluent.OBX[5].Set("Glucose: 95 mg/dL | Reference: 70-100 mg/dL");  // | used as separator in results
+fluent.OBX[8].Set("Normal | <70 = Low | >100 = High");              // | used in reference ranges
+fluent.NTE[3].Set("BP: 120/80 | Pulse: 72 | Temp: 98.6°F");       // | separating vital signs
+
+// Medication instructions with pipes
+fluent.RXE[21].Set("Take 2 tablets by mouth | Max 8 per day");     // | in dosing instructions
+fluent.SIG[1].Set("1 tab q4-6h prn | Do not exceed 6/24h");        // | in sig instructions
+
+// Names with ampersands (business/partnership names)
+fluent.PID[5].Set("Smith & Jones");                                 // & in law firm name
+fluent.PID[9].Set("Johnson & Johnson Medical");                     // & in company name
+fluent.PV1[3].Set("Bed & Breakfast Wing");                         // & in location name
+
+// File paths with backslashes
+fluent.OBX[5].Set("\\\\server\\share\\results\\2024\\patient_12345.pdf");  // Network path
+fluent.OBX[5].Set("C:\\PatientData\\Images\\scan_001.jpg");               // Windows file path
+
+// URLs with ampersands in query strings
+fluent.OBX[5].Set("https://lab.hospital.com/results?pid=12345&type=CBC&urgent=true");
+fluent.REF[4].Set("https://portal.health.org/referral?id=789&patient=12345&provider=567");
+
+// Tilde in version numbers or ranges
+fluent.MSH[12].Set("2.5.1~2.8");                                   // HL7 version range
+fluent.OBX[5].Set("Result pending ~ 24-48 hours");                 // ~ as approximation symbol
 ```
 
-## Important Patterns
+**Raw Value Handling (Advanced)**:
+```csharp
+// SetRaw() methods for pre-structured HL7 data with validation
+fluent.PID[5].SetRaw("Smith^John^M");           // Direct HL7 structure
+fluent.PID[5][1].SetRaw("Smith");               // Component data (no ^ or | allowed)
+fluent.PID[5][1][1].SetRaw("Smith");            // SubComponent data (no delimiters allowed)
+fluent.Path("PID.5.1").SetRaw("Smith");         // Path-based raw setting
 
-1. **Message Manipulation**:
-   ```csharp
-   message.GetValue("PID.5.1");  // Read
-   message.SetValue("PID.5.1", "value");  // Update existing
-   message.PutValue("PID.5.1", "value");  // Create if needed
-   ```
+// SetRaw() validates against invalid delimiters for the hierarchy level:
+fluent.PID[5].SetRaw("Value|Invalid");          // ❌ Throws: field cannot contain |
+fluent.PID[5][1].SetRaw("Value^Invalid");       // ❌ Throws: component cannot contain ^ or |
+fluent.PID[5][1][1].SetRaw("Value&Invalid");    // ❌ Throws: subcomponent cannot contain any delimiters
+```
 
-2. **Segment Access**:
-   ```csharp
-   message.DefaultSegment("PID");  // First occurrence
-   message.Segments("PID")[1];     // Second occurrence (0-based)
-   ```
+### Common Usage Patterns
 
-3. **Creating Messages**:
-   ```csharp
-   var message = new Message();
-   message.AddSegmentMSH(...);  // or AddSegmentMSH() for minimal
-   ```
+**Reading Values**:
+```csharp
+var fluent = message.ToFluentMessage();
+string patientId = fluent.PID[3].Raw;          // Raw HL7 data with structural delimiters
+string lastName = fluent.PID[5][1].Raw;        // Raw component data
+string suffix = fluent.PID[5][1][2].Raw ?? "";  // Raw subcomponent data
+```
 
-## NuGet Publishing
+**Human-Readable Display**:
+```csharp
+// Use ToString() for display/logging purposes
+string displayName = fluent.PID[5].ToString();         // "Smith John M" (decoded with spaces)
+string displayId = fluent.PID[3].ToString();           // Clean display format
+string displayNull = fluent.PID[6].ToString();         // "<null>" for HL7 nulls
 
-Publishing is manual via GitHub Actions:
-1. Go to Actions → .NET workflow
-2. Run workflow with "Publish to NuGet" checked
-3. Requires `NUGET_API_KEY` secret
+// Comparison: Raw vs ToString()
+fluent.PID[5].Raw;          // "Smith^John^M" (raw with structural delimiters)
+fluent.PID[5].ToString();   // "Smith John M" (human-readable with spaces)
 
-## Version Support
+// With encoded delimiters in data (when using Set())
+fluent.OBX[5].Set("Result: Positive | Confidence: 95%");
+fluent.OBX[5].Raw;          // "Result: Positive \\F\\ Confidence: 95%" (raw encoded)  
+fluent.OBX[5].ToString();   // "Result: Positive | Confidence: 95%" (decoded back to original)
+```
 
-- **Library**: Targets .NET Standard 1.3, 1.6, 2.0 for broad compatibility
-- **Tests**: .NET 8.0
-- **Strong Named**: Assembly signed with HL7lite.snk
+**Setting Values (Safe Encoding)**:
+```csharp
+// Set() methods automatically encode HL7 delimiters (|, ^, ~, \, &)
+fluent.PID[3].Set("12345");                    // Simple value
+fluent.OBX[5].Set("Glucose: 95 | Normal: 70-100");   // | automatically encoded
+fluent.PID[5].Set("Smith & Jones Law Firm");   // & automatically encoded
+fluent.PID[11].Set("\\\\server\\patient\\records");  // \ automatically encoded
+
+// For data that might contain user input with delimiters
+string labResult = "Result: Positive | Confidence: 95%";
+fluent.OBX[5].Set(labResult);                  // Safe - | encoded automatically
+
+// Components assembled safely
+fluent.PID[5].SetComponents("Smith & Jones", "John", "III");
+```
+
+**Setting Raw HL7 Structure (Advanced)**:
+```csharp
+// SetRaw() for pre-structured HL7 data
+fluent.PID[5].SetRaw("Smith^John^M");          // Direct HL7 component structure
+fluent.PID[3].SetRaw("ID001~ID002");           // Field repetitions with ~ delimiter
+fluent.Path("PID.5").SetRaw("Smith^John^M^Jr^Dr"); // Path-based raw setting
+```
+
+**Method Chaining**:
+```csharp
+fluent.PID[5].Set()
+    .Components("Smith", "John")
+    .Field(7, "19850315")
+    .Field(8, "M");
+```
+
+**LINQ Operations**:
+```csharp
+var diagnoses = fluent.Segments("DG1")
+    .Where(dg1 => dg1[3][1].Raw.Contains("Diabetes"))
+    .Select(dg1 => dg1[3][1].Raw)
+    .ToList();
+```
+
+**Path-based Access**:
+```csharp
+// Safe encoding
+fluent.Path("OBX.5").Set("BP: 120/80 | Pulse: 72");    // | encoded automatically
+fluent.Path("PID.5").Set("Smith & Jones");             // & encoded automatically
+string result = fluent.Path("OBX.5").Raw;              // Raw HL7 data
+
+// Raw structure
+fluent.Path("PID.5").SetRaw("Smith^John^M");    // Direct HL7 structure
+string displayName = fluent.Path("PID.5").ToString(); // "Smith John M" (human-readable)
+```
+
+**Field Repetitions - Fluent API Pattern**:
+```csharp
+// FLUENT PATTERN: AddRepetition maintains chain flow
+fluent.PID[3].Set("FirstID")
+    .AddRepetition("MRN001")                    // Adds repetition, returns mutator for new repetition
+        .SetComponents("MRN", "001", "HOSPITAL") // Set components on new repetition
+    .AddRepetition("ENC123")                    // Add another repetition
+        .SetComponents("ENC", "123", "VISIT")    // Set components on this repetition
+    .Field(7).Set("19850315");                  // Continue fluent chain to other fields
+
+// IMPORTANT: Set() resets the entire field, losing all repetitions
+fluent.PID[3].AddRepetition("FirstID");
+fluent.PID[3].AddRepetition("SecondID");        // Now has 2 repetitions
+fluent.PID[3].Set("NewID");                     // ❌ Resets field, loses all repetitions!
+
+// CORRECT: Use AddRepetition to maintain existing repetitions
+fluent.PID[3].Set("FirstID")
+    .AddRepetition("SecondID")
+    .AddRepetition("ThirdID");
+```
+
+### Testing Notes
+
+**IMPORTANT Testing Notes**:
+- **CRITICAL: Always create new test files within existing test projects** - standalone test files are not automatically included in the test discovery
+- **DO NOT create separate .cs files for testing - they will not work with `dotnet test`**
+- Add new test classes to `/HL7lite.Test/` with proper namespace `HL7lite.Test.*`
+- Use descriptive test class names ending in `Tests` (e.g. `FieldSetVsAddRepetitionTests`)
+- Test files must be in the same project structure to be discovered by `dotnet test`
+
+## XML Documentation Guidelines
+- Keep XML documentation comments concise and focused
+- Avoid excessive examples in XML docs - one simple example is sufficient if needed
+- Remove redundant "equivalent to verbose form" examples
+- Focus on describing what the method does, not how to use it in detail

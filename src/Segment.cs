@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
 namespace HL7lite
 {
     public class Segment : MessageElement
@@ -56,7 +58,9 @@ namespace HL7lite
         public Segment DeepCopy()
         {
             var newSegment = new Segment(this.Name, this.Encoding);
-            newSegment.Value = this.Value; 
+            // Use SerializeValue() to ensure we get the full segment content,
+            // including fields that were set via fluent API but not yet serialized
+            newSegment.Value = this.SerializeValue(); 
 
             return newSegment;        
         }

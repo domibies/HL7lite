@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
+
 namespace HL7lite
 {
     public class Field : MessageElement
@@ -113,6 +115,11 @@ namespace HL7lite
                     // move componentList to first repetition
                     firstField.ComponentList = this.ComponentList;
                     this.ComponentList = new ElementCollection<Component>();
+                    
+                    // Copy the original field's value and properties to first repetition
+                    firstField._value = this._value;
+                    firstField.IsComponentized = this.IsComponentized;
+                    firstField.IsDelimiters = this.IsDelimiters;
 
                     this.RepetitionList.Clear();
                     this.RepetitionList.Add(firstField);
@@ -131,8 +138,53 @@ namespace HL7lite
                 this.ComponentList = RepetitionList[0].ComponentList;
                 this.IsDelimiters = RepetitionList[0].IsDelimiters;
                 this.IsComponentized = RepetitionList[0].IsComponentized;
+                this._value = RepetitionList[0]._value; // Copy the value as well
                 RepetitionList = new List<Field>();
                 HasRepetitions = false;
+            }
+        }
+
+        public void RemoveRepetition(int repetitionNumber)
+        {
+            if (repetitionNumber < 1)
+                throw new HL7Exception($"Invalid repetition number ({repetitionNumber} < 1). Repetition numbers are 1-based.");
+
+            if (!HasRepetitions)
+            {
+                // Single field case: removing repetition 1 means clearing the field
+                if (repetitionNumber == 1)
+                {
+                    this.Value = "";
+                    this.ComponentList.Clear();
+                }
+                else
+                {
+                    throw new HL7Exception($"Repetition {repetitionNumber} does not exist. Field has only 1 repetition.");
+                }
+            }
+            else
+            {
+                // Multiple repetitions case: remove from RepetitionList (convert to 0-based)
+                int index = repetitionNumber - 1;
+                
+                if (index >= RepetitionList.Count)
+                    throw new HL7Exception($"Repetition {repetitionNumber} does not exist. Field has {RepetitionList.Count} repetitions.");
+
+                RepetitionList.RemoveAt(index);
+
+                // Handle state transitions
+                if (RepetitionList.Count == 1)
+                {
+                    // Convert back to single field using existing method
+                    RemoveRepetitions();
+                }
+                else if (RepetitionList.Count == 0)
+                {
+                    // All repetitions removed - clear the field completely
+                    HasRepetitions = false;
+                    this.Value = "";
+                    this.ComponentList.Clear();
+                }
             }
         }
 
