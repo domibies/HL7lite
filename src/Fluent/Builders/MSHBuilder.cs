@@ -8,6 +8,10 @@ namespace HL7lite.Fluent.Builders
     /// </summary>
     public class MSHBuilder
     {
+        // Static fields for thread-safe sequential control ID generation
+        private static int _counter = 0;
+        private static readonly object _counterLock = new object();
+        
         private readonly Message _message;
         private string _sendingApplication;
         private string _sendingFacility;
@@ -206,10 +210,13 @@ namespace HL7lite.Fluent.Builders
 
         private string GenerateControlId()
         {
-            // Generate a unique control ID using timestamp + random component
-            var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-            var random = new Random().Next(1000, 9999);
-            return $"{timestamp}{random}";
+            // Generate a unique control ID using timestamp + sequential counter
+            // This ensures uniqueness even when messages are created rapidly
+            lock (_counterLock)
+            {
+                _counter = (_counter + 1) % 10000; // Reset after 9999
+                return $"{DateTime.UtcNow:yyyyMMddHHmmss}{_counter:D4}";
+            }
         }
     }
 }

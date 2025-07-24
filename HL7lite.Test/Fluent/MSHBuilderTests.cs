@@ -373,5 +373,54 @@ namespace HL7lite.Test.Fluent
             Assert.NotEqual("FIRST", controlId);
             Assert.True(controlId.Length >= 14); // Should be auto-generated
         }
+
+        [Fact]
+        public void AutoControlId_MultipleRapidCalls_ShouldGenerateSequentialIds()
+        {
+            // Arrange
+            var controlIds = new string[5];
+
+            // Act - Generate multiple messages rapidly to test sequential behavior
+            for (int i = 0; i < 5; i++)
+            {
+                var message = new Message();
+                var fluent = new FluentMessage(message);
+                
+                fluent.CreateMSH
+                    .Sender("App", "Fac")
+                    .Receiver("App2", "Fac2")
+                    .MessageType("ADT^A01")
+                    .AutoControlId()
+                    .Build();
+
+                controlIds[i] = fluent.MSH[10].Raw;
+            }
+
+            // Assert - Control IDs should be sequential (when generated within same second)
+            for (int i = 1; i < controlIds.Length; i++)
+            {
+                var prev = controlIds[i - 1];
+                var curr = controlIds[i];
+                
+                // Both should have same format (18 characters: 14 timestamp + 4 counter)
+                Assert.Equal(18, prev.Length);
+                Assert.Equal(18, curr.Length);
+                
+                // Extract timestamp and counter parts
+                var prevTimestamp = prev.Substring(0, 14);
+                var currTimestamp = curr.Substring(0, 14);
+                var prevCounter = int.Parse(prev.Substring(14, 4));
+                var currCounter = int.Parse(curr.Substring(14, 4));
+                
+                // If timestamps are the same (generated within same second), counters should be sequential
+                if (prevTimestamp == currTimestamp)
+                {
+                    Assert.Equal(prevCounter + 1, currCounter);
+                }
+                
+                // All IDs should be unique
+                Assert.NotEqual(prev, curr);
+            }
+        }
     }
 }
